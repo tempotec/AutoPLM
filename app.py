@@ -22,6 +22,11 @@ if not app.config['SECRET_KEY']:
     raise RuntimeError("SESSION_SECRET environment variable is required")
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_pre_ping': True,  # Verifica conexões antes de usar
+    'pool_recycle': 3600,   # Reconecta a cada hora
+    'pool_timeout': 30,     # Timeout de 30 segundos para conexões
+}
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -404,15 +409,15 @@ def edit_specification(id):
 @app.route('/specification/<int:id>/delete', methods=['POST'])
 @login_required
 def delete_specification(id):
-    spec = Specification.query.get_or_404(id)
-    user = User.query.get(session['user_id'])
-    
-    # Allow access if user is admin or owns the specification
-    if not user.is_admin and spec.user_id != user.id:
-        flash('Acesso negado.')
-        return redirect(url_for('dashboard'))
-    
     try:
+        spec = Specification.query.get_or_404(id)
+        user = User.query.get(session['user_id'])
+        
+        # Allow access if user is admin or owns the specification
+        if not user.is_admin and spec.user_id != user.id:
+            flash('Acesso negado.')
+            return redirect(url_for('dashboard'))
+        
         # Delete associated file if it exists
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
         if os.path.exists(file_path):
@@ -423,7 +428,8 @@ def delete_specification(id):
         flash('Especificação excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
-        flash('Erro ao excluir especificação.')
+        print(f"Erro ao excluir especificação {id}: {e}")
+        flash('Erro ao excluir especificação. Tente novamente.')
     
     return redirect(url_for('dashboard'))
 
