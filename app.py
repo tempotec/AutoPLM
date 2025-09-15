@@ -508,10 +508,16 @@ def process_pdf_specification(spec_id, file_path):
         if extracted_data:
             # Update specification with extracted data
             print("Updating specification with extracted data...")
-            for field, value in extracted_data.items():
-                if hasattr(spec, field) and value:
-                    print(f"Setting {field} = {value}")
-                    setattr(spec, field, value)
+            # Flatten the nested structure and map to database fields
+            for category, fields in extracted_data.items():
+                print(f"Processing category: {category}")
+                if isinstance(fields, dict):
+                    for field, value in fields.items():
+                        if hasattr(spec, field) and value:
+                            print(f"Setting {field} = {value}")
+                            setattr(spec, field, value)
+                        else:
+                            print(f"Field {field} not found in model or value is None: {value}")
             
             spec.processing_status = 'completed'
             print("Processing completed successfully")
