@@ -261,11 +261,23 @@ def process_specification_with_openai(text_content):
         )
         
         content = response.choices[0].message.content
+        print(f"OpenAI response content: {content}")
         if content:
-            return json.loads(content)
-        return None
+            try:
+                parsed_json = json.loads(content)
+                print(f"Successfully parsed JSON: {parsed_json}")
+                return parsed_json
+            except json.JSONDecodeError as je:
+                print(f"JSON parsing error: {je}")
+                print(f"Raw content that failed to parse: {content}")
+                return None
+        else:
+            print("OpenAI returned empty content")
+            return None
     except Exception as e:
         print(f"Error processing with OpenAI: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 # Routes

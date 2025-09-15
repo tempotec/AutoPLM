@@ -1,0 +1,24 @@
+ * Debugger PIN: 404-939-739
+172.31.75.162 - - [15/Sep/2025 16:15:52] "GET / HTTP/1.1" 302 -
+/home/runner/workspace/app.py:300: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(session['user_id'])
+172.31.75.162 - - [15/Sep/2025 16:15:53] "GET /dashboard HTTP/1.1" 200 -
+/home/runner/workspace/app.py:417: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(session['user_id'])
+172.31.75.162 - - [15/Sep/2025 16:17:13] "POST /specification/3/delete HTTP/1.1" 302 -
+172.31.75.162 - - [15/Sep/2025 16:17:14] "GET /dashboard HTTP/1.1" 200 -
+172.31.75.162 - - [15/Sep/2025 16:18:11] "GET /upload_pdf HTTP/1.1" 200 -
+Starting processing for spec_id: 4, file_path: uploads/W26TH102_-_BLUSA_GOLA_ROLE_LISTRADA.pdf
+/home/runner/workspace/app.py:470: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  spec = Specification.query.get(spec_id)
+Extracting text from PDF...
+Extracted text length: 927 characters
+Processing with OpenAI...
+OpenAI client is available, starting API call...
+OpenAI returned data: None
+No data extracted from OpenAI
+Database updated
+172.31.75.162 - - [15/Sep/2025 16:18:45] "POST /upload_pdf HTTP/1.1" 302 -
+/home/runner/workspace/app.py:300: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(session['user_id'])
+172.31.75.162 - - [15/Sep/2025 16:18:46] "GET /dashboard HTTP/1.1" 200 -
