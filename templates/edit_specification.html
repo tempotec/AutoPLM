@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Especificação - Fichas Técnicas{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-edit me-2"></i>Editar Ficha Técnica</h2>
+            <a href="{{ url_for('view_specification', id=specification.id) }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left me-1"></i>Voltar
+            </a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<form method="POST">
+    {{ form.hidden_tag() }}
+    
+    <div class="row">
+        <div class="col-12">
+            <!-- 1. Identificação da Peça -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-tag me-1"></i>1. Identificação da Peça</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.ref_souq.label(class="form-label") }}
+                                {{ form.ref_souq(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.collection.label(class="form-label") }}
+                                {{ form.collection(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.supplier.label(class="form-label") }}
+                                {{ form.supplier(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.corner.label(class="form-label") }}
+                                {{ form.corner(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.description.label(class="form-label") }}
+                        {{ form.description(class="form-control", rows="3") }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2. Informações Comerciais -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-dollar-sign me-1"></i>2. Informações Comerciais</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.target_price.label(class="form-label") }}
+                                {{ form.target_price(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.store_month.label(class="form-label") }}
+                                {{ form.store_month(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.delivery_cd_month.label(class="form-label") }}
+                                {{ form.delivery_cd_month(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. Prazos e Entregas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-calendar me-1"></i>3. Prazos e Entregas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.tech_sheet_delivery_date.label(class="form-label") }}
+                                {{ form.tech_sheet_delivery_date(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.pilot_delivery_date.label(class="form-label") }}
+                                {{ form.pilot_delivery_date(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.showcase_for.label(class="form-label") }}
+                                {{ form.showcase_for(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. Equipe -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-users me-1"></i>4. Equipe Envolvida</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        {{ form.stylists.label(class="form-label") }}
+                        {{ form.stylists(class="form-control") }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. Matéria-Prima -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-tshirt me-1"></i>5. Matéria-Prima e Aviamentos</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.composition.label(class="form-label") }}
+                                {{ form.composition(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                {{ form.colors.label(class="form-label") }}
+                                {{ form.colors(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        {{ form.tags_kit.label(class="form-label") }}
+                        {{ form.tags_kit(class="form-control", rows="2") }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. Especificações Técnicas -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-ruler me-1"></i>6. Especificações Técnicas</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.pilot_size.label(class="form-label") }}
+                                {{ form.pilot_size(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.body_length.label(class="form-label") }}
+                                {{ form.body_length(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.sleeve_length.label(class="form-label") }}
+                                {{ form.sleeve_length(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.hem_width.label(class="form-label") }}
+                                {{ form.hem_width(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.shoulder_to_shoulder.label(class="form-label") }}
+                                {{ form.shoulder_to_shoulder(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.bust.label(class="form-label") }}
+                                {{ form.bust(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.waist.label(class="form-label") }}
+                                {{ form.waist(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.straight_armhole.label(class="form-label") }}
+                                {{ form.straight_armhole(class="form-control") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.neckline_depth.label(class="form-label") }}
+                                {{ form.neckline_depth(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="mb-3">
+                                {{ form.openings_details.label(class="form-label") }}
+                                {{ form.openings_details(class="form-control", rows="3") }}
+                            </div>
+                            <div class="mb-3">
+                                {{ form.finishes.label(class="form-label") }}
+                                {{ form.finishes(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. Design -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-palette me-1"></i>7. Design e Estilo</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.technical_drawing.label(class="form-label") }}
+                                {{ form.technical_drawing(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.reference_photos.label(class="form-label") }}
+                                {{ form.reference_photos(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                {{ form.specific_details.label(class="form-label") }}
+                                {{ form.specific_details(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-between mb-4">
+                <a href="{{ url_for('view_specification', id=specification.id) }}" class="btn btn-secondary">
+                    <i class="fas fa-times me-1"></i>Cancelar
+                </a>
+                {{ form.submit(class="btn btn-primary") }}
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}

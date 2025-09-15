@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Fichas Técnicas{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2><i class="fas fa-home me-2"></i>Minhas Fichas Técnicas</h2>
+            <a href="{{ url_for('upload_pdf') }}" class="btn btn-primary">
+                <i class="fas fa-plus me-1"></i>Nova Ficha
+            </a>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    {% if specifications %}
+        {% for spec in specifications %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card spec-card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        <i class="fas fa-calendar me-1"></i>
+                        {{ spec.created_at.strftime('%d/%m/%Y %H:%M') }}
+                    </small>
+                    {% if spec.processing_status == 'completed' %}
+                        <span class="badge bg-success">Completo</span>
+                    {% elif spec.processing_status == 'processing' %}
+                        <span class="badge bg-warning">Processando</span>
+                    {% elif spec.processing_status == 'error' %}
+                        <span class="badge bg-danger">Erro</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Pendente</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-file-pdf text-danger me-1"></i>
+                        {{ spec.pdf_filename }}
+                    </h6>
+                    
+                    {% if spec.ref_souq %}
+                    <p class="card-text">
+                        <strong>REF:</strong> {{ spec.ref_souq }}
+                    </p>
+                    {% endif %}
+                    
+                    {% if spec.description %}
+                    <p class="card-text">
+                        {{ spec.description[:100] }}{% if spec.description|length > 100 %}...{% endif %}
+                    </p>
+                    {% endif %}
+                    
+                    {% if spec.collection %}
+                    <p class="card-text">
+                        <small class="text-muted">
+                            <i class="fas fa-tag me-1"></i>{{ spec.collection }}
+                        </small>
+                    </p>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('view_specification', id=spec.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye me-1"></i>Ver Detalhes
+                        </a>
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ url_for('edit_specification', id=spec.id) }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-edit me-1"></i>Editar
+                            </a>
+                            <button class="btn btn-outline-danger" onclick="if(confirm('Tem certeza que deseja excluir esta especificação?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
+                                <i class="fas fa-trash me-1"></i>Excluir
+                            </button>
+                        </div>
+                    </div>
+                    <form id="delete-form-{{ spec.id }}" method="POST" action="{{ url_for('delete_specification', id=spec.id) }}" style="display: none;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="fas fa-file-upload fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">Nenhuma ficha técnica encontrada</h4>
+            <p class="text-muted mb-4">Comece enviando seu primeiro PDF para análise</p>
+            <a href="{{ url_for('upload_pdf') }}" class="btn btn-primary btn-lg">
+                <i class="fas fa-upload me-2"></i>Fazer Upload do PDF
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
