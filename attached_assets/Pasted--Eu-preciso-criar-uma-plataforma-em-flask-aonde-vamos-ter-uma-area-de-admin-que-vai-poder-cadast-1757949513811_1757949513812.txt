@@ -1,0 +1,58 @@
+
+
+
+
+
+Eu preciso criar uma plataforma em flask aonde vamos ter uma area de admin que vai poder cadastrar novos usuários no sistema e por ver tudo que todos os usuários fazem no sistema. 
+
+O usuário vai poder subir um pdf, e a partir desse pdf vamos fazer um ocr robusto para tirar essas informações usando a openai:   1. Identificação da Peça
+* Referência (REF SOUQ): código único da peça (ex.: W26TH102, W26TH104).
+* Descrição: nome e tipo da peça (ex.: Blusa Gola Rolê Manga Longa, Pull Trançado).
+* Coleção: estação/ano (ex.: Inverno 26).
+* Fornecedor: responsável pela produção (ex.: HJ Textil, RALM).
+* Corner: sublinha ou segmento (ex.: PEB, DDM).
+
+2. Informações Comerciais
+* Target Price: preço-alvo para a peça (ex.: R$55,00 / R$70,00).
+* Mês Loja: meses previstos para chegada nas lojas (ex.: Jan/Fev/Mar/Abr/Mai).
+* Mês Entrega CD: meses de entrega no centro de distribuição (ex.: Out/Nov/Dez/Jan/Fev/Mar/Abr).
+
+3. Prazos e Entregas
+* Data de Entrega Ficha Técnica: data em que a ficha precisa ser finalizada.
+* Data de Entrega Piloto: data para entrega da peça piloto (protótipo).
+* Mostruário Para: evento ou coleção em que será usado.
+
+4. Equipe Envolvida
+* Estilista(s): responsáveis criativos (ex.: Thais / Bruna).
+
+5. Matéria-Prima e Aviamentos
+* Composição: tecidos e fibras (ex.: Pepper – Invertido; Viscose / Acrílico / Poliamida).
+* Cores: paleta definida (ex.: Listrado Preto e Off; Off-White com Azul Marinho e Azul Médio).
+* Kit Etiquetas + Tag + Pendurador Cabide: elementos de identificação e apresentação.
+
+6. Especificações Técnicas da Modelagem
+* Tamanho da Piloto: referência de tamanho usado para protótipo (ex.: 38, P).
+* Medidas detalhadas:
+    * Comprimento corpo (ex.: 58 cm, 63 cm).
+    * Comprimento da manga (ex.: 58 cm).
+    * Largura da barra (ex.: 42 cm, 44 cm).
+    * Ombro a ombro (ex.: 32 cm).
+    * Busto (ex.: 40 cm).
+    * Cintura (ex.: 41 cm).
+    * Cava reta (ex.: 19 cm).
+    * Profundidade do decote (ex.: 24 cm).
+    * Aberturas ou detalhes (ex.: abertura lateral de 6 cm).
+* Acabamentos: tipo de costura, pesponto, largura da barra/punho (ex.: barra e manga com pesponto 2 agulhas 2 cm; punho e barra com 6 cm).
+
+7. Design e Estilo
+* Desenho técnico: ilustração da peça vista de frente/costas, com detalhes de modelagem.
+* Fotos de referência / protótipo: imagens do fit e visual desejado.
+* Detalhes específicos:
+    * Tipo de gola (rolê de 14 cm duplo).
+    * Tipo de decote (V com largura 3 cm, retilínea 2x2).
+    * Tranças grossas de 4 cm (no pull trançado).
+    * Listras (quantidade, largura, cores específicas).
+
+
+
+Vamos fazer o lançamento dessas informações no sistema, e vincular o pdf a esse lançamento. Consegue me ajudar com isso?
