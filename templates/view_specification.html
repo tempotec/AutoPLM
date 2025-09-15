@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Visualizar Especificação - Fichas Técnicas{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <h2>
+                <i class="fas fa-file-alt me-2"></i>Ficha Técnica
+                {% if specification.processing_status == 'completed' %}
+                    <span class="badge bg-success ms-2">Processada</span>
+                {% elif specification.processing_status == 'processing' %}
+                    <span class="badge bg-warning ms-2">Processando</span>
+                {% elif specification.processing_status == 'error' %}
+                    <span class="badge bg-danger ms-2">Erro</span>
+                {% endif %}
+            </h2>
+            <div class="btn-group">
+                <a href="{{ url_for('edit_specification', id=specification.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-1"></i>Editar
+                </a>
+                <button class="btn btn-danger" onclick="if(confirm('Tem certeza que deseja excluir esta especificação? Esta ação não pode ser desfeita.')) { document.getElementById('delete-spec-form').submit(); }">
+                    <i class="fas fa-trash me-1"></i>Excluir
+                </button>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left me-1"></i>Voltar
+                </a>
+            </div>
+            <form id="delete-spec-form" method="POST" action="{{ url_for('delete_specification', id=specification.id) }}" style="display: none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            </form>
+        </div>
+        <hr>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-info-circle me-1"></i>Informações do Arquivo</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Arquivo PDF:</strong><br>
+                   <i class="fas fa-file-pdf text-danger me-1"></i>{{ specification.pdf_filename }}</p>
+                <p><strong>Enviado por:</strong><br>{{ specification.user.username }}</p>
+                <p><strong>Data:</strong><br>{{ specification.created_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <!-- 1. Identificação da Peça -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-tag me-1"></i>1. Identificação da Peça</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Referência (REF SOUQ):</strong><br>{{ specification.ref_souq or '-' }}</p>
+                        <p><strong>Coleção:</strong><br>{{ specification.collection or '-' }}</p>
+                        <p><strong>Fornecedor:</strong><br>{{ specification.supplier or '-' }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Corner:</strong><br>{{ specification.corner or '-' }}</p>
+                    </div>
+                </div>
+                {% if specification.description %}
+                <p><strong>Descrição:</strong><br>{{ specification.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 2. Informações Comerciais -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-dollar-sign me-1"></i>2. Informações Comerciais</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p><strong>Target Price:</strong><br>{{ specification.target_price or '-' }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Mês Loja:</strong><br>{{ specification.store_month or '-' }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Mês Entrega CD:</strong><br>{{ specification.delivery_cd_month or '-' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. Prazos e Entregas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-calendar me-1"></i>3. Prazos e Entregas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <p><strong>Data Ficha Técnica:</strong><br>
+                        {{ specification.tech_sheet_delivery_date.strftime('%d/%m/%Y') if specification.tech_sheet_delivery_date else '-' }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Data Piloto:</strong><br>
+                        {{ specification.pilot_delivery_date.strftime('%d/%m/%Y') if specification.pilot_delivery_date else '-' }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <p><strong>Mostruário Para:</strong><br>{{ specification.showcase_for or '-' }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Equipe -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-users me-1"></i>4. Equipe Envolvida</h6>
+            </div>
+            <div class="card-body">
+                <p><strong>Estilista(s):</strong><br>{{ specification.stylists or '-' }}</p>
+            </div>
+        </div>
+
+        <!-- 5. Matéria-Prima -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-tshirt me-1"></i>5. Matéria-Prima e Aviamentos</h6>
+            </div>
+            <div class="card-body">
+                {% if specification.composition %}
+                <p><strong>Composição:</strong><br>{{ specification.composition }}</p>
+                {% endif %}
+                {% if specification.colors %}
+                <p><strong>Cores:</strong><br>{{ specification.colors }}</p>
+                {% endif %}
+                {% if specification.tags_kit %}
+                <p><strong>Kit Etiquetas:</strong><br>{{ specification.tags_kit }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 6. Especificações Técnicas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-ruler me-1"></i>6. Especificações Técnicas</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <p><strong>Tam. Piloto:</strong><br>{{ specification.pilot_size or '-' }}</p>
+                        <p><strong>Comp. Corpo:</strong><br>{{ specification.body_length or '-' }}</p>
+                        <p><strong>Comp. Manga:</strong><br>{{ specification.sleeve_length or '-' }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Larg. Barra:</strong><br>{{ specification.hem_width or '-' }}</p>
+                        <p><strong>Ombro:</strong><br>{{ specification.shoulder_to_shoulder or '-' }}</p>
+                        <p><strong>Busto:</strong><br>{{ specification.bust or '-' }}</p>
+                    </div>
+                    <div class="col-md-3">
+                        <p><strong>Cintura:</strong><br>{{ specification.waist or '-' }}</p>
+                        <p><strong>Cava Reta:</strong><br>{{ specification.straight_armhole or '-' }}</p>
+                        <p><strong>Prof. Decote:</strong><br>{{ specification.neckline_depth or '-' }}</p>
+                    </div>
+                </div>
+                {% if specification.openings_details %}
+                <p><strong>Aberturas/Detalhes:</strong><br>{{ specification.openings_details }}</p>
+                {% endif %}
+                {% if specification.finishes %}
+                <p><strong>Acabamentos:</strong><br>{{ specification.finishes }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- 7. Design -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-palette me-1"></i>7. Design e Estilo</h6>
+            </div>
+            <div class="card-body">
+                {% if specification.technical_drawing %}
+                <p><strong>Desenho Técnico:</strong><br>{{ specification.technical_drawing }}</p>
+                {% endif %}
+                {% if specification.reference_photos %}
+                <p><strong>Fotos de Referência:</strong><br>{{ specification.reference_photos }}</p>
+                {% endif %}
+                {% if specification.specific_details %}
+                <p><strong>Detalhes Específicos:</strong><br>{{ specification.specific_details }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
