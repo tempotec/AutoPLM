@@ -243,9 +243,9 @@ def process_specification_with_openai(text_content):
         Texto da ficha técnica:
         """ + text_content
         
-        # the newest OpenAI model is "gpt-5" which was released August 7, 2025. do not change this unless explicitly requested by the user
+        # Using gpt-4 for more reliable processing
         response = openai_client.chat.completions.create(
-            model="gpt-5",
+            model="gpt-4",
             messages=[
                 {
                     "role": "system",
@@ -257,8 +257,12 @@ def process_specification_with_openai(text_content):
                 }
             ],
             response_format={"type": "json_object"},
-            max_completion_tokens=2000
+            max_tokens=2000
         )
+        
+        print(f"OpenAI response object: {response}")
+        print(f"Response choices: {response.choices}")
+        print(f"Number of choices: {len(response.choices)}")
         
         content = response.choices[0].message.content
         print(f"OpenAI response content: {content}")
