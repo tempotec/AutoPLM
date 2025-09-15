@@ -1,0 +1,85 @@
+ * Serving Flask app 'app'
+ * Debug mode: on
+WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://172.31.75.162:5000
+Press CTRL+C to quit
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 404-939-739
+172.31.75.162 - - [15/Sep/2025 16:48:38] "GET / HTTP/1.1" 302 -
+/home/runner/workspace/app.py:316: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(session['user_id'])
+172.31.75.162 - - [15/Sep/2025 16:48:39] "GET /dashboard HTTP/1.1" 200 -
+172.31.75.162 - - [15/Sep/2025 16:50:38] "GET /upload_pdf HTTP/1.1" 200 -
+/home/runner/workspace/app.py:433: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(session['user_id'])
+172.31.75.162 - - [15/Sep/2025 16:50:41] "POST /specification/6/delete HTTP/1.1" 302 -
+Starting processing for spec_id: 7, file_path: uploads/W26TH102_-_BLUSA_GOLA_ROLE_LISTRADA.pdf
+/home/runner/workspace/app.py:486: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  spec = Specification.query.get(spec_id)
+Extracting text from PDF...
+Extracted text length: 927 characters
+Processing with OpenAI...
+OpenAI client is available, starting API call...
+OpenAI response object: ChatCompletion(id='chatcmpl-CG6hXesqP0n6ZBrKVOUtVvP1Mr7al', choices=[Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='{\n  "Identificação da Peça": {\n    "ref_souq": "W26TH102",\n    "description": "Blusa gola rolê manga longa",\n    "collection": "Inverno 26",\n    "supplier": "HJ Têxtil",\n    "corner": "PEB"\n  },\n  "Informações Comerciais": {\n    "target_price": "55,00",\n    "store_month": "Jan, Fev, Mar, Abr, Mai",\n    "delivery_cd_month": "Out, Nov, Dez, Jan, Fev, Mar, Abr"\n  },\n  "Prazos e Entregas": {\n    "tech_sheet_delivery_date": "2021-08-21",\n    "pilot_delivery_date": "2021-09-18",\n    "showcase_for": null\n  },\n  "Equipe Envolvida": {\n    "stylists": "Thais, Bruna"\n  },\n  "Matéria-Prima e Aviamentos": {\n    "composition": null,\n    "colors": "Listrado, Preto e Off",\n    "tags_kit": "Kit etiquetas + tag + pendurador cabide"\n  },\n  "Especificações Técnicas": {\n    "pilot_size": "38",\n    "body_length": "58 cm",\n    "sleeve_length": "58 cm",\n    "hem_width": "42 cm",\n    "shoulder_to_shoulder": "32 cm",\n    "bust": "40 cm",\n    "waist": "41 cm",\n    "straight_armhole": "19 cm",\n    "neckline_depth": null,\n    "openings_details": null,\n    "finishes": "Gola rolê, Acabamento todo duplo, Barra e manga com pesponto 2 agulhas"\n  },\n  "Design e Estilo": {\n    "technical_drawing": null,\n    "reference_photos": null,\n    "specific_details": "Fit da blusa como imagem de ref"\n  }\n}', refusal=None, role='assistant', annotations=[], audio=None, function_call=None, tool_calls=None))], created=1757955043, model='gpt-4-turbo-2024-04-09', object='chat.completion', service_tier='default', system_fingerprint='fp_de235176ee', usage=CompletionUsage(completion_tokens=439, prompt_tokens=677, total_tokens=1116, completion_tokens_details=CompletionTokensDetails(accepted_prediction_tokens=0, audio_tokens=0, reasoning_tokens=0, rejected_prediction_tokens=0), prompt_tokens_details=PromptTokensDetails(audio_tokens=0, cached_tokens=0)))
+Response choices: [Choice(finish_reason='stop', index=0, logprobs=None, message=ChatCompletionMessage(content='{\n  "Identificação da Peça": {\n    "ref_souq": "W26TH102",\n    "description": "Blusa gola rolê manga longa",\n    "collection": "Inverno 26",\n    "supplier": "HJ Têxtil",\n    "corner": "PEB"\n  },\n  "Informações Comerciais": {\n    "target_price": "55,00",\n    "store_month": "Jan, Fev, Mar, Abr, Mai",\n    "delivery_cd_month": "Out, Nov, Dez, Jan, Fev, Mar, Abr"\n  },\n  "Prazos e Entregas": {\n    "tech_sheet_delivery_date": "2021-08-21",\n    "pilot_delivery_date": "2021-09-18",\n    "showcase_for": null\n  },\n  "Equipe Envolvida": {\n    "stylists": "Thais, Bruna"\n  },\n  "Matéria-Prima e Aviamentos": {\n    "composition": null,\n    "colors": "Listrado, Preto e Off",\n    "tags_kit": "Kit etiquetas + tag + pendurador cabide"\n  },\n  "Especificações Técnicas": {\n    "pilot_size": "38",\n    "body_length": "58 cm",\n    "sleeve_length": "58 cm",\n    "hem_width": "42 cm",\n    "shoulder_to_shoulder": "32 cm",\n    "bust": "40 cm",\n    "waist": "41 cm",\n    "straight_armhole": "19 cm",\n    "neckline_depth": null,\n    "openings_details": null,\n    "finishes": "Gola rolê, Acabamento todo duplo, Barra e manga com pesponto 2 agulhas"\n  },\n  "Design e Estilo": {\n    "technical_drawing": null,\n    "reference_photos": null,\n    "specific_details": "Fit da blusa como imagem de ref"\n  }\n}', refusal=None, role='assistant', annotations=[], audio=None, function_call=None, tool_calls=None))]
+Number of choices: 1
+OpenAI response content: {
+  "Identificação da Peça": {
+    "ref_souq": "W26TH102",
+    "description": "Blusa gola rolê manga longa",
+    "collection": "Inverno 26",
+    "supplier": "HJ Têxtil",
+    "corner": "PEB"
+  },
+  "Informações Comerciais": {
+    "target_price": "55,00",
+    "store_month": "Jan, Fev, Mar, Abr, Mai",
+    "delivery_cd_month": "Out, Nov, Dez, Jan, Fev, Mar, Abr"
+  },
+  "Prazos e Entregas": {
+    "tech_sheet_delivery_date": "2021-08-21",
+    "pilot_delivery_date": "2021-09-18",
+    "showcase_for": null
+  },
+  "Equipe Envolvida": {
+    "stylists": "Thais, Bruna"
+  },
+  "Matéria-Prima e Aviamentos": {
+    "composition": null,
+    "colors": "Listrado, Preto e Off",
+    "tags_kit": "Kit etiquetas + tag + pendurador cabide"
+  },
+  "Especificações Técnicas": {
+    "pilot_size": "38",
+    "body_length": "58 cm",
+    "sleeve_length": "58 cm",
+    "hem_width": "42 cm",
+    "shoulder_to_shoulder": "32 cm",
+    "bust": "40 cm",
+    "waist": "41 cm",
+    "straight_armhole": "19 cm",
+    "neckline_depth": null,
+    "openings_details": null,
+    "finishes": "Gola rolê, Acabamento todo duplo, Barra e manga com pesponto 2 agulhas"
+  },
+  "Design e Estilo": {
+    "technical_drawing": null,
+    "reference_photos": null,
+    "specific_details": "Fit da blusa como imagem de ref"
+  }
+}
+Successfully parsed JSON: {'Identificação da Peça': {'ref_souq': 'W26TH102', 'description': 'Blusa gola rolê manga longa', 'collection': 'Inverno 26', 'supplier': 'HJ Têxtil', 'corner': 'PEB'}, 'Informações Comerciais': {'target_price': '55,00', 'store_month': 'Jan, Fev, Mar, Abr, Mai', 'delivery_cd_month': 'Out, Nov, Dez, Jan, Fev, Mar, Abr'}, 'Prazos e Entregas': {'tech_sheet_delivery_date': '2021-08-21', 'pilot_delivery_date': '2021-09-18', 'showcase_for': None}, 'Equipe Envolvida': {'stylists': 'Thais, Bruna'}, 'Matéria-Prima e Aviamentos': {'composition': None, 'colors': 'Listrado, Preto e Off', 'tags_kit': 'Kit etiquetas + tag + pendurador cabide'}, 'Especificações Técnicas': {'pilot_size': '38', 'body_length': '58 cm', 'sleeve_length': '58 cm', 'hem_width': '42 cm', 'shoulder_to_shoulder': '32 cm', 'bust': '40 cm', 'waist': '41 cm', 'straight_armhole': '19 cm', 'neckline_depth': None, 'openings_details': None, 'finishes': 'Gola rolê, Acabamento todo duplo, Barra e manga com pesponto 2 agulhas'}, 'Design e Estilo': {'technical_drawing': None, 'reference_photos': None, 'specific_details': 'Fit da blusa como imagem de ref'}}
+OpenAI returned data: {'Identificação da Peça': {'ref_souq': 'W26TH102', 'description': 'Blusa gola rolê manga longa', 'collection': 'Inverno 26', 'supplier': 'HJ Têxtil', 'corner': 'PEB'}, 'Informações Comerciais': {'target_price': '55,00', 'store_month': 'Jan, Fev, Mar, Abr, Mai', 'delivery_cd_month': 'Out, Nov, Dez, Jan, Fev, Mar, Abr'}, 'Prazos e Entregas': {'tech_sheet_delivery_date': '2021-08-21', 'pilot_delivery_date': '2021-09-18', 'showcase_for': None}, 'Equipe Envolvida': {'stylists': 'Thais, Bruna'}, 'Matéria-Prima e Aviamentos': {'composition': None, 'colors': 'Listrado, Preto e Off', 'tags_kit': 'Kit etiquetas + tag + pendurador cabide'}, 'Especificações Técnicas': {'pilot_size': '38', 'body_length': '58 cm', 'sleeve_length': '58 cm', 'hem_width': '42 cm', 'shoulder_to_shoulder': '32 cm', 'bust': '40 cm', 'waist': '41 cm', 'straight_armhole': '19 cm', 'neckline_depth': None, 'openings_details': None, 'finishes': 'Gola rolê, Acabamento todo duplo, Barra e manga com pesponto 2 agulhas'}, 'Design e Estilo': {'technical_drawing': None, 'reference_photos': None, 'specific_details': 'Fit da blusa como imagem de ref'}}
+Updating specification with extracted data...
+Processing completed successfully
+Database updated
+172.31.75.162 - - [15/Sep/2025 16:50:56] "POST /upload_pdf HTTP/1.1" 302 -
+/home/runner/workspace/app.py:316: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(session['user_id'])
+172.31.75.162 - - [15/Sep/2025 16:50:57] "GET /dashboard HTTP/1.1" 200 -
+/home/runner/workspace/app.py:395: LegacyAPIWarning: The Query.get() method is considered legacy as of the 1.x series of SQLAlchemy and becomes a legacy construct in 2.0. The method is now available as Session.get() (deprecated since: 2.0) (Background on SQLAlchemy 2.0 at: https://sqlalche.me/e/b8d9)
+  user = User.query.get(session['user_id'])
+172.31.75.162 - - [15/Sep/2025 16:50:59] "GET /specification/7 HTTP/1.1" 200 -
