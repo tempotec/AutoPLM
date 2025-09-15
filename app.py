@@ -221,8 +221,10 @@ def extract_text_from_pdf(pdf_path):
 def process_specification_with_openai(text_content):
     """Process specification text using OpenAI to extract structured data"""
     if not openai_client:
+        print("OpenAI client not initialized")
         return None
     
+    print("OpenAI client is available, starting API call...")
     try:
         prompt = """
         Analise o seguinte texto de ficha técnica de vestuário e extraia as informações estruturadas em formato JSON.
@@ -464,30 +466,49 @@ def delete_user(id):
 def process_pdf_specification(spec_id, file_path):
     """Process PDF specification in background"""
     try:
+        print(f"Starting processing for spec_id: {spec_id}, file_path: {file_path}")
         spec = Specification.query.get(spec_id)
         if not spec:
+            print(f"Specification with id {spec_id} not found")
             return
         
         # Extract text from PDF
+        print("Extracting text from PDF...")
         text_content = extract_text_from_pdf(file_path)
+        print(f"Extracted text length: {len(text_content)} characters")
         spec.raw_extracted_text = text_content
         
+        if not text_content.strip():
+            print("No text content extracted from PDF")
+            spec.processing_status = 'error'
+            db.session.commit()
+            return
+        
         # Process with OpenAI
+        print("Processing with OpenAI...")
         extracted_data = process_specification_with_openai(text_content)
+        print(f"OpenAI returned data: {extracted_data}")
         
         if extracted_data:
             # Update specification with extracted data
+            print("Updating specification with extracted data...")
             for field, value in extracted_data.items():
                 if hasattr(spec, field) and value:
+                    print(f"Setting {field} = {value}")
                     setattr(spec, field, value)
             
             spec.processing_status = 'completed'
+            print("Processing completed successfully")
         else:
+            print("No data extracted from OpenAI")
             spec.processing_status = 'error'
         
         db.session.commit()
+        print("Database updated")
     except Exception as e:
         print(f"Error processing PDF specification: {e}")
+        import traceback
+        traceback.print_exc()
         spec = Specification.query.get(spec_id)
         if spec:
             spec.processing_status = 'error'
