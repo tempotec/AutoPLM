@@ -243,13 +243,13 @@ def process_specification_with_openai(text_content):
         Texto da ficha técnica:
         """ + text_content
         
-        # Using gpt-4 for more reliable processing
+        # Using gpt-4-turbo for JSON mode support
         response = openai_client.chat.completions.create(
-            model="gpt-4",
+            model="gpt-4-turbo",
             messages=[
                 {
                     "role": "system",
-                    "content": "Você é um especialista em análise de fichas técnicas de vestuário. Extraia informações estruturadas e retorne em formato JSON válido."
+                    "content": "Você é um especialista em análise de fichas técnicas de vestuário. Extraia informações estruturadas e retorne SOMENTE em formato JSON válido, sem texto adicional."
                 },
                 {
                     "role": "user", 
