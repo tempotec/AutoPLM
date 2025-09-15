@@ -1,6 +1,6 @@
 import os
 import json
-from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm, CSRFProtect
 from flask_wtf.file import FileField, FileRequired, FileAllowed
@@ -224,7 +224,6 @@ def process_specification_with_openai(text_content):
         print("OpenAI client not initialized")
         return None
     
-    print("OpenAI client is available, starting API call...")
     try:
         prompt = """
         Analise o seguinte texto de ficha técnica de vestuário e extraia as informações estruturadas em formato JSON.
@@ -260,28 +259,19 @@ def process_specification_with_openai(text_content):
             max_tokens=2000
         )
         
-        print(f"OpenAI response object: {response}")
-        print(f"Response choices: {response.choices}")
-        print(f"Number of choices: {len(response.choices)}")
         
         content = response.choices[0].message.content
-        print(f"OpenAI response content: {content}")
         if content:
             try:
                 parsed_json = json.loads(content)
-                print(f"Successfully parsed JSON: {parsed_json}")
                 return parsed_json
             except json.JSONDecodeError as je:
                 print(f"JSON parsing error: {je}")
-                print(f"Raw content that failed to parse: {content}")
                 return None
         else:
-            print("OpenAI returned empty content")
             return None
     except Exception as e:
         print(f"Error processing with OpenAI: {e}")
-        import traceback
-        traceback.print_exc()
         return None
 
 # Routes
@@ -401,6 +391,50 @@ def view_specification(id):
     
     return render_template('view_specification.html', specification=spec)
 
+@app.route('/download_pdf/<int:id>')
+@login_required
+def download_pdf(id):
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    
+    # Allow access if user is admin or owns the specification
+    if not user.is_admin and spec.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('dashboard'))
+    
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True, download_name=spec.pdf_filename)
+        else:
+            flash('Arquivo PDF não encontrado.')
+            return redirect(url_for('view_specification', id=id))
+    except Exception as e:
+        flash('Erro ao baixar o arquivo PDF.')
+        return redirect(url_for('view_specification', id=id))
+
+@app.route('/view_pdf/<int:id>')
+@login_required
+def view_pdf(id):
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    
+    # Allow access if user is admin or owns the specification
+    if not user.is_admin and spec.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('dashboard'))
+    
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        if os.path.exists(file_path):
+            return send_file(file_path, mimetype='application/pdf')
+        else:
+            flash('Arquivo PDF não encontrado.')
+            return redirect(url_for('view_specification', id=id))
+    except Exception as e:
+        flash('Erro ao visualizar o arquivo PDF.')
+        return redirect(url_for('view_specification', id=id))
+
 @app.route('/specification/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_specification(id):
@@ -482,55 +516,38 @@ def delete_user(id):
 def process_pdf_specification(spec_id, file_path):
     """Process PDF specification in background"""
     try:
-        print(f"Starting processing for spec_id: {spec_id}, file_path: {file_path}")
         spec = Specification.query.get(spec_id)
         if not spec:
-            print(f"Specification with id {spec_id} not found")
             return
         
         # Extract text from PDF
-        print("Extracting text from PDF...")
         text_content = extract_text_from_pdf(file_path)
-        print(f"Extracted text length: {len(text_content)} characters")
         spec.raw_extracted_text = text_content
         
         if not text_content.strip():
-            print("No text content extracted from PDF")
             spec.processing_status = 'error'
             db.session.commit()
             return
         
         # Process with OpenAI
-        print("Processing with OpenAI...")
         extracted_data = process_specification_with_openai(text_content)
-        print(f"OpenAI returned data: {extracted_data}")
         
         if extracted_data:
             # Update specification with extracted data
-            print("Updating specification with extracted data...")
             # Flatten the nested structure and map to database fields
             for category, fields in extracted_data.items():
-                print(f"Processing category: {category}")
                 if isinstance(fields, dict):
                     for field, value in fields.items():
                         if hasattr(spec, field) and value:
-                            print(f"Setting {field} = {value}")
                             setattr(spec, field, value)
-                        else:
-                            print(f"Field {field} not found in model or value is None: {value}")
             
             spec.processing_status = 'completed'
-            print("Processing completed successfully")
         else:
-            print("No data extracted from OpenAI")
             spec.processing_status = 'error'
         
         db.session.commit()
-        print("Database updated")
     except Exception as e:
         print(f"Error processing PDF specification: {e}")
-        import traceback
-        traceback.print_exc()
         spec = Specification.query.get(spec_id)
         if spec:
             spec.processing_status = 'error'
