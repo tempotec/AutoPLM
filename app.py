@@ -250,7 +250,7 @@ def process_specification_with_openai(text_content):
                 }
             ],
             response_format={"type": "json_object"},
-            max_tokens=2000
+            max_completion_tokens=2000
         )
         
         content = response.choices[0].message.content
