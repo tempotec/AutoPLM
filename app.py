@@ -342,7 +342,7 @@ def create_user():
 @login_required
 def upload_pdf():
     form = UploadPDFForm()
-    if form.validate_on_submit():
+    if request.method == 'POST' and form.validate_on_submit():
         file = form.pdf_file.data
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -353,6 +353,7 @@ def upload_pdf():
         spec.user_id = session['user_id']
         spec.pdf_filename = filename
         spec.processing_status = 'processing'
+        spec.created_at = datetime.now()
         
         try:
             db.session.add(spec)
