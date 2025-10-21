@@ -539,6 +539,51 @@ def view_pdf(id):
         flash('Erro ao visualizar o arquivo PDF.')
         return redirect(url_for('view_specification', id=id))
 
+@app.route('/specification/<int:id>/generate_drawing', methods=['POST'])
+@login_required
+def generate_technical_drawing(id):
+    """Generate technical drawing using DALL-E 3"""
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    # Allow access if user is admin or owns the specification
+    if not user.is_admin and spec.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('dashboard'))
+    
+    if not openai_client:
+        flash('OpenAI não está configurado. Contate o administrador.')
+        return redirect(url_for('view_specification', id=id))
+    
+    try:
+        # Build prompt with specification data
+        prompt = build_technical_drawing_prompt(spec)
+        
+        # Generate image using DALL-E 3
+        response = openai_client.images.generate(
+            model="dall-e-3",
+            prompt=prompt,
+            size="1024x1024",
+            quality="standard",
+            n=1,
+        )
+        
+        # Save the image URL
+        spec.technical_drawing_url = response.data[0].url
+        db.session.commit()
+        
+        flash('Desenho técnico gerado com sucesso!')
+        return redirect(url_for('view_specification', id=id))
+        
+    except Exception as e:
+        print(f"Error generating technical drawing: {e}")
+        flash('Erro ao gerar desenho técnico. Tente novamente.')
+        return redirect(url_for('view_specification', id=id))
+
 @app.route('/specification/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_specification(id):
