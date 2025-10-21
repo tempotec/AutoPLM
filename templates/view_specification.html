@@ -58,6 +58,42 @@
                 </div>
             </div>
         </div>
+
+        <!-- Technical Drawing Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6><i class="fas fa-pencil-ruler me-1"></i>Desenho Técnico</h6>
+            </div>
+            <div class="card-body">
+                {% if specification.technical_drawing_url %}
+                    <img src="{{ specification.technical_drawing_url }}" alt="Desenho Técnico" class="img-fluid mb-3" style="border: 1px solid #ddd; border-radius: 4px;">
+                    <div class="d-grid gap-2">
+                        <a href="{{ specification.technical_drawing_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-external-link-alt me-1"></i>Abrir em Nova Aba
+                        </a>
+                        <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" onsubmit="return confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="btn btn-outline-warning btn-sm w-100">
+                                <i class="fas fa-sync-alt me-1"></i>Gerar Novo Desenho
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <p class="text-muted mb-3">
+                        <i class="fas fa-info-circle me-1"></i>Nenhum desenho técnico gerado ainda.
+                    </p>
+                    <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-magic me-1"></i>Gerar Desenho Técnico
+                        </button>
+                    </form>
+                    <small class="text-muted mt-2 d-block">
+                        <i class="fas fa-clock me-1"></i>Processo leva ~30 segundos
+                    </small>
+                {% endif %}
+            </div>
+        </div>
     </div>
     
     <div class="col-md-8">
