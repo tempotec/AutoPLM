@@ -563,12 +563,12 @@ def generate_technical_drawing(id):
         # Build prompt with specification data
         prompt = build_technical_drawing_prompt(spec)
         
-        # Generate image using DALL-E 3 with HD quality for maximum detail
+        # Generate image using GPT-Image-1 with high quality for maximum detail and text accuracy
         response = openai_client.images.generate(
-            model="dall-e-3",
+            model="gpt-image-1",
             prompt=prompt,
-            size="1792x1024",  # Maximum resolution for landscape technical drawings
-            quality="hd",  # HD quality for better detail and text rendering
+            size="1792x1024",  # High resolution for landscape technical drawings
+            quality="high",  # High quality for better detail, text rendering and precision
             n=1,
         )
         
