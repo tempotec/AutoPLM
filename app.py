@@ -24,8 +24,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_pre_ping': True,  # Verifica conexões antes de usar
-    'pool_recycle': 3600,   # Reconecta a cada hora
-    'pool_timeout': 30,     # Timeout de 30 segundos para conexões
+    'pool_recycle': 3600,  # Reconecta a cada hora
+    'pool_timeout': 30,  # Timeout de 30 segundos para conexões
 }
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
@@ -37,9 +37,11 @@ csrf = CSRFProtect(app)
 # Make CSRF token available in templates
 from flask_wtf.csrf import generate_csrf
 
+
 @app.context_processor
 def inject_csrf_token():
     return dict(csrf_token=generate_csrf)
+
 
 # Initialize OpenAI client
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -47,6 +49,7 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Create upload directory if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
 
 # Database Models
 class User(db.Model):
@@ -56,47 +59,50 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationship with specifications
-    specifications = db.relationship('Specification', backref='user', lazy=True)
-    
+    specifications = db.relationship('Specification',
+                                     backref='user',
+                                     lazy=True)
+
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
-    
+
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
 
 class Specification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     pdf_filename = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # 1. Identificação da Peça
     ref_souq = db.Column(db.String(100))
     description = db.Column(db.Text)
     collection = db.Column(db.String(100))
     supplier = db.Column(db.String(100))
     corner = db.Column(db.String(100))
-    
+
     # 2. Informações Comerciais
     target_price = db.Column(db.String(100))
     store_month = db.Column(db.String(200))
     delivery_cd_month = db.Column(db.String(200))
-    
+
     # 3. Prazos e Entregas
     tech_sheet_delivery_date = db.Column(db.Date)
     pilot_delivery_date = db.Column(db.Date)
     showcase_for = db.Column(db.String(200))
-    
+
     # 4. Equipe Envolvida
     stylists = db.Column(db.String(200))
-    
+
     # 5. Matéria-Prima e Aviamentos
     composition = db.Column(db.Text)
     colors = db.Column(db.Text)
     tags_kit = db.Column(db.Text)
-    
+
     # 6. Especificações Técnicas da Modelagem
     pilot_size = db.Column(db.String(50))
     body_length = db.Column(db.String(100))
@@ -109,18 +115,21 @@ class Specification(db.Model):
     neckline_depth = db.Column(db.String(100))
     openings_details = db.Column(db.Text)
     finishes = db.Column(db.Text)
-    
+
     # 7. Design e Estilo
     technical_drawing = db.Column(db.Text)
     reference_photos = db.Column(db.Text)
     specific_details = db.Column(db.Text)
-    
+
     # Generated technical drawing
     technical_drawing_url = db.Column(db.String(500))
-    
+
     # Raw extracted text and status
     raw_extracted_text = db.Column(db.Text)
-    processing_status = db.Column(db.String(50), default='pending')  # pending, processing, completed, error
+    processing_status = db.Column(
+        db.String(50),
+        default='pending')  # pending, processing, completed, error
+
 
 # Forms
 class LoginForm(FlaskForm):
@@ -128,19 +137,28 @@ class LoginForm(FlaskForm):
     password = PasswordField('Password', validators=[DataRequired()])
     submit = SubmitField('Login')
 
+
 class CreateUserForm(FlaskForm):
-    username = StringField('Username', validators=[DataRequired(), Length(min=3, max=20)])
+    username = StringField('Username',
+                           validators=[DataRequired(),
+                                       Length(min=3, max=20)])
     email = StringField('Email', validators=[DataRequired(), Email()])
-    password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
-    is_admin = SelectField('Role', choices=[('0', 'User'), ('1', 'Admin')], coerce=int)
+    password = PasswordField('Password',
+                             validators=[DataRequired(),
+                                         Length(min=6)])
+    is_admin = SelectField('Role',
+                           choices=[('0', 'User'), ('1', 'Admin')],
+                           coerce=int)
     submit = SubmitField('Create User')
 
+
 class UploadPDFForm(FlaskForm):
-    pdf_file = FileField('PDF File', validators=[
-        FileRequired(),
-        FileAllowed(['pdf'], 'PDF files only!')
-    ])
+    pdf_file = FileField(
+        'PDF File',
+        validators=[FileRequired(),
+                    FileAllowed(['pdf'], 'PDF files only!')])
     submit = SubmitField('Upload and Process')
+
 
 class SpecificationForm(FlaskForm):
     # 1. Identificação da Peça
@@ -149,25 +167,25 @@ class SpecificationForm(FlaskForm):
     collection = StringField('Coleção')
     supplier = StringField('Fornecedor')
     corner = StringField('Corner')
-    
+
     # 2. Informações Comerciais
     target_price = StringField('Target Price')
     store_month = StringField('Mês Loja')
     delivery_cd_month = StringField('Mês Entrega CD')
-    
+
     # 3. Prazos e Entregas
     tech_sheet_delivery_date = DateField('Data de Entrega Ficha Técnica')
     pilot_delivery_date = DateField('Data de Entrega Piloto')
     showcase_for = StringField('Mostruário Para')
-    
+
     # 4. Equipe Envolvida
     stylists = StringField('Estilista(s)')
-    
+
     # 5. Matéria-Prima e Aviamentos
     composition = TextAreaField('Composição')
     colors = TextAreaField('Cores')
     tags_kit = TextAreaField('Kit Etiquetas + Tag + Pendurador Cabide')
-    
+
     # 6. Especificações Técnicas da Modelagem
     pilot_size = StringField('Tamanho da Piloto')
     body_length = StringField('Comprimento corpo')
@@ -180,16 +198,18 @@ class SpecificationForm(FlaskForm):
     neckline_depth = StringField('Profundidade do decote')
     openings_details = TextAreaField('Aberturas ou detalhes')
     finishes = TextAreaField('Acabamentos')
-    
+
     # 7. Design e Estilo
     technical_drawing = TextAreaField('Desenho técnico')
     reference_photos = TextAreaField('Fotos de referência / protótipo')
     specific_details = TextAreaField('Detalhes específicos')
-    
+
     submit = SubmitField('Save Specification')
+
 
 # Helper functions
 def admin_required(f):
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
@@ -199,15 +219,20 @@ def admin_required(f):
             flash('Admin access required.')
             return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
+
     return decorated_function
 
+
 def login_required(f):
+
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
             return redirect(url_for('login'))
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from PDF file"""
@@ -221,13 +246,14 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error extracting text from PDF: {e}")
     return text
 
+
 def build_technical_drawing_prompt(spec):
     """Build DALL-E prompt for technical drawing generation"""
     # Build measurements block
     measurements = []
     if spec.pilot_size:
         measurements.append(f"Tamanho base: {spec.pilot_size}")
-    
+
     measurement_fields = {
         'body_length': 'comprimento_corpo',
         'sleeve_length': 'comprimento_manga',
@@ -238,14 +264,16 @@ def build_technical_drawing_prompt(spec):
         'straight_armhole': 'cava_reta',
         'neckline_depth': 'altura_gola'
     }
-    
+
     for field, label in measurement_fields.items():
         value = getattr(spec, field, None)
         if value:
             measurements.append(f"- {label}: {value}")
-    
-    measurements_block = "\n".join(measurements) if measurements else "Medidas não disponíveis - usar proporções padrão"
-    
+
+    measurements_block = "\n".join(
+        measurements
+    ) if measurements else "Medidas não disponíveis - usar proporções padrão"
+
     # Build technical notes
     notes = []
     if spec.finishes:
@@ -254,63 +282,69 @@ def build_technical_drawing_prompt(spec):
         notes.append(f"Detalhes de aberturas: {spec.openings_details}")
     if spec.composition:
         notes.append(f"Composição: {spec.composition}")
-    
+
     technical_notes = "\n".join(notes) if notes else ""
-    
-    # Build complete prompt
-    prompt = f"""TAREFA: Gere um DESENHO TÉCNICO PLANO (flat sketch) de {spec.description or 'peça de vestuário'}.
-Priorize fidelidade técnica e proporções exatas segundo as medidas fornecidas.
 
-ESTILO OBRIGATÓRIO:
-- Aparência vetorial (line art)
-- Fundo totalmente branco (#FFFFFF)
-- Traço preto contínuo e regular
-- Peça isolada (sem pessoa/manequim/sombra de chão)
-- Composição central simétrica
-- Sombra mínima (flat 2D)
-- Pode usar cinza leve apenas para indicar sobreposição de partes
+    # Build complete prompt (REVISADO – mais rígido e anti-“viagens”)
+    prompt = f"""TAREFA: Gerar um DESENHO TÉCNICO PLANO (flat sketch) de {{spec.description or 'peça de vestuário'}}, a partir da(s) imagem(ns) de referência anexada(s) e das especificações/medidas fornecidas.
 
-DETALHES CONSTRUTIVOS A INCLUIR:
-- Linhas de costura e pespontos
-- Recortes e pences
-- Golas, punhos, barras e acabamentos
-- Fechamentos (zíper, botão, casa, amarração etc.)
-- Pregas, franzidos, dobras e sobreposições (se houver)
-- Elementos funcionais/decorativos relevantes
+    PRIORIDADES (ordem obrigatória):
+    1) REFERÊNCIA VISUAL: Preserve exatamente o shape, tipo de gola, comprimento de manga, recortes, fechos e acabamentos que EXISTEM na imagem de referência. NÃO adicione nada que não esteja visível.
+    2) MEDIDAS: Ajuste proporções para respeitar as medidas (cm) do bloco abaixo, sem desenhar números/cotas na arte.
+    3) NOTAS TÉCNICAS: Aplique somente o que está escrito nas notas.
 
-BLOCO DE ESPECIFICAÇÕES (MEDIDAS E REGRAS):
-{measurements_block}
+    ESTILO OBRIGATÓRIO (técnico):
+    - Aparência vetorial (line art) | fundo branco puro (#FFFFFF)
+    - Traço preto contínuo e regular | linhas nítidas (sem serrilhado)
+    - Peça isolada (sem pessoa/manequim/sombra de chão)
+    - Composição central, simetria bilateral | visual 2D (flat), sem volume artístico
+    - Permita cinza leve APENAS para indicar sobreposição de partes (quando necessário)
 
-{technical_notes}
+    DETALHES CONSTRUTIVOS A REPRESENTAR (somente se existirem na referência ou nas notas):
+    - Linhas de costura e pespontos
+    - Recortes, pences, pregas, franzidos e dobras
+    - Golas, punhos, barras e demais acabamentos
+    - Fechamentos (zíper, botões, casas, amarrações)
+    - Elementos funcionais/decorativos REAIS (ex.: vivos, vistas, lapelas, cós, passantes)
 
-RESTRIÇÕES DE PROPORÇÃO:
-- Ajuste o shape e as proporções para respeitar as medidas fornecidas (cm).
-- Não desenhe números/cotas sobre a arte; use as medidas apenas como guia geométrico.
-- Se alguma medida estiver ausente, mantenha proporções neutras e simétricas.
+    BLOCO DE ESPECIFICAÇÕES (MEDIDAS E REGRAS):
+    {measurements_block}
 
-SAÍDAS ESPERADAS:
-- Imagem final do desenho técnico (vista frontal)
-- Fundo branco puro e linhas nítidas, sem textura/foto/ruído
+    NOTAS TÉCNICAS (priorize apenas o que estiver aqui):
+    {technical_notes}
 
-QUALIDADE MÍNIMA:
-- Alta nitidez de linha (sem serrilhado aparente)
-- Proporções coerentes com as medidas fornecidas
-- Pespontos e recortes legíveis em zoom
+    RESTRIÇÕES DE PROPORÇÃO (obrigatórias):
+    - Ajuste o shape para respeitar as medidas (cm). Use-as como guia geométrico — NÃO desenhar cotas/números.
+    - Se alguma medida estiver ausente, mantenha proporções neutras SEM inventar novos detalhes.
+    - Mantenha verticalidade/queda do tecido e simetria central. Evitar torções/distorções.
 
-NÃO FAÇA:
-- Não aplique estilização artística, textura de tecido, estampas fotográficas ou sombras pesadas
-- Não inclua textos, medidas, cotas ou marcas d'água no desenho
+    SAÍDAS ESPERADAS:
+    - Uma imagem do desenho técnico (vista frontal). Se solicitado, gere também vista posterior com MESMO estilo e proporções.
+    - Fundo branco puro, linhas limpas; sem textura/foto/ruído.
 
-CONFIRMAÇÃO: Desenho técnico plano detalhado, estilo line art (vetorial-look), fiel às medidas e pronto para uso em ficha técnica de desenvolvimento."""
-    
+    QUALIDADE MÍNIMA (checklist interno antes de finalizar):
+    - Gola, mangas, barras, recortes, pespontos e fechos CONFEREM com a imagem de referência.
+    - Proporções batem com as medidas fornecidas (comprimento de corpo/manga, busto/peito, cintura, barra, ombro a ombro, cava/armhole, altura de gola).
+    - Linha limpa, regular, sem sombreamento forte. Nada “artístico”.
+
+    NÃO FAZER (proibições explícitas):
+    - NÃO inventar detalhes (bolsos, zíperes, botões, recortes, pences) que NÃO apareçam na referência ou nas notas.
+    - NÃO estilizar com texturas, estampas, sombreamento pesado, dobras dramáticas ou volume artístico.
+    - NÃO adicionar textos, medidas, cotas, marcas d’água ou logos.
+    - NÃO alterar o tipo de gola/manga/fecho/acabamento existente.
+
+    CONFIRMAÇÃO (objetivo final):
+    Desenho técnico plano, fiel à referência e às medidas, estilo line art (vetorial-look), pronto para ficha técnica de desenvolvimento."""
+
     return prompt
+
 
 def process_specification_with_openai(text_content):
     """Process specification text using OpenAI to extract structured data"""
     if not openai_client:
         print("OpenAI client not initialized")
         return None
-    
+
     try:
         prompt = """
         Analise o seguinte texto de ficha técnica de vestuário e extraia as informações estruturadas em formato JSON.
@@ -328,25 +362,22 @@ def process_specification_with_openai(text_content):
         
         Texto da ficha técnica:
         """ + text_content
-        
+
         # Using gpt-4-turbo for JSON mode support
         response = openai_client.chat.completions.create(
             model="gpt-4-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": "Você é um especialista em análise de fichas técnicas de vestuário. Extraia informações estruturadas e retorne SOMENTE em formato JSON válido, sem texto adicional."
-                },
-                {
-                    "role": "user", 
-                    "content": prompt
-                }
-            ],
+            messages=[{
+                "role":
+                "system",
+                "content":
+                "Você é um especialista em análise de fichas técnicas de vestuário. Extraia informações estruturadas e retorne SOMENTE em formato JSON válido, sem texto adicional."
+            }, {
+                "role": "user",
+                "content": prompt
+            }],
             response_format={"type": "json_object"},
-            max_tokens=2000
-        )
-        
-        
+            max_tokens=2000)
+
         content = response.choices[0].message.content
         if content:
             try:
@@ -361,12 +392,14 @@ def process_specification_with_openai(text_content):
         print(f"Error processing with OpenAI: {e}")
         return None
 
+
 # Routes
 @app.route('/')
 def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
     return redirect(url_for('dashboard'))
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -381,11 +414,13 @@ def login():
         flash('Invalid username or password.')
     return render_template('login.html', form=form)
 
+
 @app.route('/logout')
 def logout():
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('login'))
+
 
 @app.route('/dashboard')
 @login_required
@@ -395,26 +430,31 @@ def dashboard():
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     if user.is_admin:
         # Admin dashboard
         total_users = User.query.count()
         total_specs = Specification.query.count()
-        recent_specs = Specification.query.order_by(Specification.created_at.desc()).limit(10).all()
-        return render_template('admin_dashboard.html', 
-                             total_users=total_users, 
-                             total_specs=total_specs, 
-                             recent_specs=recent_specs)
+        recent_specs = Specification.query.order_by(
+            Specification.created_at.desc()).limit(10).all()
+        return render_template('admin_dashboard.html',
+                               total_users=total_users,
+                               total_specs=total_specs,
+                               recent_specs=recent_specs)
     else:
         # User dashboard
-        user_specs = Specification.query.filter_by(user_id=user.id).order_by(Specification.created_at.desc()).all()
-        return render_template('user_dashboard.html', specifications=user_specs)
+        user_specs = Specification.query.filter_by(user_id=user.id).order_by(
+            Specification.created_at.desc()).all()
+        return render_template('user_dashboard.html',
+                               specifications=user_specs)
+
 
 @app.route('/manage_users')
 @admin_required
 def manage_users():
     users = User.query.all()
     return render_template('manage_users.html', users=users)
+
 
 @app.route('/create_user', methods=['GET', 'POST'])
 @admin_required
@@ -426,7 +466,7 @@ def create_user():
         user.email = form.email.data
         user.is_admin = bool(form.is_admin.data)
         user.set_password(form.password.data)
-        
+
         try:
             db.session.add(user)
             db.session.commit()
@@ -434,9 +474,12 @@ def create_user():
             return redirect(url_for('manage_users'))
         except Exception as e:
             db.session.rollback()
-            flash('Erro ao criar usuário. Verifique se o nome de usuário e email são únicos.')
-    
+            flash(
+                'Erro ao criar usuário. Verifique se o nome de usuário e email são únicos.'
+            )
+
     return render_template('create_user.html', form=form)
+
 
 @app.route('/upload_pdf', methods=['GET', 'POST'])
 @login_required
@@ -447,28 +490,30 @@ def upload_pdf():
         filename = secure_filename(file.filename)
         file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(file_path)
-        
+
         # Create specification record
         spec = Specification()
         spec.user_id = session['user_id']
         spec.pdf_filename = filename
         spec.processing_status = 'processing'
         spec.created_at = datetime.now()
-        
+
         try:
             db.session.add(spec)
             db.session.commit()
-            
+
             # Process PDF asynchronously (in a real app, use Celery or similar)
             process_pdf_specification(spec.id, file_path)
-            
-            flash('PDF enviado com sucesso! O processamento está em andamento.')
+
+            flash(
+                'PDF enviado com sucesso! O processamento está em andamento.')
             return redirect(url_for('dashboard'))
         except Exception as e:
             db.session.rollback()
             flash('Erro ao processar o arquivo PDF.')
-    
+
     return render_template('upload_pdf.html', form=form)
+
 
 @app.route('/specification/<int:id>')
 @login_required
@@ -479,13 +524,14 @@ def view_specification(id):
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
         flash('Acesso negado.')
         return redirect(url_for('dashboard'))
-    
+
     return render_template('view_specification.html', specification=spec)
+
 
 @app.route('/download_pdf/<int:id>')
 @login_required
@@ -496,22 +542,26 @@ def download_pdf(id):
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
         flash('Acesso negado.')
         return redirect(url_for('dashboard'))
-    
+
     try:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 spec.pdf_filename)
         if os.path.exists(file_path):
-            return send_file(file_path, as_attachment=True, download_name=spec.pdf_filename)
+            return send_file(file_path,
+                             as_attachment=True,
+                             download_name=spec.pdf_filename)
         else:
             flash('Arquivo PDF não encontrado.')
             return redirect(url_for('view_specification', id=id))
     except Exception as e:
         flash('Erro ao baixar o arquivo PDF.')
         return redirect(url_for('view_specification', id=id))
+
 
 @app.route('/view_pdf/<int:id>')
 @login_required
@@ -522,14 +572,15 @@ def view_pdf(id):
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
         flash('Acesso negado.')
         return redirect(url_for('dashboard'))
-    
+
     try:
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 spec.pdf_filename)
         if os.path.exists(file_path):
             return send_file(file_path, mimetype='application/pdf')
         else:
@@ -538,6 +589,7 @@ def view_pdf(id):
     except Exception as e:
         flash('Erro ao visualizar o arquivo PDF.')
         return redirect(url_for('view_specification', id=id))
+
 
 @app.route('/specification/<int:id>/generate_drawing', methods=['POST'])
 @login_required
@@ -549,40 +601,42 @@ def generate_technical_drawing(id):
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
         flash('Acesso negado.')
         return redirect(url_for('dashboard'))
-    
+
     if not openai_client:
         flash('OpenAI não está configurado. Contate o administrador.')
         return redirect(url_for('view_specification', id=id))
-    
+
     try:
         # Build prompt with specification data
         prompt = build_technical_drawing_prompt(spec)
-        
+
         # Generate image using DALL-E 3 with HD quality for maximum detail
         response = openai_client.images.generate(
             model="dall-e-3",
             prompt=prompt,
-            size="1792x1024",  # Maximum landscape resolution for technical drawings
+            size=
+            "1792x1024",  # Maximum landscape resolution for technical drawings
             quality="hd",  # HD quality for better detail and precision
             n=1,
         )
-        
+
         # Save the image URL
         spec.technical_drawing_url = response.data[0].url
         db.session.commit()
-        
+
         flash('Desenho técnico gerado com sucesso!')
         return redirect(url_for('view_specification', id=id))
-        
+
     except Exception as e:
         print(f"Error generating technical drawing: {e}")
         flash('Erro ao gerar desenho técnico. Tente novamente.')
         return redirect(url_for('view_specification', id=id))
+
 
 @app.route('/specification/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
@@ -593,12 +647,12 @@ def edit_specification(id):
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
         flash('Acesso negado.')
         return redirect(url_for('dashboard'))
-    
+
     form = SpecificationForm(obj=spec)
     if form.validate_on_submit():
         form.populate_obj(spec)
@@ -609,8 +663,11 @@ def edit_specification(id):
         except Exception as e:
             db.session.rollback()
             flash('Erro ao atualizar especificação.')
-    
-    return render_template('edit_specification.html', form=form, specification=spec)
+
+    return render_template('edit_specification.html',
+                           form=form,
+                           specification=spec)
+
 
 @app.route('/specification/<int:id>/delete', methods=['POST'])
 @login_required
@@ -622,17 +679,18 @@ def delete_specification(id):
             session.clear()
             flash('Sessão inválida. Por favor, faça login novamente.')
             return redirect(url_for('login'))
-        
+
         # Allow access if user is admin or owns the specification
         if not user.is_admin and spec.user_id != user.id:
             flash('Acesso negado.')
             return redirect(url_for('dashboard'))
-        
+
         # Delete associated file if it exists
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 spec.pdf_filename)
         if os.path.exists(file_path):
             os.remove(file_path)
-        
+
         db.session.delete(spec)
         db.session.commit()
         flash('Especificação excluída com sucesso!')
@@ -640,40 +698,43 @@ def delete_specification(id):
         db.session.rollback()
         print(f"Erro ao excluir especificação {id}: {e}")
         flash('Erro ao excluir especificação. Tente novamente.')
-    
+
     return redirect(url_for('dashboard'))
+
 
 @app.route('/user/<int:id>/delete', methods=['POST'])
 @admin_required
 def delete_user(id):
     user = User.query.get_or_404(id)
-    
+
     # Don't allow deleting the current admin user
     current_user = User.query.get(session['user_id'])
     if not current_user:
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     if user.id == current_user.id:
         flash('Não é possível excluir seu próprio usuário.')
         return redirect(url_for('manage_users'))
-    
+
     try:
         # Delete all user specifications and files
         for spec in user.specifications:
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                     spec.pdf_filename)
             if os.path.exists(file_path):
                 os.remove(file_path)
-        
+
         db.session.delete(user)
         db.session.commit()
         flash(f'Usuário {user.username} excluído com sucesso!')
     except Exception as e:
         db.session.rollback()
         flash('Erro ao excluir usuário.')
-    
+
     return redirect(url_for('manage_users'))
+
 
 def process_pdf_specification(spec_id, file_path):
     """Process PDF specification in background"""
@@ -681,19 +742,19 @@ def process_pdf_specification(spec_id, file_path):
         spec = Specification.query.get(spec_id)
         if not spec:
             return
-        
+
         # Extract text from PDF
         text_content = extract_text_from_pdf(file_path)
         spec.raw_extracted_text = text_content
-        
+
         if not text_content.strip():
             spec.processing_status = 'error'
             db.session.commit()
             return
-        
+
         # Process with OpenAI
         extracted_data = process_specification_with_openai(text_content)
-        
+
         if extracted_data:
             # Update specification with extracted data
             # Flatten the nested structure and map to database fields
@@ -702,11 +763,11 @@ def process_pdf_specification(spec_id, file_path):
                     for field, value in fields.items():
                         if hasattr(spec, field) and value:
                             setattr(spec, field, value)
-            
+
             spec.processing_status = 'completed'
         else:
             spec.processing_status = 'error'
-        
+
         db.session.commit()
     except Exception as e:
         print(f"Error processing PDF specification: {e}")
@@ -714,6 +775,7 @@ def process_pdf_specification(spec_id, file_path):
         if spec:
             spec.processing_status = 'error'
             db.session.commit()
+
 
 if __name__ == '__main__':
     with app.app_context():
@@ -727,5 +789,5 @@ if __name__ == '__main__':
             admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-    
+
     app.run(host='0.0.0.0', port=5000, debug=True)

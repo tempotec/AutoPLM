@@ -1,0 +1,50 @@
+# Build complete prompt (REVISADO – mais rígido e anti-“viagens”)
+prompt = f"""TAREFA: Gerar um DESENHO TÉCNICO PLANO (flat sketch) de {{spec.description or 'peça de vestuário'}}, a partir da(s) imagem(ns) de referência anexada(s) e das especificações/medidas fornecidas.
+
+PRIORIDADES (ordem obrigatória):
+1) REFERÊNCIA VISUAL: Preserve exatamente o shape, tipo de gola, comprimento de manga, recortes, fechos e acabamentos que EXISTEM na imagem de referência. NÃO adicione nada que não esteja visível.
+2) MEDIDAS: Ajuste proporções para respeitar as medidas (cm) do bloco abaixo, sem desenhar números/cotas na arte.
+3) NOTAS TÉCNICAS: Aplique somente o que está escrito nas notas.
+
+ESTILO OBRIGATÓRIO (técnico):
+- Aparência vetorial (line art) | fundo branco puro (#FFFFFF)
+- Traço preto contínuo e regular | linhas nítidas (sem serrilhado)
+- Peça isolada (sem pessoa/manequim/sombra de chão)
+- Composição central, simetria bilateral | visual 2D (flat), sem volume artístico
+- Permita cinza leve APENAS para indicar sobreposição de partes (quando necessário)
+
+DETALHES CONSTRUTIVOS A REPRESENTAR (somente se existirem na referência ou nas notas):
+- Linhas de costura e pespontos
+- Recortes, pences, pregas, franzidos e dobras
+- Golas, punhos, barras e demais acabamentos
+- Fechamentos (zíper, botões, casas, amarrações)
+- Elementos funcionais/decorativos REAIS (ex.: vivos, vistas, lapelas, cós, passantes)
+
+BLOCO DE ESPECIFICAÇÕES (MEDIDAS E REGRAS):
+{measurements_block}
+
+NOTAS TÉCNICAS (priorize apenas o que estiver aqui):
+{technical_notes}
+
+RESTRIÇÕES DE PROPORÇÃO (obrigatórias):
+- Ajuste o shape para respeitar as medidas (cm). Use-as como guia geométrico — NÃO desenhar cotas/números.
+- Se alguma medida estiver ausente, mantenha proporções neutras SEM inventar novos detalhes.
+- Mantenha verticalidade/queda do tecido e simetria central. Evitar torções/distorções.
+
+SAÍDAS ESPERADAS:
+- Uma imagem do desenho técnico (vista frontal). Se solicitado, gere também vista posterior com MESMO estilo e proporções.
+- Fundo branco puro, linhas limpas; sem textura/foto/ruído.
+
+QUALIDADE MÍNIMA (checklist interno antes de finalizar):
+- Gola, mangas, barras, recortes, pespontos e fechos CONFEREM com a imagem de referência.
+- Proporções batem com as medidas fornecidas (comprimento de corpo/manga, busto/peito, cintura, barra, ombro a ombro, cava/armhole, altura de gola).
+- Linha limpa, regular, sem sombreamento forte. Nada “artístico”.
+
+NÃO FAZER (proibições explícitas):
+- NÃO inventar detalhes (bolsos, zíperes, botões, recortes, pences) que NÃO apareçam na referência ou nas notas.
+- NÃO estilizar com texturas, estampas, sombreamento pesado, dobras dramáticas ou volume artístico.
+- NÃO adicionar textos, medidas, cotas, marcas d’água ou logos.
+- NÃO alterar o tipo de gola/manga/fecho/acabamento existente.
+
+CONFIRMAÇÃO (objetivo final):
+Desenho técnico plano, fiel à referência e às medidas, estilo line art (vetorial-look), pronto para ficha técnica de desenvolvimento."""
