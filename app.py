@@ -304,6 +304,11 @@ def logout():
 @login_required
 def dashboard():
     user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
     if user.is_admin:
         # Admin dashboard
         total_users = User.query.count()
@@ -383,6 +388,10 @@ def upload_pdf():
 def view_specification(id):
     spec = Specification.query.get_or_404(id)
     user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
     
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
@@ -396,6 +405,10 @@ def view_specification(id):
 def download_pdf(id):
     spec = Specification.query.get_or_404(id)
     user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
     
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
@@ -418,6 +431,10 @@ def download_pdf(id):
 def view_pdf(id):
     spec = Specification.query.get_or_404(id)
     user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
     
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
@@ -440,6 +457,10 @@ def view_pdf(id):
 def edit_specification(id):
     spec = Specification.query.get_or_404(id)
     user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
     
     # Allow access if user is admin or owns the specification
     if not user.is_admin and spec.user_id != user.id:
@@ -465,6 +486,10 @@ def delete_specification(id):
     try:
         spec = Specification.query.get_or_404(id)
         user = User.query.get(session['user_id'])
+        if not user:
+            session.clear()
+            flash('Sessão inválida. Por favor, faça login novamente.')
+            return redirect(url_for('login'))
         
         # Allow access if user is admin or owns the specification
         if not user.is_admin and spec.user_id != user.id:
@@ -493,6 +518,11 @@ def delete_user(id):
     
     # Don't allow deleting the current admin user
     current_user = User.query.get(session['user_id'])
+    if not current_user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
     if user.id == current_user.id:
         flash('Não é possível excluir seu próprio usuário.')
         return redirect(url_for('manage_users'))
