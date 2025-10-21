@@ -1,0 +1,80 @@
+Prompt — Geração de Desenho Técnico (use como User no Replit)
+TAREFA
+Gere um DESENHO TÉCNICO PLANO (flat sketch) da peça de vestuário a partir da(s) imagem(ns) de referência anexada(s) e do bloco de especificações abaixo.
+Priorize fidelidade técnica e proporções exatas segundo as medidas fornecidas.
+
+ESTILO OBRIGATÓRIO
+- Aparência vetorial (line art)
+- Fundo totalmente branco (#FFFFFF)
+- Traço preto contínuo e regular
+- Peça isolada (sem pessoa/manequim/sombra de chão)
+- Composição central simétrica
+- Sombra mínima (flat 2D)
+- Pode usar cinza leve apenas para indicar sobreposição de partes (ex.: vistas, forros)
+
+DETALHES CONSTRUTIVOS A INCLUIR
+- Linhas de costura e pespontos
+- Recortes e pences
+- Golas, punhos, barras e acabamentos
+- Fechamentos (zíper, botão, casa, amarração etc.)
+- Pregas, franzidos, dobras e sobreposições (se houver)
+- Elementos funcionais/decorativos relevantes (vivos, vistas, lapelas, punhos, cós, passantes)
+
+RESTRIÇÕES DE PROPORÇÃO (USAR MEDIDAS ABAIXO)
+- Ajuste o shape e as proporções para respeitar as medidas fornecidas (cm).
+- Não desenhe números/cotas sobre a arte; use as medidas apenas como guia geométrico.
+- Se alguma medida estiver ausente, mantenha proporções neutras e simétricas, sem inventar detalhes.
+
+SAÍDAS ESPERADAS
+- Imagem final do desenho técnico (vista frontal). Se possível, gere também a vista posterior mantendo mesmas proporções e estilo.
+- Fundo branco puro e linhas nítidas, sem textura/foto/ruído.
+
+BLOCO DE ESPECIFICAÇÕES (MEDIDAS E REGRAS)
+{{BLOCO_DE_MEDIDAS_E_ESPECIFICACOES}}
+
+ORIENTAÇÕES PARA A IMAGEM DE ENTRADA
+- Se a imagem contiver pessoa/manequim, isole somente a peça (remover corpo e fundo).
+- Se houver múltiplas imagens, priorize cabide > manequim > modelo para referência de shape.
+
+QUALIDADE MÍNIMA
+- Alta nitidez de linha (sem serrilhado aparente)
+- Proporções coerentes com: comprimento do corpo, comprimento de manga (se aplicável), busto/peito, cintura, barra, ombro a ombro, cava/armhole, altura de gola (quando houver)
+- Pespontos e recortes legíveis em zoom
+
+NÃO FAÇA
+- Não aplique estilização artística, textura de tecido, estampas fotográficas ou sombras pesadas.
+- Não inclua textos, medidas, cotas ou marcas d’água no desenho.
+
+CONFIRMAÇÃO
+Gerar: “desenho técnico plano detalhado, estilo line art (vetorial-look), fiel às medidas e pronto para uso em ficha técnica de desenvolvimento”.
+
+Como preencher {{BLOCO_DE_MEDIDAS_E_ESPECIFICACOES}}
+
+Injete um bloco curto, em texto, derivado do que seu sistema já tem. Ex.:
+
+Tamanho base: M (cm)
+- comprimento_corpo: 58
+- comprimento_manga: 58
+- busto: 40
+- cintura: 41
+- barra: 42
+- ombro_a_ombro: 32
+- cava_reta (armhole): 19
+- gola_altura (se houver): 14
+Observações técnicas: pesponto 2 agulhas nas barras e mangas (largura 2 cm). Acabamento de gola rolê dupla.
+
+
+Se desejar gerar frente e costas, adicione ao final do prompt:
+“Gerar duas imagens: (1) vista frontal; (2) vista posterior com mesmas proporções e mesmos acabamentos.”
+
+Dicas de chamada (seu wrapper no Replit)
+
+Modelo: DALL·E-3 (ou superior)
+
+Tamanho: 1024 ou 1536
+
+Background: branco (obrigatório)
+
+Variação/estilo: baixa (para manter fidelidade)
+
+Imagem de referência: anexe a melhor imagem extraída do PDF (se houver croqui técnico limpo, pode usar como base; caso contrário use foto em cabide/manequim/modelo).
