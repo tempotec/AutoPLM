@@ -115,6 +115,9 @@ class Specification(db.Model):
     reference_photos = db.Column(db.Text)
     specific_details = db.Column(db.Text)
     
+    # Generated technical drawing
+    technical_drawing_url = db.Column(db.String(500))
+    
     # Raw extracted text and status
     raw_extracted_text = db.Column(db.Text)
     processing_status = db.Column(db.String(50), default='pending')  # pending, processing, completed, error
