@@ -2,15 +2,6 @@
 
 This is a Flask-based technical specification management platform designed for fashion/textile industry workflows. The system allows users to upload PDF files containing technical specifications (fichas técnicas) and uses OpenAI's API to extract structured information through OCR processing. The platform features role-based access with admin controls for user management and comprehensive tracking of all user activities.
 
-## Recent Update (October 21, 2025)
-
-Added advanced AI-powered measurement extraction and technical drawing generation capabilities:
-- **Structured Measurements Extraction**: Uses OpenAI Vision (GPT-4o) to extract detailed measurements from PDFs in JSON format, supporting size scales (PP, P, M, G, GG) with tolerances
-- **Technical Sketch Detection**: Automatically detects if PDF already contains technical drawings (flat sketches) using AI vision
-- **Automated Drawing Generation**: Generates professional technical flat sketches using DALL-E-3 when no croqui exists in the PDF, respecting extracted measurements
-- **Manual Regeneration**: Users can manually trigger technical drawing regeneration with a button
-- **Image Extraction**: Uses PyMuPDF to extract high-quality images from PDFs for reference and processing
-
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -41,47 +32,8 @@ Preferred communication style: Simple, everyday language.
 - **Password Security**: Werkzeug password hashing for secure credential storage
 
 ## External Dependencies
-- **OpenAI API**: 
-  - GPT-4-Turbo: For general text analysis and structured data extraction
-  - GPT-4o: For vision-based measurement extraction from PDF images
-  - DALL-E-3: For generating technical flat sketches based on measurements and reference images
-- **Database**: PostgreSQL database via SQLALCHEMY_DATABASE_URI
-- **PyMuPDF (fitz)**: For advanced PDF processing and image extraction
+- **OpenAI API**: GPT-based text analysis for extracting structured data from PDF content
+- **Database**: SQL database connection via SQLALCHEMY_DATABASE_URI
 - **Environment Variables**: SESSION_SECRET for session security, OPENAI_API_KEY for AI processing
 
-## Data Processing Pipeline
-
-The system now implements a comprehensive dual-processing pipeline:
-
-### Primary Pipeline (Original - General Data Extraction)
-Processes technical specifications containing product identification, commercial information, delivery schedules, team assignments, materials, and basic technical measurements. The AI integration transforms unstructured PDF content into structured database records.
-
-### Secondary Pipeline (New - Measurements & Drawings)
-1. **Image Extraction**: Extracts all images from PDF using PyMuPDF, ranked by quality
-2. **Structured Measurement Extraction**: 
-   - Uses OpenAI Vision to analyze both text and images
-   - Extracts measurements in structured JSON format
-   - Supports multiple size scales and base sizes
-   - Includes tolerances and observações
-   - Stores: measurements_json, size_scale_json, measurement_base_size, tolerances_json
-3. **Technical Sketch Detection**: 
-   - Analyzes extracted images to detect existing technical drawings
-   - Sets has_technical_sketch flag
-4. **Conditional Drawing Generation**:
-   - If no technical sketch exists and measurements are available
-   - Generates front and back view flat sketches using DALL-E-3
-   - Respects extracted measurements and proportions
-   - Stores paths: generated_front_image, generated_back_image
-5. **Manual Regeneration**: Users can trigger regeneration via UI button
-
-## New Database Fields (Specification Model)
-- measurements_json: Complete structured measurements JSON
-- size_scale_json: Array of available sizes
-- measurement_base_size: Base/pilot size
-- tolerances_json: Tolerances per measurement type
-- measurements_status: Processing status for measurements
-- reference_image_path: Best reference image from PDF
-- has_technical_sketch: Boolean indicating if PDF has croqui
-- generated_front_image: Path to AI-generated front view
-- generated_back_image: Path to AI-generated back view
-- sketch_generation_status: Status of drawing generation
+The system processes technical specifications containing product identification, commercial information, delivery schedules, team assignments, materials, and technical measurements. The AI integration transforms unstructured PDF content into structured database records with fields for reference codes, descriptions, collections, suppliers, pricing, and detailed technical measurements.
