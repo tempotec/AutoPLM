@@ -12,8 +12,6 @@ from datetime import datetime
 import PyPDF2
 from functools import wraps
 import base64
-import pymupdf as fitz  # PyMuPDF
-import requests
 
 # Import OpenAI functionality
 from openai import OpenAI
@@ -42,16 +40,6 @@ from flask_wtf.csrf import generate_csrf
 @app.context_processor
 def inject_csrf_token():
     return dict(csrf_token=generate_csrf)
-
-# Custom Jinja filter to parse JSON
-@app.template_filter('from_json')
-def from_json_filter(value):
-    if value:
-        try:
-            return json.loads(value)
-        except:
-            return {}
-    return {}
 
 # Initialize OpenAI client
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
@@ -130,20 +118,6 @@ class Specification(db.Model):
     # Raw extracted text and status
     raw_extracted_text = db.Column(db.Text)
     processing_status = db.Column(db.String(50), default='pending')  # pending, processing, completed, error
-    
-    # New: Structured measurements and technical drawing generation
-    measurements_json = db.Column(db.Text)  # JSON with structured measurements (Prompt 2 format)
-    size_scale_json = db.Column(db.Text)  # JSON array of size scale (e.g., ["PP","P","M","G","GG"])
-    measurement_base_size = db.Column(db.String(50))  # Base/pilot size (e.g., "M", "38")
-    tolerances_json = db.Column(db.Text)  # JSON with tolerances per measurement
-    measurements_status = db.Column(db.String(50), default='pending')  # pending, processing, completed, error
-    
-    # Image extraction and generation
-    reference_image_path = db.Column(db.String(255))  # Best reference image extracted from PDF
-    has_technical_sketch = db.Column(db.Boolean, default=False)  # Does PDF already have a technical sketch?
-    generated_front_image = db.Column(db.String(255))  # Path to generated front view
-    generated_back_image = db.Column(db.String(255))  # Path to generated back view
-    sketch_generation_status = db.Column(db.String(50), default='pending')  # pending, processing, completed, error, not_needed
 
 # Forms
 class LoginForm(FlaskForm):
@@ -243,315 +217,6 @@ def extract_text_from_pdf(pdf_path):
     except Exception as e:
         print(f"Error extracting text from PDF: {e}")
     return text
-
-def extract_images_from_pdf(pdf_path, output_dir='uploads/generated'):
-    """Extract images from PDF file using PyMuPDF. Returns list of image paths sorted by quality."""
-    images = []
-    try:
-        pdf_document = fitz.open(pdf_path)
-        
-        for page_num in range(len(pdf_document)):
-            page = pdf_document[page_num]
-            image_list = page.get_images(full=True)
-            
-            for img_index, img_info in enumerate(image_list):
-                xref = img_info[0]
-                base_image = pdf_document.extract_image(xref)
-                image_bytes = base_image["image"]
-                image_ext = base_image["ext"]
-                
-                # Save image
-                image_filename = f"page{page_num + 1}_img{img_index + 1}.{image_ext}"
-                image_path = os.path.join(output_dir, image_filename)
-                
-                with open(image_path, "wb") as img_file:
-                    img_file.write(image_bytes)
-                
-                # Store image info with size (for quality ranking)
-                images.append({
-                    'path': image_path,
-                    'size': len(image_bytes),
-                    'page': page_num + 1,
-                    'ext': image_ext
-                })
-        
-        pdf_document.close()
-        
-        # Sort by size (larger images usually better quality)
-        images.sort(key=lambda x: x['size'], reverse=True)
-        
-    except Exception as e:
-        print(f"Error extracting images from PDF: {e}")
-    
-    return images
-
-def extract_measurements_with_vision(text_content, image_paths=None):
-    """Extract structured measurements using OpenAI Vision (Prompt 2 format)"""
-    if not openai_client:
-        print("OpenAI client not initialized")
-        return None
-    
-    try:
-        # Build the prompt based on Prompt 2
-        prompt = """Extraia APENAS as MEDIDAS da peça e retorne um JSON exatamente neste esquema. 
-- Unidade: cm
-- Use ponto decimal
-- Não invente valores: ausentes = null
-- Se houver só tamanho base, preencha somente ele
-
-ESQUEMA_JSON:
-{
-  "unidade": "cm",
-  "escala_tamanhos": ["PP","P","M","G","GG"],
-  "tamanho_base": "M",
-  "tabela": {
-    "frente": {
-      "comprimento_corpo": { "PP": null, "P": null, "M": null, "G": null, "GG": null },
-      "comprimento_manga": { "PP": null, "P": null, "M": null, "G": null, "GG": null },
-      "busto": { "PP": null, "P": null, "M": null, "G": null, "GG": null },
-      "cintura": { "PP": null, "P": null, "M": null, "G": null, "GG": null },
-      "barra": { "PP": null, "P": null, "M": null, "G": null, "GG": null },
-      "ombro_a_ombro": { "PP": null, "P": null, "M": null, "G": null, "GG": null },
-      "cava_reta": { "PP": null, "P": null, "M": null, "G": null, "GG": null },
-      "gola_altura": { "PP": null, "P": null, "M": null, "G": null, "GG": null }
-    },
-    "costas": {}
-  },
-  "tolerancias": { "comprimento_corpo": 1.0, "comprimento_manga": 1.0, "larguras": 0.5 },
-  "observacoes_medidas": null
-}
-
-Sinônimos úteis: busto~peito/torax | cintura~waist | barra~hem | ombro a ombro~ombro | cava reta~armhole | comprimento corpo~comprimento total | comprimento manga~manga longa/curta | gola_altura~altura da gola/rolê.
-
-TEXTO DAS MEDIDAS:
-""" + text_content
-        
-        messages = [
-            {
-                "role": "system",
-                "content": "Você é um agente especializado em fichas técnicas de moda. Extraia APENAS medidas em formato JSON válido, números em cm (float), valores ausentes = null."
-            },
-            {
-                "role": "user",
-                "content": [
-                    {"type": "text", "text": prompt}
-                ]
-            }
-        ]
-        
-        # If we have images, add them to the message (Vision mode)
-        if image_paths and len(image_paths) > 0:
-            # Use the best image (first one, already sorted by quality)
-            best_image_path = image_paths[0]['path']
-            
-            with open(best_image_path, "rb") as image_file:
-                image_data = base64.b64encode(image_file.read()).decode('utf-8')
-                
-            # Determine image type
-            ext = image_paths[0]['ext'].lower()
-            if ext == 'jpg' or ext == 'jpeg':
-                mime_type = 'image/jpeg'
-            elif ext == 'png':
-                mime_type = 'image/png'
-            else:
-                mime_type = 'image/jpeg'  # default
-            
-            # Add image to the message
-            messages[1]["content"].append({
-                "type": "image_url",
-                "image_url": {
-                    "url": f"data:{mime_type};base64,{image_data}"
-                }
-            })
-        
-        # Call OpenAI with Vision support
-        response = openai_client.chat.completions.create(
-            model="gpt-4o",  # gpt-4o has vision support and JSON mode
-            messages=messages,
-            response_format={"type": "json_object"},
-            max_tokens=2000
-        )
-        
-        content = response.choices[0].message.content
-        if content:
-            try:
-                parsed_json = json.loads(content)
-                return parsed_json
-            except json.JSONDecodeError as je:
-                print(f"JSON parsing error in measurements extraction: {je}")
-                return None
-        else:
-            return None
-            
-    except Exception as e:
-        print(f"Error extracting measurements with vision: {e}")
-        return None
-
-def detect_technical_sketch(image_paths):
-    """Detect if PDF contains a technical flat sketch using OpenAI Vision"""
-    if not openai_client or not image_paths or len(image_paths) == 0:
-        return False
-    
-    try:
-        # Check each image to see if it's a technical sketch
-        for img_info in image_paths:
-            image_path = img_info['path']
-            
-            with open(image_path, "rb") as image_file:
-                image_data = base64.b64encode(image_file.read()).decode('utf-8')
-            
-            ext = img_info['ext'].lower()
-            if ext == 'jpg' or ext == 'jpeg':
-                mime_type = 'image/jpeg'
-            elif ext == 'png':
-                mime_type = 'image/png'
-            else:
-                mime_type = 'image/jpeg'
-            
-            messages = [
-                {
-                    "role": "system",
-                    "content": "Você é um especialista em design técnico de moda. Responda apenas 'SIM' ou 'NÃO'."
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": "Esta imagem é um CROQUI TÉCNICO (flat sketch) de vestuário? Características: line art, fundo branco ou transparente, traço preto/cinza, peça isolada sem modelo, aparência vetorial, detalhes de costura visíveis. Responda apenas SIM ou NÃO."
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:{mime_type};base64,{image_data}"
-                            }
-                        }
-                    ]
-                }
-            ]
-            
-            response = openai_client.chat.completions.create(
-                model="gpt-4o",
-                messages=messages,
-                max_tokens=10
-            )
-            
-            answer = response.choices[0].message.content.strip().upper()
-            if "SIM" in answer or "YES" in answer:
-                return True
-        
-        return False
-        
-    except Exception as e:
-        print(f"Error detecting technical sketch: {e}")
-        return False
-
-def generate_technical_drawing(reference_image_path, measurements_json, spec_id, output_dir='uploads/generated'):
-    """Generate technical flat sketch using DALL-E-3 (Prompt 3 format)"""
-    if not openai_client:
-        print("OpenAI client not initialized")
-        return None, None
-    
-    try:
-        # Build measurements block from tamanho_base
-        measurements_block = ""
-        if measurements_json:
-            tamanho_base = measurements_json.get('tamanho_base', 'M')
-            tabela_frente = measurements_json.get('tabela', {}).get('frente', {})
-            
-            measurements_block = f"\nTamanho base: {tamanho_base} (cm)\n"
-            for medida, valores in tabela_frente.items():
-                if isinstance(valores, dict) and tamanho_base in valores:
-                    valor = valores[tamanho_base]
-                    if valor is not None:
-                        measurements_block += f"- {medida}: {valor}\n"
-        
-        # Build Prompt 3
-        prompt = f"""Transforme esta imagem de roupa em um DESENHO TÉCNICO PLANO (flat sketch) fiel às medidas e detalhes de construção.
-
-REQUISITOS DE ESTILO (obrigatórios):
-- Estilo técnico (line art), aparência vetorial
-- Fundo totalmente branco
-- Traço preto contínuo e regular
-- Peça isolada (sem modelo/manequim)
-- Simetria central
-- Sombra mínima (flat 2D)
-- Permita escala de cinza leve somente para indicar sobreposição
-
-DETALHES DE CONSTRUÇÃO A INCLUIR:
-- Linhas de costura e pespontos
-- Recortes e pences
-- Golas, punhos, barras e acabamentos
-- Fechamentos (zíper, botão, amarração etc.)
-- Pregas, franzidos, dobras e sobreposições quando presentes
-
-RESTRIÇÕES DE MEDIDAS (cm) — ajustar proporções para respeitar:{measurements_block}
-
-INSTRUÇÕES ADICIONAIS:
-- Não desenhar números/cotas sobre a arte final.
-- Gerar vista frontal detalhada.
-Saída desejada: desenho técnico plano detalhado, pronto para ficha técnica."""
-        
-        # Read reference image and convert to base64
-        with open(reference_image_path, "rb") as image_file:
-            image_data = base64.b64encode(image_file.read()).decode('utf-8')
-        
-        # Determine image type
-        ext = os.path.splitext(reference_image_path)[1].lower()
-        if ext in ['.jpg', '.jpeg']:
-            mime_type = 'image/jpeg'
-        elif ext == '.png':
-            mime_type = 'image/png'
-        else:
-            mime_type = 'image/jpeg'
-        
-        # Generate front view with DALL-E-3
-        response = openai_client.images.generate(
-            model="dall-e-3",
-            prompt=prompt,
-            size="1024x1024",
-            quality="standard",
-            n=1,
-        )
-        
-        front_image_url = response.data[0].url
-        
-        # Download and save front image
-        front_filename = f"spec_{spec_id}_front.png"
-        front_path = os.path.join(output_dir, front_filename)
-        
-        img_response = requests.get(front_image_url)
-        with open(front_path, 'wb') as f:
-            f.write(img_response.content)
-        
-        # Try to generate back view
-        back_path = None
-        try:
-            back_prompt = prompt.replace("vista frontal", "vista posterior (costas)")
-            
-            back_response = openai_client.images.generate(
-                model="dall-e-3",
-                prompt=back_prompt,
-                size="1024x1024",
-                quality="standard",
-                n=1,
-            )
-            
-            back_image_url = back_response.data[0].url
-            back_filename = f"spec_{spec_id}_back.png"
-            back_path = os.path.join(output_dir, back_filename)
-            
-            back_img_response = requests.get(back_image_url)
-            with open(back_path, 'wb') as f:
-                f.write(back_img_response.content)
-        except Exception as e:
-            print(f"Could not generate back view: {e}")
-        
-        return front_path, back_path
-        
-    except Exception as e:
-        print(f"Error generating technical drawing: {e}")
-        return None, None
 
 def process_specification_with_openai(text_content):
     """Process specification text using OpenAI to extract structured data"""
@@ -770,77 +435,6 @@ def view_pdf(id):
         flash('Erro ao visualizar o arquivo PDF.')
         return redirect(url_for('view_specification', id=id))
 
-@app.route('/generated/<path:filename>')
-@login_required
-def serve_generated_image(filename):
-    """Serve generated technical drawings"""
-    try:
-        file_path = os.path.join('uploads/generated', filename)
-        if os.path.exists(file_path):
-            return send_file(file_path)
-        else:
-            return "Imagem não encontrada", 404
-    except Exception as e:
-        print(f"Error serving generated image: {e}")
-        return "Erro ao carregar imagem", 500
-
-@app.route('/specification/<int:id>/regenerate_sketch', methods=['POST'])
-@login_required
-def regenerate_sketch(id):
-    """Manually regenerate technical drawing"""
-    spec = Specification.query.get_or_404(id)
-    user = User.query.get(session['user_id'])
-    
-    # Allow access if user is admin or owns the specification
-    if not user.is_admin and spec.user_id != user.id:
-        flash('Acesso negado.')
-        return redirect(url_for('dashboard'))
-    
-    try:
-        # Check if we have measurements and reference image
-        if not spec.measurements_json:
-            flash('Não é possível gerar desenho sem medidas extraídas.')
-            return redirect(url_for('view_specification', id=id))
-        
-        if not spec.reference_image_path or not os.path.exists(spec.reference_image_path):
-            flash('Não é possível gerar desenho sem imagem de referência.')
-            return redirect(url_for('view_specification', id=id))
-        
-        # Parse measurements
-        measurements_data = json.loads(spec.measurements_json)
-        
-        # Generate technical drawing
-        spec.sketch_generation_status = 'processing'
-        db.session.commit()
-        
-        front_path, back_path = generate_technical_drawing(
-            reference_image_path=spec.reference_image_path,
-            measurements_json=measurements_data,
-            spec_id=spec.id,
-            output_dir=f'uploads/generated/spec_{spec.id}'
-        )
-        
-        if front_path:
-            spec.generated_front_image = front_path
-        if back_path:
-            spec.generated_back_image = back_path
-        
-        spec.sketch_generation_status = 'completed' if front_path else 'error'
-        db.session.commit()
-        
-        if front_path:
-            flash('Desenho técnico gerado com sucesso!')
-        else:
-            flash('Erro ao gerar desenho técnico.')
-            
-    except Exception as e:
-        print(f"Error regenerating sketch: {e}")
-        spec.sketch_generation_status = 'error'
-        db.session.commit()
-        flash('Erro ao gerar desenho técnico.')
-    
-    return redirect(url_for('view_specification', id=id))
-
 @app.route('/specification/<int:id>/edit', methods=['GET', 'POST'])
 @login_required
 def edit_specification(id):
@@ -920,27 +514,27 @@ def delete_user(id):
     return redirect(url_for('manage_users'))
 
 def process_pdf_specification(spec_id, file_path):
-    """Process PDF specification with measurements extraction and technical drawing generation"""
+    """Process PDF specification in background"""
     try:
         spec = Specification.query.get(spec_id)
         if not spec:
             return
         
-        # STEP 1: Extract text from PDF
+        # Extract text from PDF
         text_content = extract_text_from_pdf(file_path)
         spec.raw_extracted_text = text_content
         
         if not text_content.strip():
             spec.processing_status = 'error'
-            spec.measurements_status = 'error'
             db.session.commit()
             return
         
-        # STEP 2: Process general data with OpenAI (original functionality)
+        # Process with OpenAI
         extracted_data = process_specification_with_openai(text_content)
         
         if extracted_data:
             # Update specification with extracted data
+            # Flatten the nested structure and map to database fields
             for category, fields in extracted_data.items():
                 if isinstance(fields, dict):
                     for field, value in fields.items():
@@ -952,87 +546,11 @@ def process_pdf_specification(spec_id, file_path):
             spec.processing_status = 'error'
         
         db.session.commit()
-        
-        # STEP 3: Extract images from PDF
-        print(f"Extracting images from PDF for spec {spec_id}...")
-        images = extract_images_from_pdf(file_path, output_dir=f'uploads/generated/spec_{spec_id}')
-        os.makedirs(f'uploads/generated/spec_{spec_id}', exist_ok=True)
-        
-        # STEP 4: Extract structured measurements with Vision
-        spec.measurements_status = 'processing'
-        db.session.commit()
-        
-        print(f"Extracting measurements with Vision for spec {spec_id}...")
-        measurements_data = extract_measurements_with_vision(text_content, images)
-        
-        if measurements_data:
-            # Store measurements JSON
-            spec.measurements_json = json.dumps(measurements_data, ensure_ascii=False)
-            spec.size_scale_json = json.dumps(measurements_data.get('escala_tamanhos', []))
-            spec.measurement_base_size = measurements_data.get('tamanho_base', 'M')
-            spec.tolerances_json = json.dumps(measurements_data.get('tolerancias', {}))
-            spec.measurements_status = 'completed'
-            print(f"Measurements extracted successfully for spec {spec_id}")
-        else:
-            spec.measurements_status = 'error'
-            print(f"Failed to extract measurements for spec {spec_id}")
-        
-        db.session.commit()
-        
-        # STEP 5: Detect if PDF has technical sketch
-        if images and len(images) > 0:
-            print(f"Detecting technical sketch for spec {spec_id}...")
-            has_sketch = detect_technical_sketch(images)
-            spec.has_technical_sketch = has_sketch
-            
-            # Save best reference image
-            if images:
-                spec.reference_image_path = images[0]['path']
-            
-            db.session.commit()
-            print(f"Technical sketch detected: {has_sketch}")
-        else:
-            spec.has_technical_sketch = False
-            db.session.commit()
-            print(f"No images found in PDF for spec {spec_id}")
-        
-        # STEP 6: Generate technical drawing if needed
-        if not spec.has_technical_sketch and images and len(images) > 0 and measurements_data:
-            print(f"Generating technical drawing for spec {spec_id}...")
-            spec.sketch_generation_status = 'processing'
-            db.session.commit()
-            
-            front_path, back_path = generate_technical_drawing(
-                reference_image_path=images[0]['path'],
-                measurements_json=measurements_data,
-                spec_id=spec_id,
-                output_dir=f'uploads/generated/spec_{spec_id}'
-            )
-            
-            if front_path:
-                spec.generated_front_image = front_path
-                print(f"Front view generated: {front_path}")
-            if back_path:
-                spec.generated_back_image = back_path
-                print(f"Back view generated: {back_path}")
-            
-            spec.sketch_generation_status = 'completed' if front_path else 'error'
-            db.session.commit()
-        else:
-            spec.sketch_generation_status = 'not_needed' if spec.has_technical_sketch else 'pending'
-            db.session.commit()
-            
-        print(f"Processing completed for spec {spec_id}")
-        
     except Exception as e:
-        print(f"Error processing PDF specification {spec_id}: {e}")
-        import traceback
-        traceback.print_exc()
+        print(f"Error processing PDF specification: {e}")
         spec = Specification.query.get(spec_id)
         if spec:
             spec.processing_status = 'error'
-            spec.measurements_status = 'error'
-            spec.sketch_generation_status = 'error'
             db.session.commit()
 
 if __name__ == '__main__':
