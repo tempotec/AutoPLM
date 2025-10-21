@@ -1,6 +1,6 @@
 # Overview
 
-This is a Flask-based technical specification management platform designed for fashion/textile industry workflows. The system allows users to upload PDF files containing technical specifications (fichas técnicas) and uses OpenAI's API to extract structured information through OCR processing. The platform features role-based access with admin controls for user management and comprehensive tracking of all user activities.
+This is a Flask-based technical specification management platform designed for fashion/textile industry workflows. The system allows users to upload PDF files containing technical specifications (fichas técnicas) and uses OpenAI's API to extract structured information through OCR processing. The platform now includes AI-powered technical drawing generation using DALL-E 3, automatically creating professional flat sketches based on extracted specifications. Features include role-based access with admin controls for user management and comprehensive tracking of all user activities.
 
 # User Preferences
 
@@ -32,8 +32,33 @@ Preferred communication style: Simple, everyday language.
 - **Password Security**: Werkzeug password hashing for secure credential storage
 
 ## External Dependencies
-- **OpenAI API**: GPT-based text analysis for extracting structured data from PDF content
+- **OpenAI API**: 
+  - GPT-4-Turbo for text analysis and extracting structured data from PDF content
+  - DALL-E 3 for generating professional technical drawings (flat sketches) from specifications
 - **Database**: SQL database connection via SQLALCHEMY_DATABASE_URI
 - **Environment Variables**: SESSION_SECRET for session security, OPENAI_API_KEY for AI processing
 
+## Recent Changes (October 21, 2025)
+
+### Technical Drawing Generation Feature
+- **Added DALL-E 3 Integration**: Users can now automatically generate professional technical drawings (flat sketches) from specification data
+- **Dynamic Prompt Building**: System intelligently constructs prompts using extracted measurements and technical details
+- **Database Schema Update**: Added `technical_drawing_url` field to store generated image URLs
+- **User Interface Enhancements**: 
+  - New "Desenho Técnico" card in specification view
+  - One-click generation button with progress indication
+  - Image preview and regeneration options
+  - Direct link to open drawings in new tab
+
+## Core Functionality
+
 The system processes technical specifications containing product identification, commercial information, delivery schedules, team assignments, materials, and technical measurements. The AI integration transforms unstructured PDF content into structured database records with fields for reference codes, descriptions, collections, suppliers, pricing, and detailed technical measurements.
+
+**Technical Drawing Generation Workflow:**
+1. User uploads PDF containing technical specifications
+2. System extracts data using GPT-4-Turbo (measurements, materials, finishes)
+3. User clicks "Gerar Desenho Técnico" button
+4. System builds specialized prompt with extracted data
+5. DALL-E 3 generates professional flat sketch (1024x1024, line art style)
+6. Generated image URL is stored and displayed in specification view
+7. Users can regenerate or download technical drawings as needed
