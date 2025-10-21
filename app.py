@@ -567,7 +567,7 @@ def generate_technical_drawing(id):
         response = openai_client.images.generate(
             model="gpt-image-1",
             prompt=prompt,
-            size="1792x1024",  # High resolution for landscape technical drawings
+            size="1536x1024",  # Maximum landscape resolution supported by GPT-Image-1
             quality="high",  # High quality for better detail, text rendering and precision
             n=1,
         )
