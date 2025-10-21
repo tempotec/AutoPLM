@@ -60,7 +60,11 @@ The system processes technical specifications containing product identification,
 1. User uploads PDF containing technical specifications
 2. System extracts data using GPT-4-Turbo (measurements, materials, finishes)
 3. User clicks "Gerar Desenho Técnico" button
-4. System builds specialized prompt with extracted data
-5. DALL-E 3 generates professional flat sketch (1792x1024, HD quality, line art style)
-6. Generated image URL is stored and displayed in specification view
-7. Users can regenerate or download technical drawings as needed
+4. **NEW**: System extracts images from the PDF using PyPDF2
+5. **NEW**: GPT-4o Vision analyzes images and generates detailed technical description of the garment
+6. System builds specialized prompt combining visual description + extracted measurements
+7. DALL-E 3 generates professional flat sketch (1792x1024, HD quality, line art style) based on actual reference images
+8. Generated image URL is stored and displayed in specification view
+9. Users can regenerate or download technical drawings as needed
+
+**Key Innovation:** The system now uses **real images from PDFs** as references, analyzed by GPT-4 Vision, to ensure technical drawings match the actual garment instead of "inventing" details.

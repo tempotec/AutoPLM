@@ -12,6 +12,8 @@ from datetime import datetime
 import PyPDF2
 from functools import wraps
 import base64
+from PIL import Image
+import io
 
 # Import OpenAI functionality
 from openai import OpenAI
@@ -247,7 +249,108 @@ def extract_text_from_pdf(pdf_path):
     return text
 
 
-def build_technical_drawing_prompt(spec):
+def extract_images_from_pdf(pdf_path):
+    """Extract images from PDF and return as base64 encoded strings"""
+    images_base64 = []
+    try:
+        with open(pdf_path, 'rb') as file:
+            pdf_reader = PyPDF2.PdfReader(file)
+            for page_num, page in enumerate(pdf_reader.pages):
+                # Try to extract images from page
+                if '/XObject' in page['/Resources']:
+                    xObject = page['/Resources']['/XObject'].get_object()
+                    for obj in xObject:
+                        if xObject[obj]['/Subtype'] == '/Image':
+                            try:
+                                # Get image data
+                                size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
+                                data = xObject[obj].get_data()
+                                
+                                # Convert to PIL Image
+                                if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
+                                    img = Image.frombytes('RGB', size, data)
+                                elif xObject[obj]['/ColorSpace'] == '/DeviceGray':
+                                    img = Image.frombytes('L', size, data)
+                                else:
+                                    continue
+                                
+                                # Convert to base64
+                                buffered = io.BytesIO()
+                                img.save(buffered, format="PNG")
+                                img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                                images_base64.append(img_base64)
+                            except Exception as e:
+                                print(f"Error extracting image from page {page_num}: {e}")
+                                continue
+    except Exception as e:
+        print(f"Error processing PDF for images: {e}")
+    
+    return images_base64
+
+
+def analyze_images_with_gpt4_vision(images_base64):
+    """Use GPT-4 Vision to analyze garment images and describe technical details"""
+    if not images_base64:
+        print("No images provided for GPT-4 Vision analysis")
+        return None
+    
+    if not openai_client:
+        print("OpenAI client not initialized")
+        return None
+    
+    try:
+        print(f"Analyzing {len(images_base64)} images with GPT-4 Vision...")
+        
+        # Build messages with images
+        content = [{
+            "type": "text",
+            "text": """Analise esta(s) imagem(ns) de peça de vestuário e descreva DETALHADAMENTE os seguintes aspectos técnicos:
+
+1. TIPO DE PEÇA: Qual é a peça (camisa, blusa, vestido, calça, etc.)
+2. SHAPE/SILHUETA: Descrição da forma geral (ajustada, solta, reta, evasê, etc.)
+3. GOLA: Tipo e formato exato (redonda, V, careca, polo, colarinho, etc.)
+4. MANGAS: Comprimento e estilo (curta, longa, 3/4, raglan, bufante, etc.)
+5. COMPRIMENTO: Da peça em relação ao corpo (cropped, na cintura, no quadril, midi, longo)
+6. RECORTES E COSTURAS: Onde ficam as linhas de costura visíveis
+7. FECHAMENTOS: Tipo e localização (botões, zíper, amarração, etc.)
+8. ACABAMENTOS: Detalhes como bainhas, punhos, vivos, pespontos
+9. BOLSOS: Se tem, onde ficam e que tipo são
+10. OUTROS DETALHES: Pregas, franzidos, pences, aplicações, etc.
+
+Seja PRECISO e OBJETIVO. Descreva apenas o que REALMENTE aparece na imagem, sem inventar detalhes."""
+        }]
+        
+        # Add all images
+        for img_b64 in images_base64[:3]:  # Limit to first 3 images to save tokens
+            content.append({
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:image/png;base64,{img_b64}",
+                    "detail": "high"
+                }
+            })
+        
+        response = openai_client.chat.completions.create(
+            model="gpt-4o",  # GPT-4o with vision
+            messages=[{
+                "role": "user",
+                "content": content
+            }],
+            max_tokens=1000
+        )
+        
+        description = response.choices[0].message.content
+        print(f"GPT-4 Vision analysis successful: {description[:100]}...")
+        return description
+        
+    except Exception as e:
+        print(f"Error analyzing images with GPT-4 Vision: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
+def build_technical_drawing_prompt(spec, visual_description=None):
     """Build DALL-E prompt for technical drawing generation"""
     # Build measurements block
     measurements = []
@@ -285,58 +388,35 @@ def build_technical_drawing_prompt(spec):
 
     technical_notes = "\n".join(notes) if notes else ""
 
-    # Build complete prompt (REVISADO – mais rígido e anti-“viagens”)
-    prompt = f"""TAREFA: Gerar um DESENHO TÉCNICO PLANO (flat sketch) de {{spec.description or 'peça de vestuário'}}, a partir da(s) imagem(ns) de referência anexada(s) e das especificações/medidas fornecidas.
+    # Build visual reference block
+    visual_ref = ""
+    if visual_description:
+        visual_ref = f"""
+DESCRIÇÃO VISUAL DA PEÇA (BASE OBRIGATÓRIA):
+{visual_description}
+"""
 
-    PRIORIDADES (ordem obrigatória):
-    1) REFERÊNCIA VISUAL: Preserve exatamente o shape, tipo de gola, comprimento de manga, recortes, fechos e acabamentos que EXISTEM na imagem de referência. NÃO adicione nada que não esteja visível.
-    2) MEDIDAS: Ajuste proporções para respeitar as medidas (cm) do bloco abaixo, sem desenhar números/cotas na arte.
-    3) NOTAS TÉCNICAS: Aplique somente o que está escrito nas notas.
+    # Build complete prompt
+    prompt = f"""TAREFA: Gerar DESENHO TÉCNICO PLANO (flat sketch) de {spec.description or 'peça'}.
 
-    ESTILO OBRIGATÓRIO (técnico):
-    - Aparência vetorial (line art) | fundo branco puro (#FFFFFF)
-    - Traço preto contínuo e regular | linhas nítidas (sem serrilhado)
-    - Peça isolada (sem pessoa/manequim/sombra de chão)
-    - Composição central, simetria bilateral | visual 2D (flat), sem volume artístico
-    - Permita cinza leve APENAS para indicar sobreposição de partes (quando necessário)
+{visual_ref}
 
-    DETALHES CONSTRUTIVOS A REPRESENTAR (somente se existirem na referência ou nas notas):
-    - Linhas de costura e pespontos
-    - Recortes, pences, pregas, franzidos e dobras
-    - Golas, punhos, barras e demais acabamentos
-    - Fechamentos (zíper, botões, casas, amarrações)
-    - Elementos funcionais/decorativos REAIS (ex.: vivos, vistas, lapelas, cós, passantes)
+PRIORIDADES:
+1) FIDELIDADE: Reproduza EXATAMENTE o descrito acima - gola, manga, recortes, fechos. NÃO invente.
+2) MEDIDAS: Ajuste proporções às medidas abaixo.
 
-    BLOCO DE ESPECIFICAÇÕES (MEDIDAS E REGRAS):
-    {measurements_block}
+ESTILO: Line art vetorial, fundo branco, traço preto, peça isolada, flat 2D.
 
-    NOTAS TÉCNICAS (priorize apenas o que estiver aqui):
-    {technical_notes}
+MEDIDAS:
+{measurements_block}
 
-    RESTRIÇÕES DE PROPORÇÃO (obrigatórias):
-    - Ajuste o shape para respeitar as medidas (cm). Use-as como guia geométrico — NÃO desenhar cotas/números.
-    - Se alguma medida estiver ausente, mantenha proporções neutras SEM inventar novos detalhes.
-    - Mantenha verticalidade/queda do tecido e simetria central. Evitar torções/distorções.
+NOTAS:
+{technical_notes}
 
-    SAÍDAS ESPERADAS:
-    - Uma imagem do desenho técnico (vista frontal). Se solicitado, gere também vista posterior com MESMO estilo e proporções.
-    - Fundo branco puro, linhas limpas; sem textura/foto/ruído.
-
-    QUALIDADE MÍNIMA (checklist interno antes de finalizar):
-    - Gola, mangas, barras, recortes, pespontos e fechos CONFEREM com a imagem de referência.
-    - Proporções batem com as medidas fornecidas (comprimento de corpo/manga, busto/peito, cintura, barra, ombro a ombro, cava/armhole, altura de gola).
-    - Linha limpa, regular, sem sombreamento forte. Nada “artístico”.
-
-    NÃO FAZER (proibições explícitas):
-    - NÃO inventar detalhes (bolsos, zíperes, botões, recortes, pences) que NÃO apareçam na referência ou nas notas.
-    - NÃO estilizar com texturas, estampas, sombreamento pesado, dobras dramáticas ou volume artístico.
-    - NÃO adicionar textos, medidas, cotas, marcas d’água ou logos.
-    - NÃO alterar o tipo de gola/manga/fecho/acabamento existente.
-
-    CONFIRMAÇÃO (objetivo final):
-    Desenho técnico plano, fiel à referência e às medidas, estilo line art (vetorial-look), pronto para ficha técnica de desenvolvimento."""
+PROIBIDO: Inventar detalhes não descritos, texturas, textos, cotas."""
 
     return prompt
+
 
 
 def process_specification_with_openai(text_content):
@@ -612,8 +692,17 @@ def generate_technical_drawing(id):
         return redirect(url_for('view_specification', id=id))
 
     try:
-        # Build prompt with specification data
-        prompt = build_technical_drawing_prompt(spec)
+        # Get PDF file path
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        
+        # Extract images from PDF
+        images = extract_images_from_pdf(file_path)
+        
+        # Analyze images with GPT-4 Vision to get visual description
+        visual_desc = analyze_images_with_gpt4_vision(images) if images else None
+        
+        # Build prompt with specification data and visual description
+        prompt = build_technical_drawing_prompt(spec, visual_desc)
 
         # Generate image using DALL-E 3 with HD quality for maximum detail
         response = openai_client.images.generate(
