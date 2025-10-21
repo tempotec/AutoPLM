@@ -34,14 +34,16 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 - **OpenAI API**: 
   - GPT-4-Turbo for text analysis and extracting structured data from PDF content
-  - DALL-E 3 for generating professional technical drawings (flat sketches) from specifications
+  - GPT-Image-1 for generating professional technical drawings (flat sketches) from specifications
 - **Database**: SQL database connection via SQLALCHEMY_DATABASE_URI
 - **Environment Variables**: SESSION_SECRET for session security, OPENAI_API_KEY for AI processing
 
 ## Recent Changes (October 21, 2025)
 
 ### Technical Drawing Generation Feature
-- **Added DALL-E 3 Integration**: Users can now automatically generate professional technical drawings (flat sketches) from specification data
+- **Added GPT-Image-1 Integration**: Users can now automatically generate professional technical drawings (flat sketches) from specification data using OpenAI's latest image generation model
+- **High-Quality Output**: Using quality="high" setting for maximum detail, superior text rendering, and better adherence to measurements
+- **Resolution**: 1792x1024 pixels (landscape format) optimized for technical drawings
 - **Dynamic Prompt Building**: System intelligently constructs prompts using extracted measurements and technical details
 - **Database Schema Update**: Added `technical_drawing_url` field to store generated image URLs
 - **User Interface Enhancements**: 
@@ -59,6 +61,13 @@ The system processes technical specifications containing product identification,
 2. System extracts data using GPT-4-Turbo (measurements, materials, finishes)
 3. User clicks "Gerar Desenho Técnico" button
 4. System builds specialized prompt with extracted data
-5. DALL-E 3 generates professional flat sketch (1024x1024, line art style)
+5. GPT-Image-1 generates professional flat sketch (1792x1024, high quality, line art style)
 6. Generated image URL is stored and displayed in specification view
 7. Users can regenerate or download technical drawings as needed
+
+**GPT-Image-1 Advantages:**
+- Superior text rendering for technical annotations
+- Better understanding of technical specifications
+- More accurate proportions and measurements
+- Higher resolution output (up to 4096x4096 supported)
+- Improved style consistency and detail quality
