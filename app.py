@@ -221,6 +221,90 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error extracting text from PDF: {e}")
     return text
 
+def build_technical_drawing_prompt(spec):
+    """Build DALL-E prompt for technical drawing generation"""
+    # Build measurements block
+    measurements = []
+    if spec.pilot_size:
+        measurements.append(f"Tamanho base: {spec.pilot_size}")
+    
+    measurement_fields = {
+        'body_length': 'comprimento_corpo',
+        'sleeve_length': 'comprimento_manga',
+        'bust': 'busto',
+        'waist': 'cintura',
+        'hem_width': 'barra',
+        'shoulder_to_shoulder': 'ombro_a_ombro',
+        'straight_armhole': 'cava_reta',
+        'neckline_depth': 'altura_gola'
+    }
+    
+    for field, label in measurement_fields.items():
+        value = getattr(spec, field, None)
+        if value:
+            measurements.append(f"- {label}: {value}")
+    
+    measurements_block = "\n".join(measurements) if measurements else "Medidas não disponíveis - usar proporções padrão"
+    
+    # Build technical notes
+    notes = []
+    if spec.finishes:
+        notes.append(f"Acabamentos: {spec.finishes}")
+    if spec.openings_details:
+        notes.append(f"Detalhes de aberturas: {spec.openings_details}")
+    if spec.composition:
+        notes.append(f"Composição: {spec.composition}")
+    
+    technical_notes = "\n".join(notes) if notes else ""
+    
+    # Build complete prompt
+    prompt = f"""TAREFA: Gere um DESENHO TÉCNICO PLANO (flat sketch) de {spec.description or 'peça de vestuário'}.
+Priorize fidelidade técnica e proporções exatas segundo as medidas fornecidas.
+
+ESTILO OBRIGATÓRIO:
+- Aparência vetorial (line art)
+- Fundo totalmente branco (#FFFFFF)
+- Traço preto contínuo e regular
+- Peça isolada (sem pessoa/manequim/sombra de chão)
+- Composição central simétrica
+- Sombra mínima (flat 2D)
+- Pode usar cinza leve apenas para indicar sobreposição de partes
+
+DETALHES CONSTRUTIVOS A INCLUIR:
+- Linhas de costura e pespontos
+- Recortes e pences
+- Golas, punhos, barras e acabamentos
+- Fechamentos (zíper, botão, casa, amarração etc.)
+- Pregas, franzidos, dobras e sobreposições (se houver)
+- Elementos funcionais/decorativos relevantes
+
+BLOCO DE ESPECIFICAÇÕES (MEDIDAS E REGRAS):
+{measurements_block}
+
+{technical_notes}
+
+RESTRIÇÕES DE PROPORÇÃO:
+- Ajuste o shape e as proporções para respeitar as medidas fornecidas (cm).
+- Não desenhe números/cotas sobre a arte; use as medidas apenas como guia geométrico.
+- Se alguma medida estiver ausente, mantenha proporções neutras e simétricas.
+
+SAÍDAS ESPERADAS:
+- Imagem final do desenho técnico (vista frontal)
+- Fundo branco puro e linhas nítidas, sem textura/foto/ruído
+
+QUALIDADE MÍNIMA:
+- Alta nitidez de linha (sem serrilhado aparente)
+- Proporções coerentes com as medidas fornecidas
+- Pespontos e recortes legíveis em zoom
+
+NÃO FAÇA:
+- Não aplique estilização artística, textura de tecido, estampas fotográficas ou sombras pesadas
+- Não inclua textos, medidas, cotas ou marcas d'água no desenho
+
+CONFIRMAÇÃO: Desenho técnico plano detalhado, estilo line art (vetorial-look), fiel às medidas e pronto para uso em ficha técnica de desenvolvimento."""
+    
+    return prompt
+
 def process_specification_with_openai(text_content):
     """Process specification text using OpenAI to extract structured data"""
     if not openai_client:
