@@ -43,7 +43,7 @@ Preferred communication style: Simple, everyday language.
 ### Technical Drawing Generation Feature
 - **Added GPT-Image-1 Integration**: Users can now automatically generate professional technical drawings (flat sketches) from specification data using OpenAI's latest image generation model
 - **High-Quality Output**: Using quality="high" setting for maximum detail, superior text rendering, and better adherence to measurements
-- **Resolution**: 1792x1024 pixels (landscape format) optimized for technical drawings
+- **Resolution**: 1536x1024 pixels (maximum landscape format supported by GPT-Image-1)
 - **Dynamic Prompt Building**: System intelligently constructs prompts using extracted measurements and technical details
 - **Database Schema Update**: Added `technical_drawing_url` field to store generated image URLs
 - **User Interface Enhancements**: 
@@ -61,7 +61,7 @@ The system processes technical specifications containing product identification,
 2. System extracts data using GPT-4-Turbo (measurements, materials, finishes)
 3. User clicks "Gerar Desenho Técnico" button
 4. System builds specialized prompt with extracted data
-5. GPT-Image-1 generates professional flat sketch (1792x1024, high quality, line art style)
+5. GPT-Image-1 generates professional flat sketch (1536x1024, high quality, line art style)
 6. Generated image URL is stored and displayed in specification view
 7. Users can regenerate or download technical drawings as needed
 
