@@ -923,4 +923,33 @@ def delete_user(id):
 
     if user.id == current_user.id:
         flash('Não é possível excluir seu próprio usuário.')
-        return redirect(url_for('manage_users'))  # Redirect to manage users page
+        return redirect(url_for('manage_users'))
+
+    try:
+        # Delete all specifications owned by this user
+        Specification.query.filter_by(user_id=user.id).delete()
+        
+        db.session.delete(user)
+        db.session.commit()
+        flash(f'Usuário {user.username} excluído com sucesso!')
+    except Exception as e:
+        db.session.rollback()
+        print(f"Erro ao excluir usuário {id}: {e}")
+        flash('Erro ao excluir usuário. Tente novamente.')
+
+    return redirect(url_for('manage_users'))
+
+
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
+        # Create admin user if it doesn't exist
+        admin = User.query.filter_by(username='admin').first()
+        if not admin:
+            admin = User(username='admin', is_admin=True)
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print("Admin user created: username='admin', password='admin123'")
+    
+    app.run(host='0.0.0.0', port=5000, debug=True)
