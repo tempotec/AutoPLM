@@ -476,6 +476,13 @@ NÃO FAZER (PROIBIDO):
 
 
 
+def convert_value_to_string(value):
+    """Convert complex values (lists, dicts) to strings for database storage"""
+    if isinstance(value, (list, dict)):
+        return json.dumps(value, ensure_ascii=False)
+    return value
+
+
 def process_specification_with_openai(text_content):
     """Process specification text using OpenAI to extract structured data"""
     if not openai_client:
@@ -528,6 +535,62 @@ def process_specification_with_openai(text_content):
     except Exception as e:
         print(f"Error processing with OpenAI: {e}")
         return None
+
+
+def process_pdf_specification(spec_id, file_path):
+    """Process PDF file and extract specification data using OpenAI"""
+    try:
+        # Extract text from PDF
+        text_content = extract_text_from_pdf(file_path)
+        
+        if not text_content or len(text_content.strip()) < 50:
+            print(f"Insufficient text extracted from PDF for spec {spec_id}")
+            spec = Specification.query.get(spec_id)
+            if spec:
+                spec.processing_status = 'error'
+                db.session.commit()
+            return
+        
+        # Process with OpenAI
+        extracted_data = process_specification_with_openai(text_content)
+        
+        if not extracted_data:
+            print(f"No data extracted from OpenAI for spec {spec_id}")
+            spec = Specification.query.get(spec_id)
+            if spec:
+                spec.processing_status = 'error'
+                db.session.commit()
+            return
+        
+        # Update specification with extracted data
+        spec = Specification.query.get(spec_id)
+        if not spec:
+            print(f"Specification {spec_id} not found")
+            return
+        
+        # Map extracted data to specification fields, converting complex values
+        for key, value in extracted_data.items():
+            if hasattr(spec, key) and value is not None:
+                # Convert lists/dicts to strings
+                setattr(spec, key, convert_value_to_string(value))
+        
+        spec.processing_status = 'completed'
+        db.session.commit()
+        print(f"Successfully processed specification {spec_id}")
+        
+    except Exception as e:
+        print(f"Error processing PDF specification {spec_id}: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Update status to error
+        try:
+            spec = Specification.query.get(spec_id)
+            if spec:
+                spec.processing_status = 'error'
+                db.session.commit()
+        except Exception as update_error:
+            print(f"Error updating specification status: {update_error}")
 
 
 # Routes
