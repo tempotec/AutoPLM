@@ -351,21 +351,30 @@ Seja PRECISO e OBJETIVO. Descreva apenas o que REALMENTE aparece na imagem, sem 
 
 
 def build_technical_drawing_prompt(spec, visual_description=None):
-    """Build DALL-E prompt for technical drawing generation"""
+    """Build DALL-E prompt for technical drawing generation with professional specifications"""
+    
+    # Build visual reference block from GPT-4 Vision analysis
+    visual_ref = ""
+    if visual_description:
+        visual_ref = f"""
+REFERÊNCIA VISUAL ANALISADA (BASE OBRIGATÓRIA):
+{visual_description}
+"""
+    
     # Build measurements block
     measurements = []
     if spec.pilot_size:
         measurements.append(f"Tamanho base: {spec.pilot_size}")
 
     measurement_fields = {
-        'body_length': 'comprimento_corpo',
-        'sleeve_length': 'comprimento_manga',
-        'bust': 'busto',
-        'waist': 'cintura',
-        'hem_width': 'barra',
-        'shoulder_to_shoulder': 'ombro_a_ombro',
-        'straight_armhole': 'cava_reta',
-        'neckline_depth': 'altura_gola'
+        'body_length': 'Comprimento corpo',
+        'sleeve_length': 'Comprimento manga',
+        'bust': 'Busto',
+        'waist': 'Cintura',
+        'hem_width': 'Largura barra',
+        'shoulder_to_shoulder': 'Ombro a ombro',
+        'straight_armhole': 'Cava reta',
+        'neckline_depth': 'Altura gola'
     }
 
     for field, label in measurement_fields.items():
@@ -373,9 +382,7 @@ def build_technical_drawing_prompt(spec, visual_description=None):
         if value:
             measurements.append(f"- {label}: {value}")
 
-    measurements_block = "\n".join(
-        measurements
-    ) if measurements else "Medidas não disponíveis - usar proporções padrão"
+    measurements_block = "\n".join(measurements) if measurements else ""
 
     # Build technical notes
     notes = []
@@ -388,32 +395,49 @@ def build_technical_drawing_prompt(spec, visual_description=None):
 
     technical_notes = "\n".join(notes) if notes else ""
 
-    # Build visual reference block
-    visual_ref = ""
-    if visual_description:
-        visual_ref = f"""
-DESCRIÇÃO VISUAL DA PEÇA (BASE OBRIGATÓRIA):
-{visual_description}
-"""
-
-    # Build complete prompt
-    prompt = f"""TAREFA: Gerar DESENHO TÉCNICO PLANO (flat sketch) de {spec.description or 'peça'}.
+    # Build complete professional prompt
+    prompt = f"""TAREFA
+Gerar um DESENHO TÉCNICO PLANO (flat sketch) de vestuário com ALTA FIDELIDADE aos detalhes construtivos a partir da descrição fornecida.
 
 {visual_ref}
 
-PRIORIDADES:
-1) FIDELIDADE: Reproduza EXATAMENTE o descrito acima - gola, manga, recortes, fechos. NÃO invente.
-2) MEDIDAS: Ajuste proporções às medidas abaixo.
+SAÍDA OBRIGATÓRIA
+- Duas vistas: FRENTE e COSTAS, lado a lado, alinhadas horizontalmente.
+- Estilo: line art 2D, traço preto uniforme e contínuo, fill transparente.
+- Fundo: branco puro (#FFFFFF). Sem textura, logotipo, legenda ou marca d'água.
+- Peça isolada: sem modelo, manequim, cabide, cenário, chão ou reflexos.
+- Sem textos, números, setas, cotas, medidas ou anotações.
 
-ESTILO: Line art vetorial, fundo branco, traço preto, peça isolada, flat 2D.
+O QUE DESENHAR (APENAS O QUE ESTIVER VISÍVEL/ESPECIFICADO)
+- Linhas de costura e pespontos
+- Recortes e pences
+- Golas, punhos, barras e acabamentos
+- Fechamentos (zíper, botões, amarração etc.), com posição exata
+- Bolsos (tipo e posição)
+- Pregas, franzidos e dobras estruturais
+- Proporções e simetria da peça representadas em 2D (sem volume 3D)
 
-MEDIDAS:
-{measurements_block}
+MEDIDAS TÉCNICAS (para ajuste de proporções):
+{measurements_block if measurements_block else "Usar proporções padrão"}
 
-NOTAS:
-{technical_notes}
+DETALHES CONSTRUTIVOS:
+{technical_notes if technical_notes else "Ver referência visual acima"}
 
-PROIBIDO: Inventar detalhes não descritos, texturas, textos, cotas."""
+RESTRIÇÕES (NEGATIVAS)
+- Não usar cores além de preto no traço e branco no fundo.
+- Não aplicar sombras, gradientes, textura de tecido ou efeito 3D.
+- Não inventar elementos ausentes nas referências (sem adornos extras).
+- Não incluir etiquetas, tags, logotipos ou qualquer texto.
+
+LAYOUT E FORMATO
+- Orientação: paisagem (1792x1024).
+- Margens mínimas e espaçamento regular entre FRENTE e COSTAS.
+- Traço consistente (espessura uniforme), sem variação decorativa.
+
+NOTAS DE CAIMENTO
+- Representar caimento apenas por linhas de construção (pences, recortes, posição de franzidos), sem sombreado.
+
+PRIORIDADE MÁXIMA: Fidelidade absoluta aos detalhes descritos na referência visual."""
 
     return prompt
 
