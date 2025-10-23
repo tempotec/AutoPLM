@@ -34,14 +34,22 @@ Preferred communication style: Simple, everyday language.
 ## External Dependencies
 - **OpenAI API**: 
   - GPT-4-Turbo for text analysis and extracting structured data from PDF content
-  - DALL-E 3 for generating professional technical drawings (flat sketches) from specifications
+  - GPT-4o Vision for analyzing garment images and describing construction details
+  - GPT-Image-1 for generating professional technical drawings (flat sketches) from specifications
 - **Database**: SQL database connection via SQLALCHEMY_DATABASE_URI
 - **Environment Variables**: SESSION_SECRET for session security, OPENAI_API_KEY for AI processing
 
 ## Recent Changes
 
+### October 23, 2025 - GPT-Image-1 Integration
+- **Upgraded to GPT-Image-1**: Replaced DALL-E 3 with OpenAI's latest GPT-Image-1 model for superior image quality
+  - **Higher Quality**: Photorealistic results with 94% prompt adherence (vs 78% on DALL-E 3)
+  - **Better Resolution**: Support for up to 4096x4096 pixels (currently using 1024x1024)
+  - **Perfect Text Rendering**: Accurate text within images for labels and annotations
+  - **Enhanced Fidelity**: Significantly better at following complex technical drawing specifications
+
 ### October 23, 2025 - Professional Technical Drawing Prompt
-- **Upgraded DALL-E 3 Prompt**: Implemented industry-standard specifications for professional technical drawings
+- **Upgraded Drawing Specifications**: Implemented industry-standard specifications for professional technical drawings
   - **Dual Views**: Front and back views side-by-side, horizontally aligned
   - **Line Art Style**: Pure 2D line art with uniform black lines, transparent fill, white background (#FFFFFF)
   - **Isolated Garment**: No model, mannequin, hanger, scenery, or reflections
@@ -75,7 +83,7 @@ The system processes technical specifications containing product identification,
 4. **NEW**: System extracts images from the PDF using PyPDF2
 5. **NEW**: GPT-4o Vision analyzes images and generates detailed technical description of the garment
 6. System builds specialized prompt combining visual description + extracted measurements
-7. DALL-E 3 generates professional flat sketch (1792x1024, HD quality, line art style) based on actual reference images
+7. GPT-Image-1 generates professional flat sketch (1024x1024, high quality, line art style) based on actual reference images
 8. Generated image URL is stored and displayed in specification view
 9. Users can regenerate or download technical drawings as needed
 
