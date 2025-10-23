@@ -351,69 +351,107 @@ Seja PRECISO e OBJETIVO. Descreva apenas o que REALMENTE aparece na imagem, sem 
 
 
 def build_technical_drawing_prompt(spec, visual_description=None):
-    """Build DALL-E prompt for technical drawing generation"""
-    # Build measurements block
+    """Build professional technical flat sketch prompt for GPT-Image-1"""
+    
+    # Determine garment type from description
+    garment_type = spec.description or "peça de roupa"
+    
+    # Build measurements block with proportions
     measurements = []
     if spec.pilot_size:
-        measurements.append(f"Tamanho base: {spec.pilot_size}")
-
+        measurements.append(f"Tamanho: {spec.pilot_size}")
+    
     measurement_fields = {
-        'body_length': 'comprimento_corpo',
-        'sleeve_length': 'comprimento_manga',
-        'bust': 'busto',
+        'bust': 'tórax',
+        'body_length': 'comprimento',
+        'sleeve_length': 'manga',
         'waist': 'cintura',
+        'shoulder_to_shoulder': 'ombro a ombro',
         'hem_width': 'barra',
-        'shoulder_to_shoulder': 'ombro_a_ombro',
-        'straight_armhole': 'cava_reta',
-        'neckline_depth': 'altura_gola'
+        'straight_armhole': 'cava',
+        'neckline_depth': 'decote'
     }
-
+    
     for field, label in measurement_fields.items():
         value = getattr(spec, field, None)
         if value:
-            measurements.append(f"- {label}: {value}")
-
-    measurements_block = "\n".join(
-        measurements
-    ) if measurements else "Medidas não disponíveis - usar proporções padrão"
-
-    # Build technical notes
-    notes = []
+            measurements.append(f"{label}: {value}")
+    
+    measurements_text = "; ".join(measurements) if measurements else "usar proporções padrão"
+    
+    # Build material and composition info
+    material_info = spec.composition or "tecido padrão"
+    
+    # Build constructive details from specifications
+    constructive_details = []
     if spec.finishes:
-        notes.append(f"Acabamentos: {spec.finishes}")
+        constructive_details.append(f"Acabamentos: {spec.finishes}")
     if spec.openings_details:
-        notes.append(f"Detalhes de aberturas: {spec.openings_details}")
-    if spec.composition:
-        notes.append(f"Composição: {spec.composition}")
-
-    technical_notes = "\n".join(notes) if notes else ""
-
-    # Build visual reference block
-    visual_ref = ""
+        constructive_details.append(f"Fechamentos/Aberturas: {spec.openings_details}")
+    
+    details_text = " | ".join(constructive_details) if constructive_details else "detalhes conforme análise visual"
+    
+    # Build visual reference section
+    visual_section = ""
     if visual_description:
-        visual_ref = f"""
-DESCRIÇÃO VISUAL DA PEÇA (BASE OBRIGATÓRIA):
+        visual_section = f"""
+REFERÊNCIA VISUAL (BASE OBRIGATÓRIA PARA FIDELIDADE):
 {visual_description}
 """
+    
+    # Build complete professional prompt
+    prompt = f"""TAREFA: Transformar a peça de roupa em desenho técnico plano (flat sketch) vetorial com alta fidelidade ao caimento e detalhes construtivos, pronto para ficha técnica.
 
-    # Build complete prompt
-    prompt = f"""TAREFA: Gerar DESENHO TÉCNICO PLANO (flat sketch) de {spec.description or 'peça'}.
+ENTRADAS:
+- Tipo da peça: {garment_type}
+- Material principal: {material_info}
+- Medidas/proporções: {measurements_text}
+- Detalhes obrigatórios: {details_text}
+{visual_section}
 
-{visual_ref}
+VISTAS OBRIGATÓRIAS:
+- Frente e Costas alinhadas VERTICALMENTE (mesma escala, centralizadas)
+- Incluir detalhes ampliados (1:2 ou 1:3) para: gola/colarinho, punho, bolso, zíper, barra, cós quando aplicável
+- Se relevante: vista interna parcial para mostrar forro/acabamento interno
 
-PRIORIDADES:
-1) FIDELIDADE: Reproduza EXATAMENTE o descrito acima - gola, manga, recortes, fechos. NÃO invente.
-2) MEDIDAS: Ajuste proporções às medidas abaixo.
+ESTILO VISUAL E ANOTAÇÃO:
+- Fundo 100% branco (#FFFFFF); sem corpo, cabide ou manequim
+- Traço preto contínuo; espessuras: contorno 0,75pt; costuras 0,35pt; pespontos tracejado curto
+- Padrões de linha:
+  * Contorno visível: linha contínua
+  * Costura interna: linha contínua fina
+  * Pesponto: linha tracejada
+  * Dobra/virado: linha ponto-traço fino
+- Cinza neutro (10-30%) APENAS para indicar sobreposição/volume/forro
+- Símbolos gráficos: botão (círculo 2-4mm), ilhós (anel), rebite (ponto sólido)
+- Setas indicativas simples para: direção de abotoamento, abertura de zíper, sentido de pregas/franzidos (sem texto descritivo)
 
-ESTILO: Line art vetorial, fundo branco, traço preto, peça isolada, flat 2D.
+DETALHES CONSTRUTIVOS (incluir todos aplicáveis):
+- Golas/colarinho, punhos, barras, acabamentos (rebatido, vivo, overlock)
+- Recortes, pences, pregas, franzidos, dobras funcionais
+- Fechamentos: zíper (invisível/nylon/metal), botões, colchetes, amarrações - com comprimento e posição
+- Bolsos: tipo (faca, chapa, embutido), dimensões relativas, tampas, vivos
+- Cós/cintura: com/sem passantes, quantidade e posição
+- Etiquetas/branding: localização (interna/externa)
 
-MEDIDAS:
-{measurements_block}
+NORMALIZAÇÃO DA IMAGEM:
+- Corrigir perspectiva/distorções: alinhar eixo central
+- Garantir simetria quando aplicável
+- Remover sombras/elementos que não pertencem à construção
 
-NOTAS:
-{technical_notes}
+CRITÉRIOS DE ACEITAÇÃO:
+- Proporções consistentes com as medidas de referência
+- Todas costuras e acabamentos identificáveis por tipo de linha
+- Frente/Costas em escala idêntica e perfeitamente centradas
+- Visual limpo e técnico para ficha técnica
 
-PROIBIDO: Inventar detalhes não descritos, texturas, textos, cotas."""
+NÃO FAZER (PROIBIDO):
+- NÃO incluir modelo/manequim/cabide
+- NÃO usar gradientes ou texturas realistas de tecido
+- NÃO estilizar com traço orgânico/artístico; manter técnico
+- NÃO inventar detalhes não descritos na referência visual
+- NÃO incluir medidas numéricas, cotas dimensionais, legendas ou textos descritivos longos
+- PERMITIDO: Símbolos gráficos padrão (botões, ilhós) e setas direcionais simples"""
 
     return prompt
 
