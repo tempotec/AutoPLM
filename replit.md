@@ -58,26 +58,37 @@ Preferred communication style: Simple, everyday language.
   - New filenames serve from local storage via `send_file()`
   - Zero breaking changes for existing specifications
 
-### October 23, 2025 - Professional Technical Drawing Prompt (Industry Standard)
-- **Comprehensive Professional Specifications**: Implemented complete industry-standard technical flat sketch specifications
-  - **Required Views**: Front and back views aligned VERTICALLY (same scale, centered), with enlarged details (1:2 or 1:3) for collar, cuffs, pockets, zipper, hem, waistband
-  - **Visual Style**: 100% white background (#FFFFFF); pure black line art; no model, mannequin, or hanger
+### October 23, 2025 - Professional Technical Drawing with POMs and Dimensions
+- **Production-Ready Technical Specifications**: Implemented professional flat sketch with measurements, dimensions, and POMs (Pontos de Medida)
+  - **Required Views**: Front and back aligned VERTICALLY (same scale), sleeve in natural position, enlarged details (1:2 or 1:3) for collar, cuffs, pockets, zipper, hem, waistband, buttonholes
+  - **Visual Style**: 100% white background; pure black line art; no model/mannequin/hanger; central axis indicated with dash-dot line
   - **Line Standards**: 
-    * Outline: continuous line (0.75pt)
-    * Internal seams: fine continuous line (0.35pt)
-    * Topstitching: short dashed line
-    * Fold/turn: dash-dot line
-  - **Construction Details**: Collars/necklines, cuffs, hems, finishes (flat-felled, piping, overlock), cutouts, darts, pleats, gathers, functional folds
-  - **Closures**: Zippers (invisible/nylon/metal), buttons, snaps, ties - with length and position
-  - **Pockets**: Type (slash, patch, inset), relative dimensions, flaps, piping
-  - **Waistband/Belt**: with/without belt loops, quantity and position
-  - **Labels/Branding**: location (internal/external)
-  - **Neutral Gray (10-30%)**: ONLY for indicating overlap/volume/lining
+    * Outline: 0.75pt continuous
+    * Seams/ribbing: 0.35pt continuous
+    * Topstitching: 0.35pt dashed
+    * Fold/overlap: dash-dot line
+  - **Dimension Conventions (POMs)**:
+    * Dimension lines: thin (0.35pt) with filled arrows
+    * Extension lines: perpendicular, minimum 3mm offset from contour
+    * Measurement text: sans-serif 8-9pt, above dimension line, unit in cm
+    * Symmetry notation: use "(x2)" for half-width measurements
+    * Each POM numbered on drawing
+  - **POMs (Measurement Points)**: 
+    * Total length (HPS to hem)
+    * Chest width (1cm below armhole, half chest)
+    * Hem width (half)
+    * Shoulder to shoulder (outside points)
+    * Neckline/collar depth (from HPS)
+    * Sleeve length (highest shoulder point to cuff, following curve)
+    * Waist width (half)
+    * Armhole width (vertical)
+  - **Construction Details**: Technical representation of textures/patterns (ribs, cables, pleats), collars, cuffs, hems, finishes, cuts, darts, closures with type/position/quantity
+  - **Sections/Cross-cuts**: Simple cross-sections showing overlaps (placket, facing) and thicknesses (cuff/hem when applicable)
+  - **Neutral Gray (15-30%)**: ONLY for overlap/volume/lining
   - **Graphic Symbols**: Button (circle 2-4mm), eyelet (ring), rivet (solid dot)
-  - **Directional Arrows**: Simple arrows indicating button direction, zipper opening, pleat/gather direction (without text labels)
-  - **Image Normalization**: Corrects perspective/distortions, aligns central axis, ensures symmetry
-  - **Strict Prohibitions**: No model/mannequin/hanger, no gradients/realistic textures, no organic/artistic styling, no invented details
-  - **Permitted Elements**: Graphic symbols and simple directional arrows; NO dimensional measurements, NO text legends, NO descriptive callouts
+  - **Image Normalization**: Corrects perspective, aligns central axis, ensures symmetry, measurements on relaxed garment
+  - **Acceptance Criteria**: All POMs numbered and legible; front/back same scale; central axis marked; dimension lines don't collide with contours; proportions match reference measurements
+  - **Strict Prohibitions**: No model/realistic shadows/gradients; no omission of hem/cuff/neckline/button POMs; no photorealistic textures; no organic/artistic styling; no invented details
 
 ### October 21, 2025 - Vision-Based Technical Drawing Generation
 - **Added GPT-4o Vision Integration**: System now analyzes actual garment images from PDFs before generating technical drawings
@@ -103,13 +114,19 @@ The system processes technical specifications containing product identification,
 3. User clicks "Gerar Desenho Técnico" button
 4. System extracts up to 3 images from the PDF using PyPDF2
 5. GPT-4o Vision analyzes images and generates detailed technical description of the garment
-6. System builds specialized prompt combining visual description + extracted measurements
-7. GPT-Image-1 generates professional flat sketch (1024x1024, high quality, line art style) based on actual reference images
+6. System builds specialized prompt combining visual description + extracted measurements + POMs
+7. GPT-Image-1 generates professional flat sketch **dimensionado** (with dimensions and POMs) - 1024x1024, high quality
 8. System decodes base64 response and saves image locally as `drawing_{id}_{uuid}.png`
 9. Database stores filename; image served via `/drawing/<id>` route with access control
 10. Users can view, regenerate, or download technical drawings as needed
 
+**Output:** System generates the **dimensioned version** (flat dimensionado) with all measurements, POMs, and dimension lines - the most complete and production-ready version. 
+
+**Note:** GPT-Image-1 generates one image per call. If a clean version (without dimensions) is needed, a separate generation workflow would be required.
+
 **Key Innovations:** 
 - Uses **real images from PDFs** as references, analyzed by GPT-4 Vision, to ensure technical drawings match the actual garment instead of "inventing" details
+- **POMs (Pontos de Medida)** automatically numbered and integrated from specification data
+- **Professional cotagem** with dimension lines, arrows, and measurement text following industry standards
 - **Local storage** eliminates dependency on temporary external URLs and provides better control over assets
 - **Backward compatibility** ensures existing specifications with DALL-E 3 URLs continue to work seamlessly
