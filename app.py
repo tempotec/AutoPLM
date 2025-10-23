@@ -289,7 +289,7 @@ def extract_images_from_pdf(pdf_path):
 
 
 def analyze_images_with_gpt4_vision(images_base64):
-    """Use GPT-4 Vision to analyze garment images and describe technical details"""
+    """Use GPT-4 Vision to analyze garment images and describe ALL technical construction details"""
     if not images_base64:
         print("No images provided for GPT-4 Vision analysis")
         return None
@@ -301,27 +301,90 @@ def analyze_images_with_gpt4_vision(images_base64):
     try:
         print(f"Analyzing {len(images_base64)} images with GPT-4 Vision...")
         
-        # Build messages with images
+        # Build messages with images - VERY detailed technical prompt
         content = [{
             "type": "text",
-            "text": """Analise esta(s) imagem(ns) de peça de vestuário e descreva DETALHADAMENTE os seguintes aspectos técnicos:
+            "text": """Você é um especialista técnico de vestuário. Analise esta(s) imagem(ns) e descreva com MÁXIMO DETALHE TÉCNICO todos os aspectos construtivos da peça. Este será usado para gerar um desenho técnico preciso.
 
-1. TIPO DE PEÇA: Qual é a peça (camisa, blusa, vestido, calça, etc.)
-2. SHAPE/SILHUETA: Descrição da forma geral (ajustada, solta, reta, evasê, etc.)
-3. GOLA: Tipo e formato exato (redonda, V, careca, polo, colarinho, etc.)
-4. MANGAS: Comprimento e estilo (curta, longa, 3/4, raglan, bufante, etc.)
-5. COMPRIMENTO: Da peça em relação ao corpo (cropped, na cintura, no quadril, midi, longo)
-6. RECORTES E COSTURAS: Onde ficam as linhas de costura visíveis
-7. FECHAMENTOS: Tipo e localização (botões, zíper, amarração, etc.)
-8. ACABAMENTOS: Detalhes como bainhas, punhos, vivos, pespontos
-9. BOLSOS: Se tem, onde ficam e que tipo são
-10. OUTROS DETALHES: Pregas, franzidos, pences, aplicações, etc.
+ANÁLISE OBRIGATÓRIA:
 
-Seja PRECISO e OBJETIVO. Descreva apenas o que REALMENTE aparece na imagem, sem inventar detalhes."""
+**1. IDENTIFICAÇÃO**
+- Tipo de peça exato (blusa, camisa, vestido, casaco, calça, etc.)
+- Categoria (tricô/malha, tecido plano, jeans, etc.)
+
+**2. VISTAS**
+- Frente: Descreva TUDO que aparece na frente
+- Costas: Descreva TUDO que aparece nas costas  
+- Mangas: Posição, comprimento, formato
+
+**3. GOLA/DECOTE (CRÍTICO - DESCREVA EM DETALHE)**
+- Tipo EXATO: gola rolê/careca/V/redonda/colarinho/polo/quadrada/ombro-a-ombro/canoa/etc
+- Altura da gola (baixa/média/alta)
+- Largura/abertura
+- Se tem ribana, quantos cm de altura
+- Acabamento (costura aparente, viés, overlock, etc.)
+
+**4. MANGAS (DETALHE COMPLETO)**
+- Comprimento exato (regata/curta/3-4/7-8/longa)
+- Modelo (básica/raglan/bufante/japonesa/morcego/etc.)
+- Cava: tipo (americana/cavada/ombro-caído/etc.) e altura
+- Punho: tem ou não, tipo (ribana/dobrado/abotoado), altura em cm
+
+**5. CORPO DA PEÇA**
+- Comprimento total (cropped/curto/médio/longo/maxi)
+- Caimento (justo/reto/amplo/oversized/evasê)
+- Largura nos ombros, busto, cintura, quadril, barra
+
+**6. RECORTES E PENCES**
+- Quantos recortes tem e onde ficam EXATAMENTE
+- Pences: onde ficam, quantas, direção (vertical/diagonal/horizontal)
+- Costuras princesa, laterais, ombro, etc.
+
+**7. FECHAMENTOS (MUITO IMPORTANTE)**
+- Tipo: botões/zíper/colchetes/amarração/nenhum
+- Localização EXATA (frente/costas/lateral/ombro)
+- Quantidade de botões e espaçamento entre eles
+- Para zíper: invisível/aparente/destacável/comprimento
+- Direção de abotoamento (masculino/feminino)
+
+**8. BOLSOS**
+- Tem ou não tem
+- Tipo EXATO (chapa/faca/embutido/patch/canguru/etc.)
+- Localização e tamanho
+- Tampa, vivo, recorte
+
+**9. BARRA/HEM**
+- Tipo de acabamento (reta/curva/assimétrica)
+- Acabamento (bainha/ribana/overlock/desfiada)
+- Altura da ribana ou bainha se tiver
+
+**10. TEXTURA E PADRONAGEM**
+- Tricô: tipo de ponto (jersey/canelado/trança/ponto arroz/etc.)
+- Se tem tranças: onde ficam, largura, repetição
+- Canelados/nervuras: onde ficam (punho/gola/barra), largura
+- Padrão de malha ou tecido
+
+**11. ACABAMENTOS ESPECIAIS**
+- Pespontos: onde ficam, tipo de linha
+- Vivos/Debrum/Viés: localização e largura
+- Etiquetas externas visíveis
+- Apliques, bordados, tachas, ilhós
+
+**12. PROPORÇÕES VISUAIS**
+- Relação entre largura e comprimento
+- Proporção manga/corpo
+- Altura gola/decote em relação ao total
+
+IMPORTANTE:
+- Descreva APENAS o que REALMENTE VÊ na imagem
+- Seja EXTREMAMENTE específico em gola, mangas, fechamentos e acabamentos
+- Mencione TODAS as costuras visíveis e seus posicionamentos
+- Se não tiver certeza de algo, diga "não visível" ao invés de inventar
+- Use terminologia técnica de confecção têxtil"""
         }]
         
         # Add all images
-        for img_b64 in images_base64[:3]:  # Limit to first 3 images to save tokens
+        for img_b64 in images_base64[:3]:  # Limit to first 3 images
             content.append({
                 "type": "image_url",
                 "image_url": {
@@ -336,11 +399,11 @@ Seja PRECISO e OBJETIVO. Descreva apenas o que REALMENTE aparece na imagem, sem 
                 "role": "user",
                 "content": content
             }],
-            max_tokens=1000
+            max_tokens=2000  # Increased for more detailed analysis
         )
         
         description = response.choices[0].message.content
-        print(f"GPT-4 Vision analysis successful: {description[:100]}...")
+        print(f"GPT-4 Vision detailed analysis successful ({len(description)} chars)")
         return description
         
     except Exception as e:
@@ -490,42 +553,89 @@ def process_specification_with_openai(text_content):
         return None
 
     try:    
-        prompt = """
-        Analise o seguinte texto de ficha técnica de vestuário e extraia as informações estruturadas em formato JSON.
-        
-        Extraia as seguintes categorias:
-        1. Identificação da Peça: ref_souq, description, collection, supplier, corner
-        2. Informações Comerciais: target_price, store_month, delivery_cd_month
-        3. Prazos e Entregas: tech_sheet_delivery_date, pilot_delivery_date, showcase_for
-        4. Equipe Envolvida: stylists
-        5. Matéria-Prima e Aviamentos: composition, colors, tags_kit
-        6. Especificações Técnicas: pilot_size, body_length, sleeve_length, hem_width, shoulder_to_shoulder, bust, waist, straight_armhole, neckline_depth, openings_details, finishes
-        7. Design e Estilo: technical_drawing, reference_photos, specific_details
-        
-        Para datas, use formato YYYY-MM-DD. Se uma informação não estiver disponível, use null.
-        
-        Texto da ficha técnica:
-        """ + text_content
+        prompt = f"""Você é um especialista em análise de fichas técnicas de vestuário. Extraia TODAS as informações disponíveis do texto abaixo e retorne em formato JSON estruturado.
 
-        # Using gpt-4-turbo for JSON mode support
+IMPORTANTE:
+- Extraia TODOS os dados que encontrar no texto, mesmo que em formatos variados
+- Se um campo não estiver explicitamente rotulado, procure a informação no contexto
+- Para medidas, extraia o VALOR NUMÉRICO (ex: "64 cm" → "64 cm")
+- Para datas, use formato YYYY-MM-DD quando possível
+- Se uma informação NÃO estiver disponível, use null (não invente dados)
+
+CAMPOS OBRIGATÓRIOS A EXTRAIR:
+
+1. **Identificação da Peça:**
+   - ref_souq: Código/referência da peça (pode estar como "REF", "CÓDIGO", "REFERÊNCIA")
+   - description: Nome/descrição da peça (ex: "BLUSA GOLA ROLE", "VESTIDO MIDI")
+   - collection: Coleção (ex: "Inverno 2025", "W26")
+   - supplier: Fornecedor/fabricante
+   - corner: Corner/departamento
+
+2. **Informações Comerciais:**
+   - target_price: Preço alvo/target
+   - store_month: Mês de loja
+   - delivery_cd_month: Mês de entrega CD
+
+3. **Prazos e Entregas:**
+   - tech_sheet_delivery_date: Data de entrega da ficha técnica
+   - pilot_delivery_date: Data de entrega do piloto/protótipo
+   - showcase_for: Mostruário para
+
+4. **Equipe Envolvida:**
+   - stylists: Estilistas responsáveis
+
+5. **Matéria-Prima e Composição:**
+   - composition: Composição do tecido (ex: "100% algodão", "60% poliéster 40% viscose")
+   - colors: Cores disponíveis
+   - tags_kit: Kit de etiquetas/aviamentos
+
+6. **Especificações Técnicas (CRÍTICO - EXTRAIA TODOS OS VALORES):**
+   - pilot_size: Tamanho piloto (ex: "P", "M", "38", "40")
+   - body_length: Comprimento do corpo/total (em cm)
+   - sleeve_length: Comprimento da manga (em cm)
+   - hem_width: Largura da barra (em cm)
+   - shoulder_to_shoulder: Largura ombro a ombro (em cm)
+   - bust: Largura do busto/peito (em cm)
+   - waist: Largura da cintura (em cm)
+   - straight_armhole: Altura da cava (em cm)
+   - neckline_depth: Profundidade do decote (em cm)
+   - openings_details: Detalhes de aberturas, fechamentos, zíperes, botões
+   - finishes: Acabamentos (bainhas, costuras, overlock, etc.)
+
+7. **Design e Estilo:**
+   - technical_drawing: Referência a desenho técnico se mencionado
+   - reference_photos: Referências de fotos/imagens
+   - specific_details: Detalhes específicos adicionais
+
+**TEXTO DA FICHA TÉCNICA:**
+{text_content}
+
+Retorne um objeto JSON com TODOS os campos acima, usando null para informações não disponíveis."""
+
+        # Using gpt-4o for better extraction
         response = openai_client.chat.completions.create(
             model="gpt-4o",
             messages=[{
                 "role":
                 "system",
                 "content":
-                "Você é um especialista em análise de fichas técnicas de vestuário. Extraia informações estruturadas e retorne SOMENTE em formato JSON válido, sem texto adicional."
+                "Você é um especialista em análise de fichas técnicas de vestuário. Extraia TODAS as informações estruturadas encontradas no texto e retorne SOMENTE em formato JSON válido, sem texto adicional. Seja preciso na extração de medidas e valores numéricos."
             }, {
                 "role": "user",
                 "content": prompt
             }],
             response_format={"type": "json_object"},
-            max_tokens=2000)
+            max_tokens=2500)  # Increased for more comprehensive extraction
 
         content = response.choices[0].message.content
         if content:
             try:
                 parsed_json = json.loads(content)
+                print(f"Extracted {len(parsed_json)} fields from PDF")
+                # Log what was extracted for debugging
+                for key, value in parsed_json.items():
+                    if value is not None and value != "":
+                        print(f"  - {key}: {str(value)[:50]}...")
                 return parsed_json
             except json.JSONDecodeError as je:
                 print(f"JSON parsing error: {je}")
@@ -534,6 +644,8 @@ def process_specification_with_openai(text_content):
             return None
     except Exception as e:
         print(f"Error processing with OpenAI: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
