@@ -38,13 +38,25 @@ Preferred communication style: Simple, everyday language.
 - **Database**: SQL database connection via SQLALCHEMY_DATABASE_URI
 - **Environment Variables**: SESSION_SECRET for session security, OPENAI_API_KEY for AI processing
 
-## Recent Changes (October 21, 2025)
+## Recent Changes
 
-### Technical Drawing Generation Feature
-- **Added DALL-E 3 Integration**: Users can now automatically generate professional technical drawings (flat sketches) from specification data
+### October 23, 2025 - Professional Technical Drawing Prompt
+- **Upgraded DALL-E 3 Prompt**: Implemented industry-standard specifications for professional technical drawings
+  - **Dual Views**: Front and back views side-by-side, horizontally aligned
+  - **Line Art Style**: Pure 2D line art with uniform black lines, transparent fill, white background (#FFFFFF)
+  - **Isolated Garment**: No model, mannequin, hanger, scenery, or reflections
+  - **Construction Details**: Specific rendering of seam lines, topstitching, darts, collars, cuffs, hems, closures, pockets, pleats
+  - **Strict Negatives**: No colors, shadows, gradients, 3D effects, text, numbers, annotations, or invented elements
+  - **Professional Layout**: Landscape orientation (1792x1024), minimal margins, consistent line weight
+  - **Maximum Fidelity**: Priority on absolute accuracy to GPT-4 Vision analysis and technical measurements
+
+### October 21, 2025 - Vision-Based Technical Drawing Generation
+- **Added GPT-4o Vision Integration**: System now analyzes actual garment images from PDFs before generating technical drawings
+- **Image Extraction**: PyPDF2 extracts up to 3 images from uploaded PDFs
+- **Visual Analysis**: GPT-4o Vision provides detailed technical description of garment construction
+- **Enhanced Prompt**: Combines visual description with extracted measurements for accurate DALL-E 3 generation
 - **High-Quality Output**: Using quality="hd" setting for maximum detail and precision
 - **Resolution**: 1792x1024 pixels (maximum landscape format)
-- **Dynamic Prompt Building**: System intelligently constructs prompts using extracted measurements and technical details
 - **Database Schema Update**: Added `technical_drawing_url` field to store generated image URLs
 - **User Interface Enhancements**: 
   - New "Desenho Técnico" card in specification view
