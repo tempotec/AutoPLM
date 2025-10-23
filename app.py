@@ -566,31 +566,35 @@ def create_user():
 def upload_pdf():
     form = UploadPDFForm()
     if request.method == 'POST' and form.validate_on_submit():
-        file = form.pdf_file.data
-        filename = secure_filename(file.filename)
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        file.save(file_path)
-
-        # Create specification record
-        spec = Specification()
-        spec.user_id = session['user_id']
-        spec.pdf_filename = filename
-        spec.processing_status = 'processing'
-        spec.created_at = datetime.now()
-
         try:
+            file = form.pdf_file.data
+            filename = secure_filename(file.filename)
+            file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(file_path)
+
+            # Create specification record
+            spec = Specification()
+            spec.user_id = session['user_id']
+            spec.pdf_filename = filename
+            spec.processing_status = 'processing'
+            spec.created_at = datetime.now()
+
             db.session.add(spec)
             db.session.commit()
 
             # Process PDF asynchronously (in a real app, use Celery or similar)
             process_pdf_specification(spec.id, file_path)
 
-            flash(
-                'PDF enviado com sucesso! O processamento está em andamento.')
+            flash('PDF enviado com sucesso! O processamento está em andamento.')
             return redirect(url_for('dashboard'))
+            
         except Exception as e:
             db.session.rollback()
-            flash('Erro ao processar o arquivo PDF.')
+            print(f"Error in upload_pdf: {e}")
+            import traceback
+            traceback.print_exc()
+            flash('Erro ao processar o arquivo PDF. Por favor, tente novamente ou contate o suporte.')
+            return render_template('upload_pdf.html', form=form)
 
     return render_template('upload_pdf.html', form=form)
 
@@ -825,6 +829,36 @@ def delete_user(id):
     return redirect(url_for('manage_users'))
 
 
+def convert_value_to_string(value):
+    """Convert complex types (list, dict) to formatted strings for database storage"""
+    if value is None:
+        return None
+    
+    if isinstance(value, str):
+        return value
+    
+    if isinstance(value, list):
+        # Handle list of dictionaries
+        if value and isinstance(value[0], dict):
+            # Extract values from dictionaries and join
+            extracted_values = []
+            for item in value:
+                if isinstance(item, dict):
+                    # Get all non-empty values from the dict
+                    extracted_values.extend([str(v) for v in item.values() if v])
+            return ", ".join(extracted_values) if extracted_values else ""
+        else:
+            # Simple list of strings/numbers
+            return ", ".join(str(item) for item in value if item)
+    
+    if isinstance(value, dict):
+        # Convert dict to "key: value" format
+        return ", ".join(f"{k}: {v}" for k, v in value.items() if v)
+    
+    # For numbers, booleans, etc.
+    return str(value)
+
+
 def process_pdf_specification(spec_id, file_path):
     """Process PDF specification in background"""
     try:
@@ -851,15 +885,21 @@ def process_pdf_specification(spec_id, file_path):
                 if isinstance(fields, dict):
                     for field, value in fields.items():
                         if hasattr(spec, field) and value:
-                            setattr(spec, field, value)
+                            # Convert complex types to strings before saving
+                            converted_value = convert_value_to_string(value)
+                            setattr(spec, field, converted_value)
 
             spec.processing_status = 'completed'
         else:
             spec.processing_status = 'error'
 
         db.session.commit()
+        print(f"Successfully processed specification {spec_id}")
+        
     except Exception as e:
         print(f"Error processing PDF specification: {e}")
+        import traceback
+        traceback.print_exc()
         spec = Specification.query.get(spec_id)
         if spec:
             spec.processing_status = 'error'
