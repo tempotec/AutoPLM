@@ -41,12 +41,22 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
-### October 23, 2025 - GPT-Image-1 Integration
+### October 23, 2025 - GPT-Image-1 Integration with Local File Storage
 - **Upgraded to GPT-Image-1**: Replaced DALL-E 3 with OpenAI's latest GPT-Image-1 model for superior image quality
   - **Higher Quality**: Photorealistic results with 94% prompt adherence (vs 78% on DALL-E 3)
   - **Better Resolution**: Support for up to 4096x4096 pixels (currently using 1024x1024)
   - **Perfect Text Rendering**: Accurate text within images for labels and annotations
   - **Enhanced Fidelity**: Significantly better at following complex technical drawing specifications
+- **Local File Storage**: Images now saved locally instead of relying on temporary external URLs
+  - GPT-Image-1 returns base64-encoded images (no URL support)
+  - System decodes base64 and saves as `drawing_{spec_id}_{uuid}.png` in `uploads/` folder
+  - Database stores only the filename, reducing dependency on external services
+  - Created `/drawing/<id>` route to serve images with proper access control
+- **Backward Compatibility**: Seamless support for legacy DALL-E 3 URLs
+  - Route detects if `technical_drawing_url` starts with `http://` or `https://`
+  - Legacy URLs redirect to external OpenAI storage
+  - New filenames serve from local storage via `send_file()`
+  - Zero breaking changes for existing specifications
 
 ### October 23, 2025 - Professional Technical Drawing Prompt
 - **Upgraded Drawing Specifications**: Implemented industry-standard specifications for professional technical drawings
@@ -80,11 +90,15 @@ The system processes technical specifications containing product identification,
 1. User uploads PDF containing technical specifications
 2. System extracts data using GPT-4-Turbo (measurements, materials, finishes)
 3. User clicks "Gerar Desenho Técnico" button
-4. **NEW**: System extracts images from the PDF using PyPDF2
-5. **NEW**: GPT-4o Vision analyzes images and generates detailed technical description of the garment
+4. System extracts up to 3 images from the PDF using PyPDF2
+5. GPT-4o Vision analyzes images and generates detailed technical description of the garment
 6. System builds specialized prompt combining visual description + extracted measurements
 7. GPT-Image-1 generates professional flat sketch (1024x1024, high quality, line art style) based on actual reference images
-8. Generated image URL is stored and displayed in specification view
-9. Users can regenerate or download technical drawings as needed
+8. System decodes base64 response and saves image locally as `drawing_{id}_{uuid}.png`
+9. Database stores filename; image served via `/drawing/<id>` route with access control
+10. Users can view, regenerate, or download technical drawings as needed
 
-**Key Innovation:** The system now uses **real images from PDFs** as references, analyzed by GPT-4 Vision, to ensure technical drawings match the actual garment instead of "inventing" details.
+**Key Innovations:** 
+- Uses **real images from PDFs** as references, analyzed by GPT-4 Vision, to ensure technical drawings match the actual garment instead of "inventing" details
+- **Local storage** eliminates dependency on temporary external URLs and provides better control over assets
+- **Backward compatibility** ensures existing specifications with DALL-E 3 URLs continue to work seamlessly
