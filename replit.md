@@ -58,15 +58,26 @@ Preferred communication style: Simple, everyday language.
   - New filenames serve from local storage via `send_file()`
   - Zero breaking changes for existing specifications
 
-### October 23, 2025 - Professional Technical Drawing Prompt
-- **Upgraded Drawing Specifications**: Implemented industry-standard specifications for professional technical drawings
-  - **Dual Views**: Front and back views side-by-side, horizontally aligned
-  - **Line Art Style**: Pure 2D line art with uniform black lines, transparent fill, white background (#FFFFFF)
-  - **Isolated Garment**: No model, mannequin, hanger, scenery, or reflections
-  - **Construction Details**: Specific rendering of seam lines, topstitching, darts, collars, cuffs, hems, closures, pockets, pleats
-  - **Strict Negatives**: No colors, shadows, gradients, 3D effects, text, numbers, annotations, or invented elements
-  - **Professional Layout**: Landscape orientation (1792x1024), minimal margins, consistent line weight
-  - **Maximum Fidelity**: Priority on absolute accuracy to GPT-4 Vision analysis and technical measurements
+### October 23, 2025 - Professional Technical Drawing Prompt (Industry Standard)
+- **Comprehensive Professional Specifications**: Implemented complete industry-standard technical flat sketch specifications
+  - **Required Views**: Front and back views aligned VERTICALLY (same scale, centered), with enlarged details (1:2 or 1:3) for collar, cuffs, pockets, zipper, hem, waistband
+  - **Visual Style**: 100% white background (#FFFFFF); pure black line art; no model, mannequin, or hanger
+  - **Line Standards**: 
+    * Outline: continuous line (0.75pt)
+    * Internal seams: fine continuous line (0.35pt)
+    * Topstitching: short dashed line
+    * Fold/turn: dash-dot line
+  - **Construction Details**: Collars/necklines, cuffs, hems, finishes (flat-felled, piping, overlock), cutouts, darts, pleats, gathers, functional folds
+  - **Closures**: Zippers (invisible/nylon/metal), buttons, snaps, ties - with length and position
+  - **Pockets**: Type (slash, patch, inset), relative dimensions, flaps, piping
+  - **Waistband/Belt**: with/without belt loops, quantity and position
+  - **Labels/Branding**: location (internal/external)
+  - **Neutral Gray (10-30%)**: ONLY for indicating overlap/volume/lining
+  - **Graphic Symbols**: Button (circle 2-4mm), eyelet (ring), rivet (solid dot)
+  - **Directional Arrows**: Simple arrows indicating button direction, zipper opening, pleat/gather direction (without text labels)
+  - **Image Normalization**: Corrects perspective/distortions, aligns central axis, ensures symmetry
+  - **Strict Prohibitions**: No model/mannequin/hanger, no gradients/realistic textures, no organic/artistic styling, no invented details
+  - **Permitted Elements**: Graphic symbols and simple directional arrows; NO dimensional measurements, NO text legends, NO descriptive callouts
 
 ### October 21, 2025 - Vision-Based Technical Drawing Generation
 - **Added GPT-4o Vision Integration**: System now analyzes actual garment images from PDFs before generating technical drawings
