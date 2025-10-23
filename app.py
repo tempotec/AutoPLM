@@ -351,43 +351,50 @@ Seja PRECISO e OBJETIVO. Descreva apenas o que REALMENTE aparece na imagem, sem 
 
 
 def build_technical_drawing_prompt(spec, visual_description=None):
-    """Build professional technical flat sketch prompt for GPT-Image-1"""
+    """Build professional technical flat sketch prompt with measurements and POMs for GPT-Image-1"""
     
     # Determine garment type from description
     garment_type = spec.description or "peça de roupa"
     
-    # Build measurements block with proportions
-    measurements = []
-    if spec.pilot_size:
-        measurements.append(f"Tamanho: {spec.pilot_size}")
-    
-    measurement_fields = {
-        'bust': 'tórax',
-        'body_length': 'comprimento',
-        'sleeve_length': 'manga',
-        'waist': 'cintura',
-        'shoulder_to_shoulder': 'ombro a ombro',
-        'hem_width': 'barra',
-        'straight_armhole': 'cava',
-        'neckline_depth': 'decote'
-    }
-    
-    for field, label in measurement_fields.items():
-        value = getattr(spec, field, None)
-        if value:
-            measurements.append(f"{label}: {value}")
-    
-    measurements_text = "; ".join(measurements) if measurements else "usar proporções padrão"
+    # Build size information
+    size_base = spec.pilot_size or "M/P"
     
     # Build material and composition info
     material_info = spec.composition or "tecido padrão"
     
-    # Build constructive details from specifications
+    # Build POMs (Pontos de Medida) list with available measurements
+    poms = []
+    pom_counter = 1
+    
+    measurement_poms = {
+        'body_length': 'Comprimento total (HPS até barra)',
+        'bust': 'Largura peito (1 cm abaixo da cava, half chest)',
+        'hem_width': 'Largura barra (hem width, half)',
+        'shoulder_to_shoulder': 'Ombro a ombro (ponto externo a externo)',
+        'neckline_depth': 'Abertura decote/gola (profundidade a partir do HPS)',
+        'sleeve_length': 'Comprimento manga (do ponto mais alto do ombro até punho)',
+        'waist': 'Largura cintura (half)',
+        'straight_armhole': 'Largura da cava (vertical)'
+    }
+    
+    for field, description in measurement_poms.items():
+        value = getattr(spec, field, None)
+        if value:
+            # Sanitize measurement value: remove existing "cm" unit to avoid duplication
+            value_str = str(value).strip()
+            if value_str.lower().endswith('cm'):
+                value_str = value_str[:-2].strip()
+            poms.append(f"  {pom_counter}. {description}: {value_str} cm")
+            pom_counter += 1
+    
+    poms_text = "\n".join(poms) if poms else "  (usar medidas proporcionais padrão)"
+    
+    # Build constructive details
     constructive_details = []
     if spec.finishes:
         constructive_details.append(f"Acabamentos: {spec.finishes}")
     if spec.openings_details:
-        constructive_details.append(f"Fechamentos/Aberturas: {spec.openings_details}")
+        constructive_details.append(f"Fechamentos: {spec.openings_details}")
     
     details_text = " | ".join(constructive_details) if constructive_details else "detalhes conforme análise visual"
     
@@ -399,59 +406,71 @@ REFERÊNCIA VISUAL (BASE OBRIGATÓRIA PARA FIDELIDADE):
 {visual_description}
 """
     
-    # Build complete professional prompt
-    prompt = f"""TAREFA: Transformar a peça de roupa em desenho técnico plano (flat sketch) vetorial com alta fidelidade ao caimento e detalhes construtivos, pronto para ficha técnica.
+    # Build complete professional prompt with POMs and dimensions
+    prompt = f"""TAREFA: A partir da imagem da peça, gere desenho técnico plano (flat sketch) vetorial DIMENSIONADO com todas as cotas e POMs, pronto para produção e ficha técnica profissional.
+
+IMPORTANTE: Gerar a versão com medidas e cotagem completa (não a versão limpa sem medidas).
 
 ENTRADAS:
 - Tipo da peça: {garment_type}
-- Material principal: {material_info}
-- Medidas/proporções: {measurements_text}
-- Detalhes obrigatórios: {details_text}
+- Tamanho-base para cotagem: {size_base}
+- Material/composição: {material_info}
+- Detalhes construtivos: {details_text}
 {visual_section}
 
 VISTAS OBRIGATÓRIAS:
-- Frente e Costas alinhadas VERTICALMENTE (mesma escala, centralizadas)
-- Incluir detalhes ampliados (1:2 ou 1:3) para: gola/colarinho, punho, bolso, zíper, barra, cós quando aplicável
-- Se relevante: vista interna parcial para mostrar forro/acabamento interno
+- Frente e Costas (mesma escala), alinhadas VERTICALMENTE
+- Manga em posição natural quando aplicável
+- Detalhes ampliados (1:2 ou 1:3) para: gola/colarinho, punho, bolso, zíper, barra, cós, casas de botão
+- Seções: mostrar em corte simples sobreposições (placket, vista) e espessuras (punho/barra quando aplicável)
 
-ESTILO VISUAL E ANOTAÇÃO:
-- Fundo 100% branco (#FFFFFF); sem corpo, cabide ou manequim
-- Traço preto contínuo; espessuras: contorno 0,75pt; costuras 0,35pt; pespontos tracejado curto
-- Padrões de linha:
-  * Contorno visível: linha contínua
-  * Costura interna: linha contínua fina
-  * Pesponto: linha tracejada
-  * Dobra/virado: linha ponto-traço fino
-- Cinza neutro (10-30%) APENAS para indicar sobreposição/volume/forro
+ESTILO VISUAL:
+- Fundo 100% branco (#FFFFFF); sem corpo/manequim/cabide
+- Traço preto; espessuras: contorno 0,75pt, costuras/canelado 0,35pt, pesponto/linha tracejado 0,35pt
+- Cinza 15-30% apenas para sobreposição/forro
+- Simetria central indicada por linha ponto-traço (eixo central)
 - Símbolos gráficos: botão (círculo 2-4mm), ilhós (anel), rebite (ponto sólido)
-- Setas indicativas simples para: direção de abotoamento, abertura de zíper, sentido de pregas/franzidos (sem texto descritivo)
+
+CONVENÇÕES DE COTAGEM (MEDIDAS E POMs):
+- Linhas de cota: finas (0,35pt), com setas cheias
+- Linhas de chamada perpendiculares, afastamento mínimo 3mm do contorno
+- Texto de medida: sans-serif 8-9pt, sempre acima da linha de cota; unidade em cm
+- Centro/espelhamento: indicar eixo central; usar "(x2)" quando medida refere-se a metade simétrica
+- Cada POM numerado no desenho
+
+PONTOS DE MEDIDA (POMs) OBRIGATÓRIOS:
+{poms_text}
 
 DETALHES CONSTRUTIVOS (incluir todos aplicáveis):
+- Textura/padronagem: representar com traço técnico (nervuras, canelados, tranças quando aplicável)
 - Golas/colarinho, punhos, barras, acabamentos (rebatido, vivo, overlock)
 - Recortes, pences, pregas, franzidos, dobras funcionais
-- Fechamentos: zíper (invisível/nylon/metal), botões, colchetes, amarrações - com comprimento e posição
+- Fechamentos: tipo (zíper invisível/nylon/metal, botões, colchetes), posição e quantidade
+- Casas de botão: posição centrada, distância da borda e quantidade
 - Bolsos: tipo (faca, chapa, embutido), dimensões relativas, tampas, vivos
-- Cós/cintura: com/sem passantes, quantidade e posição
-- Etiquetas/branding: localização (interna/externa)
+- Cós/placket: largura, com/sem passantes, lado do abotoamento
+- Etiquetas: localização (interna/externa)
 
 NORMALIZAÇÃO DA IMAGEM:
 - Corrigir perspectiva/distorções: alinhar eixo central
-- Garantir simetria quando aplicável
+- Garantir simetria quando aplicável (espelhar quando necessário)
 - Remover sombras/elementos que não pertencem à construção
+- Todas as medidas em peça relaxada (sem esticar)
 
 CRITÉRIOS DE ACEITAÇÃO:
+- Todos os POMs numerados visíveis e legíveis no desenho
+- Frente/Costas na mesma escala, perfeitamente centradas
+- Eixo central indicado; simetria consistente
+- Linhas de cota não colidem com textura/contornos (usar afastamentos adequados)
 - Proporções consistentes com as medidas de referência
-- Todas costuras e acabamentos identificáveis por tipo de linha
-- Frente/Costas em escala idêntica e perfeitamente centradas
-- Visual limpo e técnico para ficha técnica
+- Visual limpo e técnico para produção
 
 NÃO FAZER (PROIBIDO):
-- NÃO incluir modelo/manequim/cabide
-- NÃO usar gradientes ou texturas realistas de tecido
+- NÃO incluir modelo/sombra realista/gradiente
+- NÃO omitir POMs de barra, punho, decote, botões quando aplicáveis
+- NÃO usar gradientes ou texturas fotorrealistas
 - NÃO estilizar com traço orgânico/artístico; manter técnico
-- NÃO inventar detalhes não descritos na referência visual
-- NÃO incluir medidas numéricas, cotas dimensionais, legendas ou textos descritivos longos
-- PERMITIDO: Símbolos gráficos padrão (botões, ilhós) e setas direcionais simples"""
+- NÃO inventar detalhes não descritos na referência visual"""
 
     return prompt
 
@@ -904,114 +923,4 @@ def delete_user(id):
 
     if user.id == current_user.id:
         flash('Não é possível excluir seu próprio usuário.')
-        return redirect(url_for('manage_users'))
-
-    try:
-        # Delete all user specifications and files
-        for spec in user.specifications:
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'],
-                                     spec.pdf_filename)
-            if os.path.exists(file_path):
-                os.remove(file_path)
-
-        db.session.delete(user)
-        db.session.commit()
-        flash(f'Usuário {user.username} excluído com sucesso!')
-    except Exception as e:
-        db.session.rollback()
-        flash('Erro ao excluir usuário.')
-
-    return redirect(url_for('manage_users'))
-
-
-def convert_value_to_string(value):
-    """Convert complex types (list, dict) to formatted strings for database storage"""
-    if value is None:
-        return None
-    
-    if isinstance(value, str):
-        return value
-    
-    if isinstance(value, list):
-        # Handle list of dictionaries
-        if value and isinstance(value[0], dict):
-            # Extract values from dictionaries and join
-            extracted_values = []
-            for item in value:
-                if isinstance(item, dict):
-                    # Get all non-empty values from the dict
-                    extracted_values.extend([str(v) for v in item.values() if v])
-            return ", ".join(extracted_values) if extracted_values else ""
-        else:
-            # Simple list of strings/numbers
-            return ", ".join(str(item) for item in value if item)
-    
-    if isinstance(value, dict):
-        # Convert dict to "key: value" format
-        return ", ".join(f"{k}: {v}" for k, v in value.items() if v)
-    
-    # For numbers, booleans, etc.
-    return str(value)
-
-
-def process_pdf_specification(spec_id, file_path):
-    """Process PDF specification in background"""
-    try:
-        spec = Specification.query.get(spec_id)
-        if not spec:
-            return
-
-        # Extract text from PDF
-        text_content = extract_text_from_pdf(file_path)
-        spec.raw_extracted_text = text_content
-
-        if not text_content.strip():
-            spec.processing_status = 'error'
-            db.session.commit()
-            return
-
-        # Process with OpenAI
-        extracted_data = process_specification_with_openai(text_content)
-
-        if extracted_data:
-            # Update specification with extracted data
-            # Flatten the nested structure and map to database fields
-            for category, fields in extracted_data.items():
-                if isinstance(fields, dict):
-                    for field, value in fields.items():
-                        if hasattr(spec, field) and value:
-                            # Convert complex types to strings before saving
-                            converted_value = convert_value_to_string(value)
-                            setattr(spec, field, converted_value)
-
-            spec.processing_status = 'completed'
-        else:
-            spec.processing_status = 'error'
-
-        db.session.commit()
-        print(f"Successfully processed specification {spec_id}")
-        
-    except Exception as e:
-        print(f"Error processing PDF specification: {e}")
-        import traceback
-        traceback.print_exc()
-        spec = Specification.query.get(spec_id)
-        if spec:
-            spec.processing_status = 'error'
-            db.session.commit()
-
-
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        # Create default admin user if none exists
-        if not User.query.filter_by(is_admin=True).first():
-            admin = User()
-            admin.username = 'admin'
-            admin.email = 'admin@example.com'
-            admin.is_admin = True
-            admin.set_password('admin123')
-            db.session.add(admin)
-            db.session.commit()
-
-    app.run(host='0.0.0.0', port=5000, debug=True)
+        return redirect(url_for('manage_users'))  # Redirect to manage users page
