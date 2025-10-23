@@ -678,7 +678,7 @@ def view_pdf(id):
 @app.route('/specification/<int:id>/generate_drawing', methods=['POST'])
 @login_required
 def generate_technical_drawing(id):
-    """Generate technical drawing using DALL-E 3"""
+    """Generate technical drawing using GPT-Image-1"""
     spec = Specification.query.get_or_404(id)
     user = User.query.get(session['user_id'])
     if not user:
@@ -708,14 +708,14 @@ def generate_technical_drawing(id):
         # Build prompt with specification data and visual description
         prompt = build_technical_drawing_prompt(spec, visual_desc)
 
-        # Generate image using DALL-E 3 with HD quality for maximum detail
+        # Generate image using GPT-Image-1 with high quality for maximum detail
         response = openai_client.images.generate(
-            model="dall-e-3",
+            model="gpt-image-1",
             prompt=prompt,
-            size=
-            "1792x1024",  # Maximum landscape resolution for technical drawings
-            quality="hd",  # HD quality for better detail and precision
+            size="1024x1024",  # GPT-Image-1 supports up to 4096x4096
+            quality="high",  # High quality for better detail and precision
             n=1,
+            response_format="url"  # Return URL instead of base64
         )
 
         # Save the image URL
@@ -727,6 +727,8 @@ def generate_technical_drawing(id):
 
     except Exception as e:
         print(f"Error generating technical drawing: {e}")
+        import traceback
+        traceback.print_exc()
         flash('Erro ao gerar desenho técnico. Tente novamente.')
         return redirect(url_for('view_specification', id=id))
 
