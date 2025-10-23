@@ -445,7 +445,7 @@ def process_specification_with_openai(text_content):
 
         # Using gpt-4-turbo for JSON mode support
         response = openai_client.chat.completions.create(
-            model="gpt-4-turbo",
+            model="gpt-4o",
             messages=[{
                 "role":
                 "system",
