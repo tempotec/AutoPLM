@@ -66,9 +66,9 @@
             </div>
             <div class="card-body">
                 {% if specification.technical_drawing_url %}
-                    <img src="{{ specification.technical_drawing_url }}" alt="Desenho Técnico" class="img-fluid mb-3" style="border: 1px solid #ddd; border-radius: 4px;">
+                    <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico" class="img-fluid mb-3" style="border: 1px solid #ddd; border-radius: 4px;">
                     <div class="d-grid gap-2">
-                        <a href="{{ specification.technical_drawing_url }}" target="_blank" class="btn btn-outline-primary btn-sm">
+                        <a href="{{ url_for('view_drawing', id=specification.id) }}" target="_blank" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-external-link-alt me-1"></i>Abrir em Nova Aba
                         </a>
                         <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" onsubmit="return confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.');">

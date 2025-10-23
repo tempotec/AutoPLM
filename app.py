@@ -675,6 +675,47 @@ def view_pdf(id):
         return redirect(url_for('view_specification', id=id))
 
 
+@app.route('/drawing/<int:id>')
+@login_required
+def view_drawing(id):
+    """Serve the generated technical drawing image"""
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+
+    # Allow access if user is admin or owns the specification
+    if not user.is_admin and spec.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('dashboard'))
+
+    if not spec.technical_drawing_url:
+        flash('Desenho técnico não encontrado.')
+        return redirect(url_for('view_specification', id=id))
+
+    try:
+        # Check if it's a legacy external URL (HTTPS) or new local filename
+        if spec.technical_drawing_url.startswith('http://') or spec.technical_drawing_url.startswith('https://'):
+            # Legacy URL from DALL-E 3 - redirect to external URL
+            return redirect(spec.technical_drawing_url)
+        else:
+            # New local file from GPT-Image-1
+            drawing_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.technical_drawing_url)
+            if os.path.exists(drawing_path):
+                return send_file(drawing_path, mimetype='image/png')
+            else:
+                flash('Arquivo de desenho não encontrado.')
+                return redirect(url_for('view_specification', id=id))
+    except Exception as e:
+        print(f"Error serving drawing: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Erro ao carregar desenho técnico.')
+        return redirect(url_for('view_specification', id=id))
+
+
 @app.route('/specification/<int:id>/generate_drawing', methods=['POST'])
 @login_required
 def generate_technical_drawing(id):
@@ -714,12 +755,26 @@ def generate_technical_drawing(id):
             prompt=prompt,
             size="1024x1024",  # GPT-Image-1 supports up to 4096x4096
             quality="high",  # High quality for better detail and precision
-            n=1,
-            response_format="url"  # Return URL instead of base64
+            n=1
         )
 
-        # Save the image URL
-        spec.technical_drawing_url = response.data[0].url
+        # GPT-Image-1 returns base64 by default
+        import base64
+        import uuid
+        
+        # Decode the base64 image
+        image_data = base64.b64decode(response.data[0].b64_json)
+        
+        # Generate unique filename
+        drawing_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
+        drawing_path = os.path.join(app.config['UPLOAD_FOLDER'], drawing_filename)
+        
+        # Save image to disk
+        with open(drawing_path, 'wb') as f:
+            f.write(image_data)
+        
+        # Save the filename (we'll serve it via a route)
+        spec.technical_drawing_url = drawing_filename
         db.session.commit()
 
         flash('Desenho técnico gerado com sucesso!')
