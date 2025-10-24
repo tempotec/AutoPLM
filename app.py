@@ -263,28 +263,33 @@ def extract_images_from_pdf(pdf_path):
                         if xObject[obj]['/Subtype'] == '/Image':
                             try:
                                 # Get image data
-                                size = (xObject[obj]['/Width'], xObject[obj]['/Height'])
+                                size = (xObject[obj]['/Width'],
+                                        xObject[obj]['/Height'])
                                 data = xObject[obj].get_data()
-                                
+
                                 # Convert to PIL Image
                                 if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
                                     img = Image.frombytes('RGB', size, data)
-                                elif xObject[obj]['/ColorSpace'] == '/DeviceGray':
+                                elif xObject[obj][
+                                        '/ColorSpace'] == '/DeviceGray':
                                     img = Image.frombytes('L', size, data)
                                 else:
                                     continue
-                                
+
                                 # Convert to base64
                                 buffered = io.BytesIO()
                                 img.save(buffered, format="PNG")
-                                img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                                img_base64 = base64.b64encode(
+                                    buffered.getvalue()).decode('utf-8')
                                 images_base64.append(img_base64)
                             except Exception as e:
-                                print(f"Error extracting image from page {page_num}: {e}")
+                                print(
+                                    f"Error extracting image from page {page_num}: {e}"
+                                )
                                 continue
     except Exception as e:
         print(f"Error processing PDF for images: {e}")
-    
+
     return images_base64
 
 
@@ -293,18 +298,20 @@ def analyze_images_with_gpt4_vision(images_base64):
     if not images_base64:
         print("No images provided for GPT-4 Vision analysis")
         return None
-    
+
     if not openai_client:
         print("OpenAI client not initialized")
         return None
-    
+
     try:
         print(f"Analyzing {len(images_base64)} images with GPT-4 Vision...")
-        
+
         # Build messages with images - VERY detailed technical prompt
         content = [{
-            "type": "text",
-            "text": """Você é um especialista técnico de vestuário. Analise esta(s) imagem(ns) e descreva com MÁXIMO DETALHE TÉCNICO todos os aspectos construtivos da peça. Este será usado para gerar um desenho técnico preciso.
+            "type":
+            "text",
+            "text":
+            """Você é um especialista técnico de vestuário. Analise esta(s) imagem(ns) e descreva com MÁXIMO DETALHE TÉCNICO todos os aspectos construtivos da peça. Este será usado para gerar um desenho técnico preciso.
 
 ANÁLISE OBRIGATÓRIA:
 
@@ -382,7 +389,7 @@ IMPORTANTE:
 - Se não tiver certeza de algo, diga "não visível" ao invés de inventar
 - Use terminologia técnica de confecção têxtil"""
         }]
-        
+
         # Add all images
         for img_b64 in images_base64[:3]:  # Limit to first 3 images
             content.append({
@@ -392,7 +399,7 @@ IMPORTANTE:
                     "detail": "high"
                 }
             })
-        
+
         response = openai_client.chat.completions.create(
             model="gpt-4o",  # GPT-4o with vision
             messages=[{
@@ -401,11 +408,13 @@ IMPORTANTE:
             }],
             max_tokens=2000  # Increased for more detailed analysis
         )
-        
+
         description = response.choices[0].message.content
-        print(f"GPT-4 Vision detailed analysis successful ({len(description)} chars)")
+        print(
+            f"GPT-4 Vision detailed analysis successful ({len(description)} chars)"
+        )
         return description
-        
+
     except Exception as e:
         print(f"Error analyzing images with GPT-4 Vision: {e}")
         import traceback
@@ -416,36 +425,38 @@ IMPORTANTE:
 def build_technical_drawing_prompt(spec, visual_description=None):
     """Build professional technical flat sketch prompt with measurements and POMs for GPT-Image-1
     Based on professional industry standards for technical flats with full dimensioning"""
-    
+
     # Determine garment type from description
     garment_type = spec.description or "peça de vestuário"
-    
+
     # Build size information
     size_base = spec.pilot_size or "M"
-    
+
     # Build material and composition info
     material_info = spec.composition or "malha/tecido padrão"
-    
+
     # Extract additional material details if available
     material_details = ""
     if "tricô" in material_info.lower() or "malha" in material_info.lower():
         material_details = "Malha/tricô - representar textura com traço técnico"
-    
+
     # Build POMs (Pontos de Medida) list with available measurements
     poms = []
     pom_counter = 1
-    
+
     measurement_poms = {
         'body_length': 'Comprimento total (HPS até barra)',
         'bust': 'Largura peito (1 cm abaixo da cava, half chest)',
         'hem_width': 'Largura barra (hem width, half)',
         'shoulder_to_shoulder': 'Ombro a ombro (ponto externo a externo)',
-        'neckline_depth': 'Abertura decote/gola (profundidade a partir do HPS)',
-        'sleeve_length': 'Comprimento manga (do ponto mais alto do ombro até punho, seguindo curva)',
+        'neckline_depth':
+        'Abertura decote/gola (profundidade a partir do HPS)',
+        'sleeve_length':
+        'Comprimento manga (do ponto mais alto do ombro até punho, seguindo curva)',
         'waist': 'Largura cintura (half)',
         'straight_armhole': 'Largura da cava (vertical)'
     }
-    
+
     for field, description in measurement_poms.items():
         value = getattr(spec, field, None)
         if value:
@@ -455,23 +466,29 @@ def build_technical_drawing_prompt(spec, visual_description=None):
                 value_str = value_str[:-2].strip()
             poms.append(f"  {pom_counter}. {description}: {value_str} cm")
             pom_counter += 1
-    
+
     # Add additional POMs for specific details if available
-    if spec.openings_details and any(term in spec.openings_details.lower() for term in ['botão', 'botões', 'button']):
+    if spec.openings_details and any(
+            term in spec.openings_details.lower()
+            for term in ['botão', 'botões', 'button']):
         poms.append(f"  {pom_counter}. Espaçamento entre botões e diâmetro")
         pom_counter += 1
-    
-    poms_text = "\n".join(poms) if poms else "  (usar medidas proporcionais padrão para o tipo de peça)"
-    
+
+    poms_text = "\n".join(
+        poms
+    ) if poms else "  (usar medidas proporcionais padrão para o tipo de peça)"
+
     # Build constructive details
     constructive_details = []
     if spec.finishes:
         constructive_details.append(f"Acabamentos: {spec.finishes}")
     if spec.openings_details:
         constructive_details.append(f"Fechamentos: {spec.openings_details}")
-    
-    details_text = " | ".join(constructive_details) if constructive_details else "detalhes conforme análise visual"
-    
+
+    details_text = " | ".join(
+        constructive_details
+    ) if constructive_details else "detalhes conforme análise visual"
+
     # Build visual reference section
     visual_section = ""
     if visual_description:
@@ -479,7 +496,7 @@ def build_technical_drawing_prompt(spec, visual_description=None):
 **REFERÊNCIA VISUAL DA PEÇA (BASE OBRIGATÓRIA - SEGUIR FIELMENTE):**
 {visual_description}
 """
-    
+
     # Build complete professional prompt following industry standards
     prompt = f"""TAREFA:
 A partir da análise da peça, gere desenho técnico plano (flat sketch) vetorial DIMENSIONADO com todas as cotas e POMs (Pontos de Medida).
@@ -556,7 +573,6 @@ NÃO FAZER (ESTRITAMENTE PROIBIDO):
     return prompt
 
 
-
 def convert_value_to_string(value):
     """Convert complex values (lists, dicts) to strings for database storage"""
     if isinstance(value, (list, dict)):
@@ -570,7 +586,7 @@ def process_specification_with_openai(text_content):
         print("OpenAI client not initialized")
         return None
 
-    try:    
+    try:
         prompt = f"""Você é um especialista em análise de fichas técnicas de vestuário. Extraia TODAS as informações disponíveis do texto abaixo e retorne em formato JSON estruturado.
 
 IMPORTANTE:
@@ -672,7 +688,7 @@ def process_pdf_specification(spec_id, file_path):
     try:
         # Extract text from PDF
         text_content = extract_text_from_pdf(file_path)
-        
+
         if not text_content or len(text_content.strip()) < 50:
             print(f"Insufficient text extracted from PDF for spec {spec_id}")
             spec = Specification.query.get(spec_id)
@@ -680,10 +696,10 @@ def process_pdf_specification(spec_id, file_path):
                 spec.processing_status = 'error'
                 db.session.commit()
             return
-        
+
         # Process with OpenAI
         extracted_data = process_specification_with_openai(text_content)
-        
+
         if not extracted_data:
             print(f"No data extracted from OpenAI for spec {spec_id}")
             spec = Specification.query.get(spec_id)
@@ -691,28 +707,28 @@ def process_pdf_specification(spec_id, file_path):
                 spec.processing_status = 'error'
                 db.session.commit()
             return
-        
+
         # Update specification with extracted data
         spec = Specification.query.get(spec_id)
         if not spec:
             print(f"Specification {spec_id} not found")
             return
-        
+
         # Map extracted data to specification fields, converting complex values
         for key, value in extracted_data.items():
             if hasattr(spec, key) and value is not None:
                 # Convert lists/dicts to strings
                 setattr(spec, key, convert_value_to_string(value))
-        
+
         spec.processing_status = 'completed'
         db.session.commit()
         print(f"Successfully processed specification {spec_id}")
-        
+
     except Exception as e:
         print(f"Error processing PDF specification {spec_id}: {e}")
         import traceback
         traceback.print_exc()
-        
+
         # Update status to error
         try:
             spec = Specification.query.get(spec_id)
@@ -835,15 +851,18 @@ def upload_pdf():
             # Process PDF asynchronously (in a real app, use Celery or similar)
             process_pdf_specification(spec.id, file_path)
 
-            flash('PDF enviado com sucesso! O processamento está em andamento.')
+            flash(
+                'PDF enviado com sucesso! O processamento está em andamento.')
             return redirect(url_for('dashboard'))
-            
+
         except Exception as e:
             db.session.rollback()
             print(f"Error in upload_pdf: {e}")
             import traceback
             traceback.print_exc()
-            flash('Erro ao processar o arquivo PDF. Por favor, tente novamente ou contate o suporte.')
+            flash(
+                'Erro ao processar o arquivo PDF. Por favor, tente novamente ou contate o suporte.'
+            )
             return render_template('upload_pdf.html', form=form)
 
     return render_template('upload_pdf.html', form=form)
@@ -947,12 +966,15 @@ def view_drawing(id):
 
     try:
         # Check if it's a legacy external URL (HTTPS) or new local filename
-        if spec.technical_drawing_url.startswith('http://') or spec.technical_drawing_url.startswith('https://'):
+        if spec.technical_drawing_url.startswith(
+                'http://') or spec.technical_drawing_url.startswith(
+                    'https://'):
             # Legacy URL from DALL-E 3 - redirect to external URL
             return redirect(spec.technical_drawing_url)
         else:
             # New local file from GPT-Image-1
-            drawing_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.technical_drawing_url)
+            drawing_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                        spec.technical_drawing_url)
             if os.path.exists(drawing_path):
                 return send_file(drawing_path, mimetype='image/png')
             else:
@@ -988,14 +1010,16 @@ def generate_technical_drawing(id):
 
     try:
         # Get PDF file path
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
-        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 spec.pdf_filename)
+
         # Extract images from PDF
         images = extract_images_from_pdf(file_path)
-        
+
         # Analyze images with GPT-4 Vision to get visual description
-        visual_desc = analyze_images_with_gpt4_vision(images) if images else None
-        
+        visual_desc = analyze_images_with_gpt4_vision(
+            images) if images else None
+
         # Build prompt with specification data and visual description
         prompt = build_technical_drawing_prompt(spec, visual_desc)
 
@@ -1005,24 +1029,24 @@ def generate_technical_drawing(id):
             prompt=prompt,
             size="1024x1024",  # GPT-Image-1 supports up to 4096x4096
             quality="high",  # High quality for better detail and precision
-            n=1
-        )
+            n=1)
 
         # GPT-Image-1 returns base64 by default
         import base64
         import uuid
-        
+
         # Decode the base64 image
         image_data = base64.b64decode(response.data[0].b64_json)
-        
+
         # Generate unique filename
         drawing_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
-        drawing_path = os.path.join(app.config['UPLOAD_FOLDER'], drawing_filename)
-        
+        drawing_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                    drawing_filename)
+
         # Save image to disk
         with open(drawing_path, 'wb') as f:
             f.write(image_data)
-        
+
         # Save the filename (we'll serve it via a route)
         spec.technical_drawing_url = drawing_filename
         db.session.commit()
@@ -1121,7 +1145,7 @@ def delete_user(id):
     try:
         # Delete all specifications owned by this user
         Specification.query.filter_by(user_id=user.id).delete()
-        
+
         db.session.delete(user)
         db.session.commit()
         flash(f'Usuário {user.username} excluído com sucesso!')
@@ -1144,5 +1168,5 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Admin user created: username='admin', password='admin123'")
-    
+
     app.run(host='0.0.0.0', port=5000, debug=True)
