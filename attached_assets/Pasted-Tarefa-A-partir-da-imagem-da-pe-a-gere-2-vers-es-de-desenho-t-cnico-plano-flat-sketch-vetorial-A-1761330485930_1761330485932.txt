@@ -1,0 +1,110 @@
+Tarefa
+A partir da imagem da peça, gere 2 versões de desenho técnico plano (flat sketch) vetorial:
+A) Flat limpo (sem medidas) e B) Flat dimensionado (com todas as cotas e POMs).
+A peça é {tipo}: cardigã de tricô com tranças.
+
+Entradas
+
+Tamanho-base para cotagem: {M unissex / P feminino / etc.}
+
+Malha/bitola: {fio, título, gauge}; comportamento: {estruturado / médio / fluido}
+
+Repetição do ponto/raport da trança: {largura X cm, repetição a cada Y cm}
+
+Botões/aviamentos: {diâmetro, quantidade, espaçamento}
+
+Vistas obrigatórias
+
+Frente e Costas (mesma escala), manga em posição natural + detalhes ampliados (1:2) de: gola V/placket, punho, barra canelada, trança (rapport), casa de botão.
+
+Seções: mostrar em corte simples a sobreposição do placket e a espessura da malha no punho/barra.
+
+Estilo visual
+
+Fundo 100% branco; sem corpo/manequim/cabide.
+
+Traço preto; espessuras: contorno 0,75 pt, costuras/canelado 0,35 pt, pesponto/linha de malha quando aplicável 0,35 pt tracejado.
+
+Cinza 15–30% apenas para sobreposição/forro.
+
+Simetria central (eixo indicado por linha ponto-traço).
+
+Convenções de cotagem (apenas na versão B – dimensionado)
+
+Linhas de cota: finas (0,35 pt), com setas cheias; linhas de chamada perpendiculares, afastamento mínimo 3 mm do contorno.
+
+Texto de medida: sans-serif 8–9 pt, sempre acima da linha de cota; unidade cm.
+
+Centro/espelhamento: indicar eixo central com ponto-traço; repetir “(x2)” quando a medida refere-se a metade simétrica.
+
+Tolerâncias: padrão de tricô ±1,0 cm para medidas totais e ±0,5 cm para detalhes; indicar “Tol.” na legenda.
+
+Cores/camadas (apenas organização, tudo em preto no final):
+
+01-Contorno; 02-Textura/Tranças; 03-Cotas/Medidas; 04-Anotações; 05-Aviamentos; 06-Overlaps.
+
+Pontos de Medida (POMs) obrigatórios – cardigã tricô
+
+Comprimento total (HPS até barra).
+
+Largura peito (1 cm abaixo da cava, half chest).
+
+Largura barra (hem width, half).
+
+Ombro a ombro (ponto externo a externo).
+
+Abertura decote V (profundidade a partir do HPS).
+
+Largura do placket (e da vista/casa de botão).
+
+Espaçamento entre botões e diâmetro do botão.
+
+Comprimento manga (do ponto mais alto do ombro até punho, seguindo curva).
+
+Boca de punho (half) e altura do punho canelado.
+
+Altura da barra canelada.
+
+Largura de rapport da trança e repetição entre colunas (centro–centro).
+
+Largura da cova/cava (vertical) e largura manga a 5 cm do punho.
+
+Largura de costas (entre pontos de cava).
+
+Comprimento da gola traseira (meia circunferência).
+
+Cada POM deve vir numerado no desenho e listado em tabela com: Nº, Descrição, Medida base (cm), Tol., Observações.
+
+Detalhes construtivos (aplicar ao tricô)
+
+Textura/canelado: representar nervuras verticais com passo regular; para tranças, desenhar trilho com cruzamento claro (sem shading realista).
+
+Placket: mostrar sobreposição e lado do abotoamento (masc./fem.).
+
+Casas de botão: posição centrada no placket, distância da borda e quantidade.
+
+Acabamentos: borda limpa ou rebatida; tipo de fechamento (botão costurado vs. gancho).
+
+Saídas obrigatórias
+
+SVG + PDF, escala 1:1 (base), unidades em cm.
+
+Duas pranchas: A) “Flat limpo” e B) “Flat dimensionado + Tabela POM”.
+
+Legenda com convenções de linha, tolerâncias e nota “Medidas referem-se a peça relaxada (sem esticar)”.
+
+Critérios de aceitação
+
+Todas as POMs numeradas visíveis e legíveis; frente/costas na mesma escala.
+
+Eixo central indicado; simetria consistente.
+
+Linhas de cota não colidem com textura/contornos (usar afastamentos).
+
+Tabela POM presente na prancha B, com medidas preenchidas.
+
+Não fazer
+
+Não incluir modelo/sombra realista/gradiente.
+
+Não omitir POMs de barra, punho, placket, botões e rapport da trança.
