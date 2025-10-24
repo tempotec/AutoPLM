@@ -242,55 +242,102 @@ def extract_text_from_pdf(pdf_path):
     try:
         with open(pdf_path, 'rb') as file:
             pdf_reader = PyPDF2.PdfReader(file)
-            for page in pdf_reader.pages:
-                text += page.extract_text()
+            print(f"\n{'='*80}")
+            print(f"EXTRAÇÃO DE TEXTO DO PDF: {pdf_path}")
+            print(f"Total de páginas: {len(pdf_reader.pages)}")
+            print(f"{'='*80}")
+            
+            for page_num, page in enumerate(pdf_reader.pages, 1):
+                page_text = page.extract_text()
+                text += page_text
+                print(f"\n--- Página {page_num} ---")
+                print(f"Texto extraído ({len(page_text)} caracteres):")
+                print(page_text[:500])  # Primeiros 500 caracteres
+                if len(page_text) > 500:
+                    print(f"... (mais {len(page_text) - 500} caracteres)")
+            
+            print(f"\n{'='*80}")
+            print(f"TOTAL DE TEXTO EXTRAÍDO: {len(text)} caracteres")
+            print(f"{'='*80}\n")
     except Exception as e:
         print(f"Error extracting text from PDF: {e}")
+        import traceback
+        traceback.print_exc()
     return text
 
 
 def extract_images_from_pdf(pdf_path):
-    """Extract images from PDF and return as base64 encoded strings"""
-    images_base64 = []
+    """Extract images from PDF and return as base64 encoded strings with metadata"""
+    images_data = []
     try:
         with open(pdf_path, 'rb') as file:
             pdf_reader = PyPDF2.PdfReader(file)
+            print(f"\n{'='*80}")
+            print(f"EXTRAÇÃO DE IMAGENS DO PDF")
+            print(f"{'='*80}")
+            
             for page_num, page in enumerate(pdf_reader.pages):
                 # Try to extract images from page
-                if '/XObject' in page['/Resources']:
+                if '/Resources' in page and '/XObject' in page['/Resources']:
                     xObject = page['/Resources']['/XObject'].get_object()
-                    for obj in xObject:
+                    for obj_num, obj in enumerate(xObject):
                         if xObject[obj]['/Subtype'] == '/Image':
                             try:
                                 # Get image data
-                                size = (xObject[obj]['/Width'],
-                                        xObject[obj]['/Height'])
+                                width = xObject[obj]['/Width']
+                                height = xObject[obj]['/Height']
+                                size = (width, height)
                                 data = xObject[obj].get_data()
 
                                 # Convert to PIL Image
                                 if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
                                     img = Image.frombytes('RGB', size, data)
-                                elif xObject[obj][
-                                        '/ColorSpace'] == '/DeviceGray':
+                                elif xObject[obj]['/ColorSpace'] == '/DeviceGray':
                                     img = Image.frombytes('L', size, data)
                                 else:
+                                    print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace não suportado")
                                     continue
 
                                 # Convert to base64
                                 buffered = io.BytesIO()
                                 img.save(buffered, format="PNG")
-                                img_base64 = base64.b64encode(
-                                    buffered.getvalue()).decode('utf-8')
-                                images_base64.append(img_base64)
+                                img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+                                
+                                # Calculate image size to prioritize larger images (photos vs small icons)
+                                area = width * height
+                                
+                                images_data.append({
+                                    'base64': img_base64,
+                                    'page': page_num + 1,
+                                    'width': width,
+                                    'height': height,
+                                    'area': area
+                                })
+                                
+                                print(f"  ✓ Página {page_num + 1}, Imagem {obj_num + 1}: {width}x{height}px (área: {area:,}px²)")
+                                
                             except Exception as e:
-                                print(
-                                    f"Error extracting image from page {page_num}: {e}"
-                                )
+                                print(f"  ✗ Erro extraindo imagem da página {page_num + 1}: {e}")
                                 continue
+            
+            # Sort images by area (larger images first - likely to be the main garment photos)
+            images_data.sort(key=lambda x: x['area'], reverse=True)
+            
+            print(f"\n{'='*80}")
+            print(f"TOTAL DE IMAGENS EXTRAÍDAS: {len(images_data)}")
+            if images_data:
+                print(f"Ordem de prioridade (por tamanho):")
+                for i, img in enumerate(images_data[:5], 1):
+                    print(f"  {i}. Página {img['page']}: {img['width']}x{img['height']}px (área: {img['area']:,}px²)")
+            print(f"{'='*80}\n")
+            
     except Exception as e:
         print(f"Error processing PDF for images: {e}")
+        import traceback
+        traceback.print_exc()
 
-    return images_base64
+    # Return only base64 strings in priority order
+    return [img['base64'] for img in images_data]
 
 
 def analyze_images_with_gpt4_vision(images_base64):
@@ -311,7 +358,11 @@ def analyze_images_with_gpt4_vision(images_base64):
             "type":
             "text",
             "text":
-            """Você é um especialista técnico de vestuário. Analise esta(s) imagem(ns) e descreva com MÁXIMO DETALHE TÉCNICO todos os aspectos construtivos da peça. Este será usado para gerar um desenho técnico preciso.
+            """Você é um especialista técnico de vestuário. Analise esta(s) imagem(ns) e identifique APENAS A PRIMEIRA PEÇA DE VESTUÁRIO que aparecer (ignorando outras peças ou desenhos técnicos genéricos que possam aparecer depois).
+
+IMPORTANTE: Se você ver múltiplas peças diferentes nas imagens (ex: uma blusa E um cardigã), descreva APENAS a primeira peça que encontrar. Ignore completamente as outras.
+
+Descreva com MÁXIMO DETALHE TÉCNICO todos os aspectos construtivos DESTA ÚNICA PEÇA. Este será usado para gerar um desenho técnico preciso.
 
 ANÁLISE OBRIGATÓRIA:
 
