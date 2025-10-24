@@ -716,10 +716,21 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
         if content:
             try:
                 parsed_json = json.loads(content)
+                
+                # Flatten nested JSON if OpenAI grouped by categories
+                flattened = {}
+                for key, value in parsed_json.items():
+                    if isinstance(value, dict):
+                        # If value is a dict, merge its contents to top level
+                        flattened.update(value)
+                    else:
+                        # Keep non-dict values as is
+                        flattened[key] = value
+                
                 print(f"\n{'='*80}")
                 print(f"DADOS EXTRAÍDOS PELO OPENAI")
                 print(f"{'='*80}")
-                print(f"Total de campos: {len(parsed_json)}")
+                print(f"Total de campos: {len(flattened)}")
                 
                 # Log what was extracted for debugging
                 campos_importantes = ['ref_souq', 'description', 'collection', 'composition', 
@@ -727,19 +738,19 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                 
                 print("\n📋 CAMPOS PRINCIPAIS:")
                 for key in campos_importantes:
-                    value = parsed_json.get(key)
+                    value = flattened.get(key)
                     if value is not None and value != "":
                         print(f"  ✓ {key}: {str(value)}")
                     else:
                         print(f"  ✗ {key}: (vazio/não encontrado)")
                 
                 print("\n📏 OUTROS CAMPOS:")
-                for key, value in parsed_json.items():
+                for key, value in flattened.items():
                     if key not in campos_importantes and value is not None and value != "":
                         print(f"  - {key}: {str(value)[:80]}...")
                 
                 print(f"{'='*80}\n")
-                return parsed_json
+                return flattened
             except json.JSONDecodeError as je:
                 print(f"JSON parsing error: {je}")
                 return None
