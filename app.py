@@ -797,6 +797,15 @@ def process_pdf_specification(spec_id, file_path):
         # Map extracted data to specification fields, converting complex values
         for key, value in extracted_data.items():
             if hasattr(spec, key) and value is not None:
+                # Skip invalid dates - set to None instead of failing
+                if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
+                    # Check if it's a valid date format (YYYY-MM-DD)
+                    if isinstance(value, str):
+                        # If it doesn't match YYYY-MM-DD pattern, skip it
+                        import re
+                        if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                            print(f"  ⚠️ Ignorando data inválida para {key}: {value} (esperado YYYY-MM-DD)")
+                            continue
                 # Convert lists/dicts to strings
                 setattr(spec, key, convert_value_to_string(value))
 
