@@ -716,11 +716,29 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
         if content:
             try:
                 parsed_json = json.loads(content)
-                print(f"Extracted {len(parsed_json)} fields from PDF")
+                print(f"\n{'='*80}")
+                print(f"DADOS EXTRAÍDOS PELO OPENAI")
+                print(f"{'='*80}")
+                print(f"Total de campos: {len(parsed_json)}")
+                
                 # Log what was extracted for debugging
-                for key, value in parsed_json.items():
+                campos_importantes = ['ref_souq', 'description', 'collection', 'composition', 
+                                    'pilot_size', 'body_length', 'bust', 'sleeve_length']
+                
+                print("\n📋 CAMPOS PRINCIPAIS:")
+                for key in campos_importantes:
+                    value = parsed_json.get(key)
                     if value is not None and value != "":
-                        print(f"  - {key}: {str(value)[:50]}...")
+                        print(f"  ✓ {key}: {str(value)}")
+                    else:
+                        print(f"  ✗ {key}: (vazio/não encontrado)")
+                
+                print("\n📏 OUTROS CAMPOS:")
+                for key, value in parsed_json.items():
+                    if key not in campos_importantes and value is not None and value != "":
+                        print(f"  - {key}: {str(value)[:80]}...")
+                
+                print(f"{'='*80}\n")
                 return parsed_json
             except json.JSONDecodeError as je:
                 print(f"JSON parsing error: {je}")
