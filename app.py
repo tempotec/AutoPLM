@@ -414,16 +414,22 @@ IMPORTANTE:
 
 
 def build_technical_drawing_prompt(spec, visual_description=None):
-    """Build professional technical flat sketch prompt with measurements and POMs for GPT-Image-1"""
+    """Build professional technical flat sketch prompt with measurements and POMs for GPT-Image-1
+    Based on professional industry standards for technical flats with full dimensioning"""
     
     # Determine garment type from description
-    garment_type = spec.description or "peça de roupa"
+    garment_type = spec.description or "peça de vestuário"
     
     # Build size information
-    size_base = spec.pilot_size or "M/P"
+    size_base = spec.pilot_size or "M"
     
     # Build material and composition info
-    material_info = spec.composition or "tecido padrão"
+    material_info = spec.composition or "malha/tecido padrão"
+    
+    # Extract additional material details if available
+    material_details = ""
+    if "tricô" in material_info.lower() or "malha" in material_info.lower():
+        material_details = "Malha/tricô - representar textura com traço técnico"
     
     # Build POMs (Pontos de Medida) list with available measurements
     poms = []
@@ -435,7 +441,7 @@ def build_technical_drawing_prompt(spec, visual_description=None):
         'hem_width': 'Largura barra (hem width, half)',
         'shoulder_to_shoulder': 'Ombro a ombro (ponto externo a externo)',
         'neckline_depth': 'Abertura decote/gola (profundidade a partir do HPS)',
-        'sleeve_length': 'Comprimento manga (do ponto mais alto do ombro até punho)',
+        'sleeve_length': 'Comprimento manga (do ponto mais alto do ombro até punho, seguindo curva)',
         'waist': 'Largura cintura (half)',
         'straight_armhole': 'Largura da cava (vertical)'
     }
@@ -450,7 +456,12 @@ def build_technical_drawing_prompt(spec, visual_description=None):
             poms.append(f"  {pom_counter}. {description}: {value_str} cm")
             pom_counter += 1
     
-    poms_text = "\n".join(poms) if poms else "  (usar medidas proporcionais padrão)"
+    # Add additional POMs for specific details if available
+    if spec.openings_details and any(term in spec.openings_details.lower() for term in ['botão', 'botões', 'button']):
+        poms.append(f"  {pom_counter}. Espaçamento entre botões e diâmetro")
+        pom_counter += 1
+    
+    poms_text = "\n".join(poms) if poms else "  (usar medidas proporcionais padrão para o tipo de peça)"
     
     # Build constructive details
     constructive_details = []
@@ -465,75 +476,82 @@ def build_technical_drawing_prompt(spec, visual_description=None):
     visual_section = ""
     if visual_description:
         visual_section = f"""
-REFERÊNCIA VISUAL (BASE OBRIGATÓRIA PARA FIDELIDADE):
+**REFERÊNCIA VISUAL DA PEÇA (BASE OBRIGATÓRIA - SEGUIR FIELMENTE):**
 {visual_description}
 """
     
-    # Build complete professional prompt with POMs and dimensions
-    prompt = f"""TAREFA: A partir da imagem da peça, gere desenho técnico plano (flat sketch) vetorial DIMENSIONADO com todas as cotas e POMs, pronto para produção e ficha técnica profissional.
+    # Build complete professional prompt following industry standards
+    prompt = f"""TAREFA:
+A partir da análise da peça, gere desenho técnico plano (flat sketch) vetorial DIMENSIONADO com todas as cotas e POMs (Pontos de Medida).
+Este desenho será usado em produção e ficha técnica profissional.
 
-IMPORTANTE: Gerar a versão com medidas e cotagem completa (não a versão limpa sem medidas).
+TIPO DA PEÇA: {garment_type}
 
 ENTRADAS:
-- Tipo da peça: {garment_type}
 - Tamanho-base para cotagem: {size_base}
 - Material/composição: {material_info}
+{material_details}
 - Detalhes construtivos: {details_text}
 {visual_section}
 
 VISTAS OBRIGATÓRIAS:
 - Frente e Costas (mesma escala), alinhadas VERTICALMENTE
-- Manga em posição natural quando aplicável
-- Detalhes ampliados (1:2 ou 1:3) para: gola/colarinho, punho, bolso, zíper, barra, cós, casas de botão
-- Seções: mostrar em corte simples sobreposições (placket, vista) e espessuras (punho/barra quando aplicável)
+- Manga em posição natural (quando aplicável)
+- Detalhes ampliados (escala 1:2) de: gola/colarinho, punho, bolso, zíper, barra, cós, casas de botão
+- Seções/cortes: mostrar em corte simples a sobreposição do placket (se houver) e a espessura da malha no punho/barra (quando aplicável)
 
 ESTILO VISUAL:
-- Fundo 100% branco (#FFFFFF); sem corpo/manequim/cabide
-- Traço preto; espessuras: contorno 0,75pt, costuras/canelado 0,35pt, pesponto/linha tracejado 0,35pt
-- Cinza 15-30% apenas para sobreposição/forro
+- Fundo 100% branco (#FFFFFF); SEM corpo/manequim/cabide
+- Traço preto; espessuras: 
+  * Contorno: 0,75pt contínuo
+  * Costuras/canelado: 0,35pt contínuo
+  * Pesponto/linha de malha: 0,35pt tracejado
+- Cinza 15-30% APENAS para sobreposição/forro/volume
 - Simetria central indicada por linha ponto-traço (eixo central)
 - Símbolos gráficos: botão (círculo 2-4mm), ilhós (anel), rebite (ponto sólido)
 
-CONVENÇÕES DE COTAGEM (MEDIDAS E POMs):
+CONVENÇÕES DE COTAGEM (DIMENSÕES E POMs):
 - Linhas de cota: finas (0,35pt), com setas cheias
 - Linhas de chamada perpendiculares, afastamento mínimo 3mm do contorno
 - Texto de medida: sans-serif 8-9pt, sempre acima da linha de cota; unidade em cm
-- Centro/espelhamento: indicar eixo central; usar "(x2)" quando medida refere-se a metade simétrica
-- Cada POM numerado no desenho
+- Centro/espelhamento: indicar eixo central com ponto-traço; usar "(x2)" quando medida refere-se a metade simétrica
+- Tolerâncias: padrão ±1,0 cm para medidas totais e ±0,5 cm para detalhes
+- Cada POM numerado no desenho (1, 2, 3...)
 
 PONTOS DE MEDIDA (POMs) OBRIGATÓRIOS:
 {poms_text}
 
 DETALHES CONSTRUTIVOS (incluir todos aplicáveis):
-- Textura/padronagem: representar com traço técnico (nervuras, canelados, tranças quando aplicável)
-- Golas/colarinho, punhos, barras, acabamentos (rebatido, vivo, overlock)
+- Textura/padronagem: representar com traço técnico (nervuras verticais, canelados, tranças com cruzamento claro - sem shading realista)
+- Golas/colarinho: tipo exato, altura, acabamento
+- Punhos: tipo (ribana/dobrado/abotoado), altura em cm
+- Barras: acabamento (bainha/ribana/overlock), altura quando aplicável
 - Recortes, pences, pregas, franzidos, dobras funcionais
-- Fechamentos: tipo (zíper invisível/nylon/metal, botões, colchetes), posição e quantidade
-- Casas de botão: posição centrada, distância da borda e quantidade
-- Bolsos: tipo (faca, chapa, embutido), dimensões relativas, tampas, vivos
-- Cós/placket: largura, com/sem passantes, lado do abotoamento
-- Etiquetas: localização (interna/externa)
+- Fechamentos: tipo (zíper invisível/aparente/destacável, botões, colchetes), posição exata e quantidade
+- Casas de botão: posição centrada no placket, distância da borda, quantidade
+- Bolsos: tipo exato (faca, chapa, embutido, patch), dimensões, tampas, vivos
+- Placket/cós: largura, lado do abotoamento (masculino/feminino)
 
 NORMALIZAÇÃO DA IMAGEM:
 - Corrigir perspectiva/distorções: alinhar eixo central
 - Garantir simetria quando aplicável (espelhar quando necessário)
 - Remover sombras/elementos que não pertencem à construção
-- Todas as medidas em peça relaxada (sem esticar)
+- Medidas referem-se a peça relaxada (sem esticar)
 
 CRITÉRIOS DE ACEITAÇÃO:
-- Todos os POMs numerados visíveis e legíveis no desenho
+- Todas as POMs numeradas, visíveis e legíveis
 - Frente/Costas na mesma escala, perfeitamente centradas
 - Eixo central indicado; simetria consistente
 - Linhas de cota não colidem com textura/contornos (usar afastamentos adequados)
-- Proporções consistentes com as medidas de referência
-- Visual limpo e técnico para produção
+- Proporções consistentes com as medidas de referência fornecidas
+- Visual limpo, técnico e profissional para produção
 
-NÃO FAZER (PROIBIDO):
-- NÃO incluir modelo/sombra realista/gradiente
-- NÃO omitir POMs de barra, punho, decote, botões quando aplicáveis
-- NÃO usar gradientes ou texturas fotorrealistas
+NÃO FAZER (ESTRITAMENTE PROIBIDO):
+- NÃO incluir modelo/sombra realista/gradiente orgânico
+- NÃO omitir POMs de barra, punho, decote, gola, botões
+- NÃO usar texturas fotorrealistas
 - NÃO estilizar com traço orgânico/artístico; manter técnico
-- NÃO inventar detalhes não descritos na referência visual"""
+- NÃO inventar detalhes não mencionados na referência visual"""
 
     return prompt
 

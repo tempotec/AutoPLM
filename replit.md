@@ -41,6 +41,40 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+### October 24, 2025 - Enhanced AI Prompts for Superior Accuracy
+- **Dramatically Improved Technical Drawing Prompt**: Updated GPT-Image-1 prompt based on professional industry standards
+  - **Industry-Standard Specifications**: Follows exact technical flat sketch conventions used in professional production
+  - **Comprehensive POMs**: All measurement points numbered and labeled (1, 2, 3...) with tolerances (±1.0 cm for totals, ±0.5 cm for details)
+  - **Professional Cotagem (Dimensioning)**: Precise line weights (0.35pt cota lines with filled arrows), 3mm minimum offset, text positioning standards
+  - **Material-Specific Instructions**: Detects tricô/malha and adds technical texture representation guidelines
+  - **Strict Acceptance Criteria**: All POMs must be visible, numbered, legible; front/back same scale; no collision between dimension lines and contours
+  - **Enhanced Detail Sections**: Explicit instructions for plackets, button spacing, seam types, cross-sections showing overlaps
+  - **Professional Output**: Generates production-ready technical flats suitable for manufacturing and quality control
+  
+- **Massively Enhanced GPT-4o Vision Analysis** (12 comprehensive sections):
+  - **Section 1-2**: Identification (exact garment type, category: tricô/malha/tecido plano/jeans)
+  - **Section 3**: Gola/Decote (CRITICAL - exact type: rolê/careca/V/redonda/polo/etc., height, width, ribana details, finish)
+  - **Section 4**: Mangas (exact length: regata/curta/3-4/7-8/longa, model: básica/raglan/bufante/japonesa, cava type, punho details with height)
+  - **Section 5**: Corpo (exact length: cropped/curto/médio/longo, fit: justo/reto/amplo/oversized, width measurements)
+  - **Section 6**: Recortes e Pences (exact quantity and positions, direction: vertical/diagonal/horizontal)
+  - **Section 7**: Fechamentos (CRITICAL - type: botões/zíper/colchetes, exact location, button count and spacing, zipper type and length)
+  - **Section 8**: Bolsos (exact type: chapa/faca/embutido/patch/canguru, location, size, details)
+  - **Section 9**: Barra/Hem (finish type: reta/curva/assimétrica, treatment: bainha/ribana/overlock, ribana height)
+  - **Section 10**: Textura e Padronagem (tricô points: jersey/canelado/trança/ponto arroz, cable locations and width, rib positions)
+  - **Section 11**: Acabamentos Especiais (pespontos locations, vivos/debrum/viés, visible labels, appliqués)
+  - **Section 12**: Proporções Visuais (width/length ratio, sleeve/body proportion, collar/neckline height relative to total)
+  - **Token Increase**: 1000 → 2000 tokens for comprehensive analysis
+  - **Terminology**: Uses professional confection industry technical terms
+
+- **Robust PDF Data Extraction**: Improved OpenAI extraction prompt with explicit field instructions
+  - **2500-Token Detailed Prompt**: Expanded from 2000 to 2500 tokens for more comprehensive extraction
+  - **Field-by-Field Guidance**: Each field has explicit instructions on what to look for and how to extract
+  - **Format Variations Handling**: Recognizes "REF", "CÓDIGO", "REFERÊNCIA" as ref_souq field variations
+  - **Measurement Extraction**: Explicit instructions to extract numeric values from measurements (e.g., "64 cm" → "64 cm")
+  - **Detailed Logging**: Prints each extracted field with preview of value for debugging
+  - **Better Context Understanding**: Searches for information even when not explicitly labeled
+  - **7 Major Categories**: Identification, Commercial Info, Deadlines, Team, Materials, Technical Specs (critical), Design/Style
+
 ### October 23, 2025 - GPT-Image-1 Integration with Local File Storage
 - **Upgraded to GPT-Image-1**: Replaced DALL-E 3 with OpenAI's latest GPT-Image-1 model for superior image quality
   - **Higher Quality**: Photorealistic results with 94% prompt adherence (vs 78% on DALL-E 3)
