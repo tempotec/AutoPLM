@@ -519,9 +519,14 @@ Retorne SOMENTE o JSON, sem texto adicional."""
         return None
 
 
-def build_technical_drawing_prompt(spec, visual_description=None):
+def build_technical_drawing_prompt(spec, visual_analysis=None):
     """Build professional technical flat sketch prompt with measurements and POMs for GPT-Image-1
-    Based on professional industry standards for technical flats with full dimensioning"""
+    Based on professional industry standards for technical flats with full dimensioning
+    
+    Args:
+        spec: Specification database object with measurements
+        visual_analysis: Structured JSON dict from GPT-4o Vision analysis (or legacy text string)
+    """
 
     # Determine garment type from description
     garment_type = spec.description or "peça de vestuário"
@@ -586,9 +591,121 @@ def build_technical_drawing_prompt(spec, visual_description=None):
         constructive_details
     ) if constructive_details else "detalhes conforme análise visual"
 
-    # Build visual reference section
+    # Build visual reference section - ENHANCED for structured JSON
     visual_section = ""
-    if visual_description:
+    if visual_analysis:
+        # Check if it's structured JSON or legacy text
+        if isinstance(visual_analysis, dict):
+            # STRUCTURED JSON - Build detailed description from fields
+            ident = visual_analysis.get('identificacao', {})
+            gola = visual_analysis.get('gola_decote', {})
+            mangas = visual_analysis.get('mangas', {})
+            corpo = visual_analysis.get('corpo', {})
+            fechamentos = visual_analysis.get('fechamentos', {})
+            bolsos = visual_analysis.get('bolsos', {})
+            barra = visual_analysis.get('barra_hem', {})
+            textura = visual_analysis.get('textura_padronagem', {})
+            
+            visual_parts = []
+            
+            # Identificação
+            if ident.get('tipo_peca'):
+                visual_parts.append(f"TIPO: {ident['tipo_peca']} ({ident.get('categoria', 'N/A')})")
+            
+            # Gola/Decote - CRÍTICO
+            if gola.get('tipo') and gola['tipo'] != 'nao_visivel':
+                gola_desc = f"GOLA/DECOTE: {gola['tipo']}"
+                if gola.get('altura_visual') and gola['altura_visual'] != 'nao_visivel':
+                    gola_desc += f" - altura {gola['altura_visual']}"
+                if gola.get('acabamento'):
+                    gola_desc += f" - acabamento: {gola['acabamento']}"
+                if gola.get('detalhes'):
+                    gola_desc += f" - {gola['detalhes']}"
+                visual_parts.append(gola_desc)
+            
+            # Mangas - CRÍTICO
+            if mangas.get('comprimento') and mangas['comprimento'] != 'nao_visivel':
+                manga_desc = f"MANGAS: {mangas['comprimento']}"
+                if mangas.get('modelo') and mangas['modelo'] != 'nao_visivel':
+                    manga_desc += f" - modelo {mangas['modelo']}"
+                if mangas.get('cava'):
+                    manga_desc += f" - cava {mangas['cava']}"
+                
+                punho = mangas.get('punho', {})
+                if punho.get('existe') and punho.get('tipo'):
+                    manga_desc += f" - punho {punho['tipo']}"
+                    if punho.get('largura_visual'):
+                        manga_desc += f" ({punho['largura_visual']})"
+                
+                visual_parts.append(manga_desc)
+            
+            # Corpo
+            if corpo.get('comprimento_visual'):
+                corpo_desc = f"CORPO: comprimento {corpo['comprimento_visual']}"
+                if corpo.get('caimento'):
+                    corpo_desc += f" - caimento {corpo['caimento']}"
+                if corpo.get('recortes'):
+                    corpo_desc += f" - recortes: {corpo['recortes']}"
+                visual_parts.append(corpo_desc)
+            
+            # Fechamentos - MUITO IMPORTANTE
+            if fechamentos.get('tipo') and fechamentos['tipo'] != 'nao_visivel':
+                fech_desc = f"FECHAMENTOS: {fechamentos['tipo']}"
+                if fechamentos.get('posicao'):
+                    fech_desc += f" na {fechamentos['posicao']}"
+                if fechamentos.get('quantidade_botoes') and fechamentos['quantidade_botoes'] != 'nao_visivel':
+                    fech_desc += f" - {fechamentos['quantidade_botoes']} botões"
+                if fechamentos.get('botoes_espacamento_relativo'):
+                    fech_desc += f" ({fechamentos['botoes_espacamento_relativo']})"
+                
+                ziper = fechamentos.get('ziper', {})
+                if ziper.get('visibilidade') and ziper['visibilidade'] != 'nao_visivel':
+                    fech_desc += f" - zíper {ziper['visibilidade']}"
+                
+                visual_parts.append(fech_desc)
+            
+            # Bolsos
+            if bolsos.get('existe') and bolsos.get('lista'):
+                for bolso in bolsos['lista']:
+                    bolso_desc = f"BOLSO: {bolso.get('tipo', 'N/A')}"
+                    if bolso.get('posicao'):
+                        bolso_desc += f" - {bolso['posicao']}"
+                    if bolso.get('dimensao_visual'):
+                        bolso_desc += f" ({bolso['dimensao_visual']})"
+                    visual_parts.append(bolso_desc)
+            
+            # Barra
+            if barra.get('formato'):
+                barra_desc = f"BARRA: {barra['formato']}"
+                if barra.get('acabamento'):
+                    barra_desc += f" - acabamento {barra['acabamento']}"
+                if barra.get('largura_visual'):
+                    barra_desc += f" ({barra['largura_visual']})"
+                visual_parts.append(barra_desc)
+            
+            # Textura
+            if textura.get('tipo_trico_malha') and textura['tipo_trico_malha'] != 'nao_visivel':
+                tex_desc = f"TEXTURA: {textura['tipo_trico_malha']}"
+                if textura.get('direcao') and textura['direcao'] != 'nao_visivel':
+                    tex_desc += f" - direção {textura['direcao']}"
+                visual_parts.append(tex_desc)
+            
+            # Acabamentos especiais
+            acabamentos = visual_analysis.get('acabamentos_especiais', [])
+            if acabamentos:
+                visual_parts.append(f"ACABAMENTOS ESPECIAIS: {', '.join(acabamentos)}")
+            
+            # Diferenças frente/costas
+            diferencas = visual_analysis.get('diferencas_frente_costas', '')
+            if diferencas and diferencas.strip():
+                visual_parts.append(f"DIFERENÇAS FRENTE/COSTAS: {diferencas}")
+            
+            visual_description = "\n".join(visual_parts)
+            
+        else:
+            # Legacy text format
+            visual_description = str(visual_analysis)
+        
         visual_section = f"""
 **REFERÊNCIA VISUAL DA PEÇA (BASE OBRIGATÓRIA - SEGUIR FIELMENTE):**
 {visual_description}
