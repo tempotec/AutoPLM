@@ -351,7 +351,7 @@ def extract_images_from_pdf(pdf_path):
 
 
 def analyze_images_with_gpt4_vision(images_base64):
-    """Use GPT-4 Vision to analyze garment images and describe ALL technical construction details"""
+    """Use GPT-4 Vision to analyze garment images with structured JSON output"""
     if not images_base64:
         print("No images provided for GPT-4 Vision analysis")
         return None
@@ -361,94 +361,114 @@ def analyze_images_with_gpt4_vision(images_base64):
         return None
 
     try:
-        print(f"Analyzing {len(images_base64)} images with GPT-4 Vision...")
+        print(f"Analyzing {len(images_base64)} images with GPT-4 Vision (structured JSON output)...")
 
-        # Build messages with images - VERY detailed technical prompt
+        # Build messages with images - Professional structured prompt
         content = [{
-            "type":
-            "text",
-            "text":
-            """Você é um especialista técnico de vestuário. Analise esta(s) imagem(ns) e identifique APENAS A PRIMEIRA PEÇA DE VESTUÁRIO que aparecer (ignorando outras peças ou desenhos técnicos genéricos que possam aparecer depois).
+            "type": "text",
+            "text": """Você é um especialista técnico de vestuário. Analise ATÉ 3 imagens e descreva APENAS UMA peça: a mais PROEMINENTE da primeira imagem (maior área de pixels do corpo da peça). Ignore outras peças, pessoas, rostos e o fundo. Não descreva características pessoais.
 
-IMPORTANTE: Se você ver múltiplas peças diferentes nas imagens (ex: uma blusa E um cardigã), descreva APENAS a primeira peça que encontrar. Ignore completamente as outras.
+⚠️ Precisão:
+- Quando algo não pode ser visto com clareza, escreva exatamente "nao_visivel".
+- Nunca invente medidas reais em cm sem referência explícita. Prefira relações visuais (ex.: "punho parece 2–3x a largura do pesponto").
+- Use termos técnicos (PT-BR) e normalize enums (ex.: gola={careca,V,role,redonda,colarinho,polo,quadrada,canoa,ombro_a_ombro}).
 
-Descreva com MÁXIMO DETALHE TÉCNICO todos os aspectos construtivos DESTA ÚNICA PEÇA. Este será usado para gerar um desenho técnico preciso.
+Procedimento em 3 PASSOS (obrigatório):
+1) MACRO: identifique tipo de peça e categoria (malha/tricô, tecido plano, jeans).
+2) VARREDURA POR REGIÕES (ordem e "lupa"):
+   - Decote/gola → placket/vistas → ombro/ombreira → cava → mangas → punhos → corpo/frente → bolsos frente → recortes/penses → barra → costas completas → gola/capuz costas → centro costas → recortes/penses costas → bolsos costas → barra costas → interior visível (forro/entretela/vivos).
+   Para cada região, examine bordas, quinas, encontros, rebatidos, pespontos, travetes/bartacks, folgas e simetria E/D.
+3) VARREDURA TRANSVERSAL (categorias de detalhe):
+   - Fechamentos (tipo, posição exata, quantidade, direção de abotoamento).
+   - Componentes pequenos: casas (forma, posição e distância da borda), botões (diâmetro relativo), ilhoses, rebites, colchetes, zíper (invisível/aparente, espiral/dente, cursor, puxador).
+   - Costuras/acabamentos: tipo de ponto (reta, overlock 3/4 fios, cobertura), número de passadas (simples/duplo/tríplice), distância de rebatido da borda, largura de viés/debrum, largura de ribana/bainha, limpeza interna visível.
+   - Modelagem/volume: franzidos, pregas, nervuras/canelados, godê, evasê, ombro caído, raglan.
+   - Padronagens/texturas: direção do fio/canelado, disposição de tranças, rapport aparente.
+   - Etiquetas/elementos externos: etiqueta de marca aparente, patches, bordados, termocolantes.
+   - Assimetria e diferenças Frente vs Costas; Esquerda vs Direita (se houver).
 
-ANÁLISE OBRIGATÓRIA:
+SAÍDA: responda SOMENTE um JSON válido com este esquema (preencha tudo que conseguir; use "nao_visivel" quando não der):
 
-**1. IDENTIFICAÇÃO**
-- Tipo de peça exato (blusa, camisa, vestido, casaco, calça, etc.)
-- Categoria (tricô/malha, tecido plano, jeans, etc.)
+{
+  "identificacao": {
+    "tipo_peca": "",
+    "categoria": "",
+    "confianca": 0.0
+  },
+  "visoes": {
+    "frente": "...",
+    "costas": "...",
+    "mangas": "..."
+  },
+  "gola_decote": {
+    "tipo": "",
+    "altura_visual": "",
+    "abertura_largura_visual": "",
+    "acabamento": "",
+    "detalhes": "",
+    "confianca": 0.0
+  },
+  "mangas": {
+    "comprimento": "",
+    "modelo": "",
+    "cava": "",
+    "copa_modelagem": "",
+    "punho": {
+      "existe": true,
+      "tipo": "",
+      "largura_visual": "",
+      "fechamento": ""
+    },
+    "pala_ou_recorte": "",
+    "confianca": 0.0
+  },
+  "corpo": {
+    "comprimento_visual": "",
+    "caimento": "",
+    "recortes": "...",
+    "pences_pregas_franzidos": "...",
+    "simetria_ED": "",
+    "observacoes": ""
+  },
+  "fechamentos": {
+    "tipo": "",
+    "posicao": "",
+    "quantidade_botoes": "nao_visivel",
+    "botoes_espacamento_relativo": "",
+    "direcao_abotoamento": "nao_visivel",
+    "ziper": {
+      "visibilidade": "nao_visivel",
+      "tipo_dente": "nao_visivel",
+      "comprimento_visual": ""
+    }
+  },
+  "bolsos": {
+    "existe": false,
+    "lista": []
+  },
+  "barra_hem": {
+    "formato": "",
+    "acabamento": "",
+    "largura_visual": "",
+    "aberturas_fendas": ""
+  },
+  "textura_padronagem": {
+    "tipo_trico_malha": "nao_visivel",
+    "direcao": "nao_visivel",
+    "rapport_ou_repeticao": "",
+    "contraste_linha_pesponto": ""
+  },
+  "acabamentos_especiais": [],
+  "diferencas_frente_costas": "...",
+  "itens_nao_visiveis_ou_ambigos": [],
+  "conclusao_checklist": {
+    "varredura_regioes_ok": true,
+    "varredura_transversal_ok": true,
+    "campos_pendentes": []
+  }
+}
 
-**2. VISTAS**
-- Frente: Descreva TUDO que aparece na frente
-- Costas: Descreva TUDO que aparece nas costas  
-- Mangas: Posição, comprimento, formato
-
-**3. GOLA/DECOTE (CRÍTICO - DESCREVA EM DETALHE)**
-- Tipo EXATO: gola rolê/careca/V/redonda/colarinho/polo/quadrada/ombro-a-ombro/canoa/etc
-- Altura da gola (baixa/média/alta)
-- Largura/abertura
-- Se tem ribana, quantos cm de altura
-- Acabamento (costura aparente, viés, overlock, etc.)
-
-**4. MANGAS (DETALHE COMPLETO)**
-- Comprimento exato (regata/curta/3-4/7-8/longa)
-- Modelo (básica/raglan/bufante/japonesa/morcego/etc.)
-- Cava: tipo (americana/cavada/ombro-caído/etc.) e altura
-- Punho: tem ou não, tipo (ribana/dobrado/abotoado), altura em cm
-
-**5. CORPO DA PEÇA**
-- Comprimento total (cropped/curto/médio/longo/maxi)
-- Caimento (justo/reto/amplo/oversized/evasê)
-- Largura nos ombros, busto, cintura, quadril, barra
-
-**6. RECORTES E PENCES**
-- Quantos recortes tem e onde ficam EXATAMENTE
-- Pences: onde ficam, quantas, direção (vertical/diagonal/horizontal)
-- Costuras princesa, laterais, ombro, etc.
-
-**7. FECHAMENTOS (MUITO IMPORTANTE)**
-- Tipo: botões/zíper/colchetes/amarração/nenhum
-- Localização EXATA (frente/costas/lateral/ombro)
-- Quantidade de botões e espaçamento entre eles
-- Para zíper: invisível/aparente/destacável/comprimento
-- Direção de abotoamento (masculino/feminino)
-
-**8. BOLSOS**
-- Tem ou não tem
-- Tipo EXATO (chapa/faca/embutido/patch/canguru/etc.)
-- Localização e tamanho
-- Tampa, vivo, recorte
-
-**9. BARRA/HEM**
-- Tipo de acabamento (reta/curva/assimétrica)
-- Acabamento (bainha/ribana/overlock/desfiada)
-- Altura da ribana ou bainha se tiver
-
-**10. TEXTURA E PADRONAGEM**
-- Tricô: tipo de ponto (jersey/canelado/trança/ponto arroz/etc.)
-- Se tem tranças: onde ficam, largura, repetição
-- Canelados/nervuras: onde ficam (punho/gola/barra), largura
-- Padrão de malha ou tecido
-
-**11. ACABAMENTOS ESPECIAIS**
-- Pespontos: onde ficam, tipo de linha
-- Vivos/Debrum/Viés: localização e largura
-- Etiquetas externas visíveis
-- Apliques, bordados, tachas, ilhós
-
-**12. PROPORÇÕES VISUAIS**
-- Relação entre largura e comprimento
-- Proporção manga/corpo
-- Altura gola/decote em relação ao total
-
-IMPORTANTE:
-- Descreva APENAS o que REALMENTE VÊ na imagem
-- Seja EXTREMAMENTE específico em gola, mangas, fechamentos e acabamentos
-- Mencione TODAS as costuras visíveis e seus posicionamentos
-- Se não tiver certeza de algo, diga "não visível" ao invés de inventar
-- Use terminologia técnica de confecção têxtil"""
+Retorne SOMENTE o JSON, sem texto adicional."""
         }]
 
         # Add all images
@@ -462,19 +482,35 @@ IMPORTANTE:
             })
 
         response = openai_client.chat.completions.create(
-            model="gpt-4o",  # GPT-4o with vision
+            model="gpt-4o",
             messages=[{
                 "role": "user",
                 "content": content
             }],
-            max_tokens=2000  # Increased for more detailed analysis
+            response_format={"type": "json_object"},  # Force JSON output
+            max_tokens=3000  # Increased for comprehensive structured analysis
         )
 
-        description = response.choices[0].message.content
-        print(
-            f"GPT-4 Vision detailed analysis successful ({len(description)} chars)"
-        )
-        return description
+        json_response = response.choices[0].message.content
+        
+        # Parse and validate JSON
+        try:
+            analysis_data = json.loads(json_response)
+            print(f"\n{'='*80}")
+            print(f"ANÁLISE VISUAL GPT-4o (JSON ESTRUTURADO)")
+            print(f"{'='*80}")
+            print(f"Tipo de peça: {analysis_data.get('identificacao', {}).get('tipo_peca', 'N/A')}")
+            print(f"Categoria: {analysis_data.get('identificacao', {}).get('categoria', 'N/A')}")
+            print(f"Confiança: {analysis_data.get('identificacao', {}).get('confianca', 0.0)}")
+            print(f"Gola/Decote: {analysis_data.get('gola_decote', {}).get('tipo', 'N/A')}")
+            print(f"Mangas: {analysis_data.get('mangas', {}).get('comprimento', 'N/A')} - {analysis_data.get('mangas', {}).get('modelo', 'N/A')}")
+            print(f"Fechamentos: {analysis_data.get('fechamentos', {}).get('tipo', 'N/A')}")
+            print(f"{'='*80}\n")
+            return analysis_data
+        except json.JSONDecodeError as e:
+            print(f"⚠️ Erro ao parsear JSON da análise visual: {e}")
+            print(f"Resposta bruta: {json_response[:500]}...")
+            return None
 
     except Exception as e:
         print(f"Error analyzing images with GPT-4 Vision: {e}")
