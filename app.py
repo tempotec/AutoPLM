@@ -508,9 +508,12 @@ Retorne SOMENTE o JSON, sem texto adicional."""
             print(f"{'='*80}\n")
             return analysis_data
         except json.JSONDecodeError as e:
-            print(f"⚠️ Erro ao parsear JSON da análise visual: {e}")
-            print(f"Resposta bruta: {json_response[:500]}...")
-            return None
+            # FALLBACK: If JSON parsing fails, return raw text (legacy format)
+            print(f"⚠️ Erro ao parsear JSON - usando fallback para texto bruto")
+            print(f"Erro JSON: {e}")
+            print(f"Retornando texto livre para compatibilidade...")
+            # Return as plain string - build_technical_drawing_prompt() handles both formats
+            return json_response
 
     except Exception as e:
         print(f"Error analyzing images with GPT-4 Vision: {e}")
