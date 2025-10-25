@@ -246,7 +246,7 @@ def extract_text_from_pdf(pdf_path):
             print(f"EXTRAÇÃO DE TEXTO DO PDF: {pdf_path}")
             print(f"Total de páginas: {len(pdf_reader.pages)}")
             print(f"{'='*80}")
-            
+
             for page_num, page in enumerate(pdf_reader.pages, 1):
                 page_text = page.extract_text()
                 text += page_text
@@ -255,7 +255,7 @@ def extract_text_from_pdf(pdf_path):
                 print(page_text[:500])  # Primeiros 500 caracteres
                 if len(page_text) > 500:
                     print(f"... (mais {len(page_text) - 500} caracteres)")
-            
+
             print(f"\n{'='*80}")
             print(f"TOTAL DE TEXTO EXTRAÍDO: {len(text)} caracteres")
             print(f"{'='*80}\n")
@@ -275,7 +275,7 @@ def extract_images_from_pdf(pdf_path):
             print(f"\n{'='*80}")
             print(f"EXTRAÇÃO DE IMAGENS DO PDF")
             print(f"{'='*80}")
-            
+
             for page_num, page in enumerate(pdf_reader.pages):
                 # Try to extract images from page
                 if '/Resources' in page and '/XObject' in page['/Resources']:
@@ -292,20 +292,24 @@ def extract_images_from_pdf(pdf_path):
                                 # Convert to PIL Image
                                 if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
                                     img = Image.frombytes('RGB', size, data)
-                                elif xObject[obj]['/ColorSpace'] == '/DeviceGray':
+                                elif xObject[obj][
+                                        '/ColorSpace'] == '/DeviceGray':
                                     img = Image.frombytes('L', size, data)
                                 else:
-                                    print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace não suportado")
+                                    print(
+                                        f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace não suportado"
+                                    )
                                     continue
 
                                 # Convert to base64
                                 buffered = io.BytesIO()
                                 img.save(buffered, format="PNG")
-                                img_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
-                                
+                                img_base64 = base64.b64encode(
+                                    buffered.getvalue()).decode('utf-8')
+
                                 # Calculate image size to prioritize larger images (photos vs small icons)
                                 area = width * height
-                                
+
                                 images_data.append({
                                     'base64': img_base64,
                                     'page': page_num + 1,
@@ -313,24 +317,30 @@ def extract_images_from_pdf(pdf_path):
                                     'height': height,
                                     'area': area
                                 })
-                                
-                                print(f"  ✓ Página {page_num + 1}, Imagem {obj_num + 1}: {width}x{height}px (área: {area:,}px²)")
-                                
+
+                                print(
+                                    f"  ✓ Página {page_num + 1}, Imagem {obj_num + 1}: {width}x{height}px (área: {area:,}px²)"
+                                )
+
                             except Exception as e:
-                                print(f"  ✗ Erro extraindo imagem da página {page_num + 1}: {e}")
+                                print(
+                                    f"  ✗ Erro extraindo imagem da página {page_num + 1}: {e}"
+                                )
                                 continue
-            
+
             # Sort images by area (larger images first - likely to be the main garment photos)
             images_data.sort(key=lambda x: x['area'], reverse=True)
-            
+
             print(f"\n{'='*80}")
             print(f"TOTAL DE IMAGENS EXTRAÍDAS: {len(images_data)}")
             if images_data:
                 print(f"Ordem de prioridade (por tamanho):")
                 for i, img in enumerate(images_data[:5], 1):
-                    print(f"  {i}. Página {img['page']}: {img['width']}x{img['height']}px (área: {img['area']:,}px²)")
+                    print(
+                        f"  {i}. Página {img['page']}: {img['width']}x{img['height']}px (área: {img['area']:,}px²)"
+                    )
             print(f"{'='*80}\n")
-            
+
     except Exception as e:
         print(f"Error processing PDF for images: {e}")
         import traceback
@@ -716,7 +726,7 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
         if content:
             try:
                 parsed_json = json.loads(content)
-                
+
                 # Flatten nested JSON if OpenAI grouped by categories
                 flattened = {}
                 for key, value in parsed_json.items():
@@ -726,16 +736,18 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                     else:
                         # Keep non-dict values as is
                         flattened[key] = value
-                
+
                 print(f"\n{'='*80}")
                 print(f"DADOS EXTRAÍDOS PELO OPENAI")
                 print(f"{'='*80}")
                 print(f"Total de campos: {len(flattened)}")
-                
+
                 # Log what was extracted for debugging
-                campos_importantes = ['ref_souq', 'description', 'collection', 'composition', 
-                                    'pilot_size', 'body_length', 'bust', 'sleeve_length']
-                
+                campos_importantes = [
+                    'ref_souq', 'description', 'collection', 'composition',
+                    'pilot_size', 'body_length', 'bust', 'sleeve_length'
+                ]
+
                 print("\n📋 CAMPOS PRINCIPAIS:")
                 for key in campos_importantes:
                     value = flattened.get(key)
@@ -743,12 +755,12 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                         print(f"  ✓ {key}: {str(value)}")
                     else:
                         print(f"  ✗ {key}: (vazio/não encontrado)")
-                
+
                 print("\n📏 OUTROS CAMPOS:")
                 for key, value in flattened.items():
                     if key not in campos_importantes and value is not None and value != "":
                         print(f"  - {key}: {str(value)[:80]}...")
-                
+
                 print(f"{'='*80}\n")
                 return flattened
             except json.JSONDecodeError as je:
@@ -804,7 +816,9 @@ def process_pdf_specification(spec_id, file_path):
                         # If it doesn't match YYYY-MM-DD pattern, skip it
                         import re
                         if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
-                            print(f"  ⚠️ Ignorando data inválida para {key}: {value} (esperado YYYY-MM-DD)")
+                            print(
+                                f"  ⚠️ Ignorando data inválida para {key}: {value} (esperado YYYY-MM-DD)"
+                            )
                             continue
                 # Convert lists/dicts to strings
                 setattr(spec, key, convert_value_to_string(value))
