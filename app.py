@@ -700,12 +700,16 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
             # Bolsos
             if bolsos.get('existe') and bolsos.get('lista'):
                 for bolso in bolsos['lista']:
-                    bolso_desc = f"BOLSO: {bolso.get('tipo', 'N/A')}"
-                    if bolso.get('posicao'):
-                        bolso_desc += f" - {bolso['posicao']}"
-                    if bolso.get('dimensao_visual'):
-                        bolso_desc += f" ({bolso['dimensao_visual']})"
-                    visual_parts.append(bolso_desc)
+                    # Handle both dict and string formats
+                    if isinstance(bolso, dict):
+                        bolso_desc = f"BOLSO: {bolso.get('tipo', 'N/A')}"
+                        if bolso.get('posicao'):
+                            bolso_desc += f" - {bolso['posicao']}"
+                        if bolso.get('dimensao_visual'):
+                            bolso_desc += f" ({bolso['dimensao_visual']})"
+                        visual_parts.append(bolso_desc)
+                    elif isinstance(bolso, str):
+                        visual_parts.append(f"BOLSO: {bolso}")
             
             # Barra
             if barra.get('formato'):
