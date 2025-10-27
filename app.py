@@ -156,9 +156,9 @@ class CreateUserForm(FlaskForm):
 
 class UploadPDFForm(FlaskForm):
     pdf_file = FileField(
-        'PDF File',
+        'File',
         validators=[FileRequired(),
-                    FileAllowed(['pdf'], 'PDF files only!')])
+                    FileAllowed(['pdf', 'jpg', 'jpeg', 'png'], 'Apenas PDF ou imagens (JPG, PNG)!')])
     submit = SubmitField('Upload and Process')
 
 
@@ -234,6 +234,36 @@ def login_required(f):
         return f(*args, **kwargs)
 
     return decorated_function
+
+
+def is_image_file(filename):
+    """Check if file is an image based on extension"""
+    if not filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    return ext in ['jpg', 'jpeg', 'png', 'gif', 'webp']
+
+
+def is_pdf_file(filename):
+    """Check if file is a PDF based on extension"""
+    if not filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+    return ext == 'pdf'
+
+
+def convert_image_to_base64(image_path):
+    """Convert image file to base64 string"""
+    import base64
+    try:
+        with open(image_path, 'rb') as image_file:
+            image_data = image_file.read()
+            base64_string = base64.b64encode(image_data).decode('utf-8')
+            print(f"✓ Imagem convertida para base64: {len(base64_string)} caracteres")
+            return base64_string
+    except Exception as e:
+        print(f"Erro ao converter imagem para base64: {e}")
+        return None
 
 
 def extract_text_from_pdf(pdf_path):
@@ -932,59 +962,179 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
 
 
 def process_pdf_specification(spec_id, file_path):
-    """Process PDF file and extract specification data using OpenAI"""
+    """Process PDF or image file and extract specification data using OpenAI"""
     try:
-        # Extract text from PDF
-        text_content = extract_text_from_pdf(file_path)
-
-        if not text_content or len(text_content.strip()) < 50:
-            print(f"Insufficient text extracted from PDF for spec {spec_id}")
-            spec = Specification.query.get(spec_id)
-            if spec:
-                spec.processing_status = 'error'
-                db.session.commit()
-            return
-
-        # Process with OpenAI
-        extracted_data = process_specification_with_openai(text_content)
-
-        if not extracted_data:
-            print(f"No data extracted from OpenAI for spec {spec_id}")
-            spec = Specification.query.get(spec_id)
-            if spec:
-                spec.processing_status = 'error'
-                db.session.commit()
-            return
-
-        # Update specification with extracted data
         spec = Specification.query.get(spec_id)
         if not spec:
             print(f"Specification {spec_id} not found")
             return
+        
+        filename = spec.pdf_filename
+        
+        # Check if it's an image or PDF
+        if is_image_file(filename):
+            print(f"\n{'='*80}")
+            print(f"PROCESSAMENTO DE IMAGEM DETECTADO: {filename}")
+            print(f"{'='*80}\n")
+            
+            # For images, skip text extraction and use ONLY visual analysis
+            print("⚠️ Arquivo de imagem: pulando extração de texto.")
+            print("📸 Usando APENAS análise visual GPT-4o para extrair informações.")
+            
+            # Convert image to base64 and analyze with GPT-4 Vision
+            image_b64 = convert_image_to_base64(file_path)
+            if not image_b64:
+                print("❌ Erro ao converter imagem para base64")
+                spec.processing_status = 'error'
+                db.session.commit()
+                return
+            
+            # Analyze image with GPT-4 Vision
+            visual_analysis = analyze_images_with_gpt4_vision([image_b64])
+            
+            if not visual_analysis:
+                print("❌ Erro na análise visual da imagem")
+                spec.processing_status = 'error'
+                db.session.commit()
+                return
+            
+            # Extract data from visual analysis (JSON format)
+            if isinstance(visual_analysis, dict):
+                # Structured JSON response
+                ident = visual_analysis.get('identificacao', {})
+                gola = visual_analysis.get('gola_decote', {})
+                mangas = visual_analysis.get('mangas', {})
+                corpo = visual_analysis.get('corpo', {})
+                textura = visual_analysis.get('textura_padronagem', {})
+                
+                # Populate spec fields from visual analysis
+                tipo_peca = ident.get('tipo_peca', '')
+                categoria = ident.get('categoria', '')
+                
+                spec.description = f"{tipo_peca}" if tipo_peca else "Peça de Vestuário (Imagem)"
+                spec.composition = categoria if categoria else None
+                
+                # Build a descriptive summary for finishes
+                detalhes = []
+                if gola.get('tipo') and gola['tipo'] != 'nao_visivel':
+                    detalhes.append(f"Gola: {gola['tipo']}")
+                if mangas.get('comprimento') and mangas['comprimento'] != 'nao_visivel':
+                    detalhes.append(f"Mangas: {mangas['comprimento']}")
+                if corpo.get('comprimento_visual'):
+                    detalhes.append(f"Comprimento: {corpo['comprimento_visual']}")
+                
+                if detalhes:
+                    spec.finishes = ' | '.join(detalhes)
+                
+                print(f"✓ Dados extraídos da análise visual (JSON estruturado):")
+                print(f"  - Descrição: {spec.description}")
+                print(f"  - Categoria: {spec.composition}")
+                print(f"  - Detalhes: {spec.finishes}")
+            else:
+                # Fallback: text response (when JSON parsing failed)
+                print("⚠️ Análise visual retornou texto (fallback de JSON)")
+                print("📝 Tentando extrair dados estruturados do texto com OpenAI...")
+                
+                # Store raw visual analysis text
+                visual_text = str(visual_analysis)
+                
+                # Process visual text through OpenAI to extract structured data
+                # This mirrors the PDF workflow for consistency
+                extracted_data = process_specification_with_openai(visual_text)
+                
+                if extracted_data:
+                    # Map extracted data to specification fields (same as PDF)
+                    for key, value in extracted_data.items():
+                        if hasattr(spec, key) and value is not None:
+                            # Skip invalid dates
+                            if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
+                                if isinstance(value, str):
+                                    import re
+                                    if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                                        print(f"  ⚠️ Ignorando data inválida para {key}: {value}")
+                                        continue
+                            # Convert lists/dicts to strings
+                            setattr(spec, key, convert_value_to_string(value))
+                    
+                    print(f"✓ Dados extraídos via OpenAI do texto visual (fallback):")
+                    print(f"  - Descrição: {spec.description}")
+                    print(f"  - Composição: {spec.composition}")
+                else:
+                    print("⚠️ Falha ao extrair dados estruturados do texto")
+                    # Last resort: try simple keyword detection
+                    description_lower = visual_text.lower()
+                    garment_types = {
+                        'blusa': 'Blusa', 'camisa': 'Camisa', 'camiseta': 'Camiseta',
+                        'vestido': 'Vestido', 'calça': 'Calça', 'short': 'Short',
+                        'saia': 'Saia', 'jaqueta': 'Jaqueta', 'casaco': 'Casaco',
+                        'cardigan': 'Cardigan', 'suéter': 'Suéter', 'moletom': 'Moletom'
+                    }
+                    
+                    detected_type = None
+                    for key, value in garment_types.items():
+                        if key in description_lower:
+                            detected_type = value
+                            break
+                    
+                    spec.description = f"{detected_type} (Imagem)" if detected_type else "Peça de Vestuário (Imagem)"
+                    spec.finishes = visual_text[:500] if len(visual_text) > 500 else visual_text
+                    print(f"✓ Descrição básica extraída: {spec.description}")
+            
+            spec.processing_status = 'completed'
+            db.session.commit()
+            print(f"✓ Imagem processada com sucesso via análise visual!")
+            return
+            
+        elif is_pdf_file(filename):
+            print(f"\n{'='*80}")
+            print(f"PROCESSAMENTO DE PDF DETECTADO: {filename}")
+            print(f"{'='*80}\n")
+            
+            # Extract text from PDF
+            text_content = extract_text_from_pdf(file_path)
 
-        # Map extracted data to specification fields, converting complex values
-        for key, value in extracted_data.items():
-            if hasattr(spec, key) and value is not None:
-                # Skip invalid dates - set to None instead of failing
-                if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
-                    # Check if it's a valid date format (YYYY-MM-DD)
-                    if isinstance(value, str):
-                        # If it doesn't match YYYY-MM-DD pattern, skip it
-                        import re
-                        if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
-                            print(
-                                f"  ⚠️ Ignorando data inválida para {key}: {value} (esperado YYYY-MM-DD)"
-                            )
-                            continue
-                # Convert lists/dicts to strings
-                setattr(spec, key, convert_value_to_string(value))
+            if not text_content or len(text_content.strip()) < 50:
+                print(f"Insufficient text extracted from PDF for spec {spec_id}")
+                spec.processing_status = 'error'
+                db.session.commit()
+                return
 
-        spec.processing_status = 'completed'
-        db.session.commit()
-        print(f"Successfully processed specification {spec_id}")
+            # Process with OpenAI
+            extracted_data = process_specification_with_openai(text_content)
+
+            if not extracted_data:
+                print(f"No data extracted from OpenAI for spec {spec_id}")
+                spec.processing_status = 'error'
+                db.session.commit()
+                return
+
+            # Map extracted data to specification fields, converting complex values
+            for key, value in extracted_data.items():
+                if hasattr(spec, key) and value is not None:
+                    # Skip invalid dates - set to None instead of failing
+                    if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
+                        # Check if it's a valid date format (YYYY-MM-DD)
+                        if isinstance(value, str):
+                            # If it doesn't match YYYY-MM-DD pattern, skip it
+                            import re
+                            if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                                print(
+                                    f"  ⚠️ Ignorando data inválida para {key}: {value} (esperado YYYY-MM-DD)"
+                                )
+                                continue
+                    # Convert lists/dicts to strings
+                    setattr(spec, key, convert_value_to_string(value))
+
+            spec.processing_status = 'completed'
+            db.session.commit()
+            print(f"Successfully processed PDF specification {spec_id}")
+        else:
+            print(f"⚠️ Formato de arquivo não reconhecido: {filename}")
+            spec.processing_status = 'error'
+            db.session.commit()
 
     except Exception as e:
-        print(f"Error processing PDF specification {spec_id}: {e}")
+        print(f"Error processing specification {spec_id}: {e}")
         import traceback
         traceback.print_exc()
 
@@ -1268,12 +1418,25 @@ def generate_technical_drawing(id):
         return redirect(url_for('view_specification', id=id))
 
     try:
-        # Get PDF file path
+        # Get file path
         file_path = os.path.join(app.config['UPLOAD_FOLDER'],
                                  spec.pdf_filename)
-
-        # Extract images from PDF
-        images = extract_images_from_pdf(file_path)
+        
+        # Check if it's an image or PDF
+        images = []
+        if is_image_file(spec.pdf_filename):
+            print(f"📸 Arquivo de imagem detectado: {spec.pdf_filename}")
+            # Convert image directly to base64
+            image_b64 = convert_image_to_base64(file_path)
+            if image_b64:
+                images = [image_b64]
+        elif is_pdf_file(spec.pdf_filename):
+            print(f"📄 Arquivo PDF detectado: {spec.pdf_filename}")
+            # Extract images from PDF
+            images = extract_images_from_pdf(file_path)
+        else:
+            flash('Formato de arquivo não suportado para geração de desenho.')
+            return redirect(url_for('view_specification', id=id))
 
         # Analyze images with GPT-4 Vision to get visual description
         visual_desc = analyze_images_with_gpt4_vision(

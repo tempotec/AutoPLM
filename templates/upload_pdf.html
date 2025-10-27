@@ -19,9 +19,10 @@
                     
                     <div class="upload-area mb-4">
                         <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
-                        <h5>Selecione sua ficha técnica em PDF</h5>
+                        <h5>Selecione sua ficha técnica em PDF ou Imagem</h5>
                         <p class="text-muted">Arraste e solte o arquivo aqui ou clique para selecionar</p>
-                        {{ form.pdf_file(class="form-control", style="display: none;", id="pdf-input") }}
+                        <p class="text-muted small"><strong>Formatos aceitos:</strong> PDF, JPG, PNG</p>
+                        {{ form.pdf_file(class="form-control", style="display: none;", id="pdf-input", accept=".pdf,.jpg,.jpeg,.png") }}
                         <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('pdf-input').click()">
                             <i class="fas fa-folder-open me-1"></i>Escolher Arquivo
                         </button>
@@ -36,7 +37,7 @@
                     </div>
                     
                     <div id="file-info" class="alert alert-info" style="display: none;">
-                        <i class="fas fa-file-pdf text-danger me-2"></i>
+                        <i id="file-icon" class="fas fa-file text-primary me-2"></i>
                         <span id="file-name"></span>
                     </div>
                     
@@ -69,15 +70,30 @@
 
 {% block scripts %}
 <script>
-document.getElementById('pdf-input').addEventListener('change', function(e) {
+function updateFileDisplay(file) {
     const fileInfo = document.getElementById('file-info');
     const fileName = document.getElementById('file-name');
+    const fileIcon = document.getElementById('file-icon');
     
-    if (e.target.files.length > 0) {
-        fileName.textContent = e.target.files[0].name;
-        fileInfo.style.display = 'block';
+    fileName.textContent = file.name;
+    
+    // Update icon based on file type
+    if (file.type === 'application/pdf') {
+        fileIcon.className = 'fas fa-file-pdf text-danger me-2';
+    } else if (file.type.startsWith('image/')) {
+        fileIcon.className = 'fas fa-file-image text-success me-2';
     } else {
-        fileInfo.style.display = 'none';
+        fileIcon.className = 'fas fa-file text-primary me-2';
+    }
+    
+    fileInfo.style.display = 'block';
+}
+
+document.getElementById('pdf-input').addEventListener('change', function(e) {
+    if (e.target.files.length > 0) {
+        updateFileDisplay(e.target.files[0]);
+    } else {
+        document.getElementById('file-info').style.display = 'none';
     }
 });
 
@@ -103,10 +119,11 @@ uploadArea.addEventListener('drop', function(e) {
     uploadArea.style.backgroundColor = '#f8f9fa';
     
     const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].type === 'application/pdf') {
+    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+    
+    if (files.length > 0 && allowedTypes.includes(files[0].type)) {
         fileInput.files = files;
-        document.getElementById('file-name').textContent = files[0].name;
-        document.getElementById('file-info').style.display = 'block';
+        updateFileDisplay(files[0]);
     }
 });
 </script>
