@@ -1444,6 +1444,43 @@ def view_pdf(id):
         return redirect(url_for('view_specification', id=id))
 
 
+@app.route('/view_image/<int:id>')
+@login_required
+def view_image(id):
+    """View uploaded image files (JPG, PNG, JPEG)"""
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+
+    # Allow access if user is admin or owns the specification
+    if not user.is_admin and spec.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('dashboard'))
+
+    try:
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 spec.pdf_filename)
+        if os.path.exists(file_path):
+            # Detect mimetype based on file extension
+            ext = spec.pdf_filename.lower().split('.')[-1]
+            mimetype_map = {
+                'jpg': 'image/jpeg',
+                'jpeg': 'image/jpeg',
+                'png': 'image/png'
+            }
+            mimetype = mimetype_map.get(ext, 'image/jpeg')
+            return send_file(file_path, mimetype=mimetype)
+        else:
+            flash('Arquivo de imagem não encontrado.')
+            return redirect(url_for('view_specification', id=id))
+    except Exception as e:
+        flash('Erro ao visualizar o arquivo de imagem.')
+        return redirect(url_for('view_specification', id=id))
+
+
 @app.route('/drawing/<int:id>')
 @login_required
 def view_drawing(id):
