@@ -1,6 +1,13 @@
 # Overview
 
-This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files containing technical specs (fichas técnicas) using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
+This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
+
+## Recent Changes (October 27, 2025)
+- **Image Upload Support**: Extended upload functionality to accept image files (JPG, PNG, JPEG) in addition to PDFs.
+- **Dual Processing Pipeline**: Implemented intelligent file type detection with separate processing paths for images and PDFs.
+- **Enhanced Visual Analysis**: Images are directly analyzed with GPT-4o Vision for structured data extraction.
+- **Robust Fallback**: When Vision returns text instead of JSON, the system processes it through OpenAI extraction pipeline to ensure fields are always populated.
+- **UI Updates**: Upload interface now accepts multiple formats with appropriate file type icons and validation.
 
 # User Preferences
 
