@@ -319,16 +319,115 @@ def extract_images_from_pdf(pdf_path):
                                 size = (width, height)
                                 data = xObject[obj].get_data()
 
-                                # Convert to PIL Image
-                                if xObject[obj]['/ColorSpace'] == '/DeviceRGB':
-                                    img = Image.frombytes('RGB', size, data)
-                                elif xObject[obj][
-                                        '/ColorSpace'] == '/DeviceGray':
-                                    img = Image.frombytes('L', size, data)
+                                # Convert to PIL Image - Support multiple ColorSpace formats
+                                colorspace_raw = xObject[obj].get('/ColorSpace', None)
+                                
+                                # Dereference indirect objects (critical for Indexed color spaces)
+                                if hasattr(colorspace_raw, 'get_object'):
+                                    colorspace = colorspace_raw.get_object()
                                 else:
-                                    print(
-                                        f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace não suportado"
-                                    )
+                                    colorspace = colorspace_raw
+                                
+                                try:
+                                    if colorspace == '/DeviceRGB':
+                                        img = Image.frombytes('RGB', size, data)
+                                    elif colorspace == '/DeviceGray':
+                                        img = Image.frombytes('L', size, data)
+                                    elif colorspace == '/DeviceCMYK':
+                                        # Convert CMYK to RGB
+                                        img = Image.frombytes('CMYK', size, data)
+                                        img = img.convert('RGB')
+                                    elif isinstance(colorspace, list):
+                                        # Handle Indexed or ICCBased color spaces
+                                        colorspace_name = colorspace[0] if colorspace else None
+                                        
+                                        if colorspace_name == '/Indexed':
+                                            # Indexed color space: [/Indexed base_colorspace hival lookup]
+                                            try:
+                                                base_colorspace = colorspace[1] if len(colorspace) > 1 else '/DeviceRGB'
+                                                hival = int(colorspace[2]) if len(colorspace) > 2 else 255
+                                                lookup_raw = colorspace[3] if len(colorspace) > 3 else None
+                                                
+                                                # Dereference lookup if it's an indirect object
+                                                if lookup_raw and hasattr(lookup_raw, 'get_object'):
+                                                    lookup = lookup_raw.get_object()
+                                                else:
+                                                    lookup = lookup_raw
+                                                
+                                                # Get lookup data - handle PyPDF2 ByteStringObject
+                                                if hasattr(lookup, 'get_data'):
+                                                    # Stream object
+                                                    lookup_data = lookup.get_data()
+                                                elif isinstance(lookup, bytes):
+                                                    # Direct bytes
+                                                    lookup_data = lookup
+                                                elif hasattr(lookup, 'original_bytes'):
+                                                    # PyPDF2 ByteStringObject
+                                                    lookup_data = lookup.original_bytes
+                                                elif isinstance(lookup, str):
+                                                    # String - encode as latin-1 (PDF standard encoding)
+                                                    lookup_data = lookup.encode('latin-1')
+                                                else:
+                                                    # Unknown type - try to convert
+                                                    try:
+                                                        lookup_data = bytes(lookup)
+                                                    except:
+                                                        print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Lookup type desconhecido ({type(lookup)})")
+                                                        # Try without palette
+                                                        img = Image.frombytes('P', size, data)
+                                                        img = img.convert('RGB')
+                                                
+                                                # Create palette image
+                                                img = Image.frombytes('P', size, data)
+                                                
+                                                # Build PIL palette from lookup data
+                                                # Palette format depends on base colorspace
+                                                if base_colorspace == '/DeviceRGB' or (isinstance(base_colorspace, str) and 'RGB' in base_colorspace):
+                                                    # RGB palette: 3 bytes per color (R,G,B)
+                                                    palette = []
+                                                    for i in range(min(256, hival + 1)):
+                                                        idx = i * 3
+                                                        if idx + 2 < len(lookup_data):
+                                                            palette.extend([lookup_data[idx], lookup_data[idx+1], lookup_data[idx+2]])
+                                                        else:
+                                                            palette.extend([0, 0, 0])
+                                                    # Pad to 256 colors
+                                                    while len(palette) < 768:
+                                                        palette.extend([0, 0, 0])
+                                                    img.putpalette(palette)
+                                                    img = img.convert('RGB')
+                                                else:
+                                                    # For other base colorspaces, try direct conversion
+                                                    img = img.convert('RGB')
+                                                    
+                                            except Exception as indexed_error:
+                                                print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Indexed ColorSpace - erro na paleta ({indexed_error})")
+                                                continue
+                                        
+                                        elif colorspace_name == '/ICCBased':
+                                            # ICC-based color space - try RGB as fallback
+                                            try:
+                                                img = Image.frombytes('RGB', size, data)
+                                            except:
+                                                print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ICCBased ColorSpace não suportado")
+                                                continue
+                                        else:
+                                            # Other complex color spaces - try RGB fallback
+                                            try:
+                                                img = Image.frombytes('RGB', size, data)
+                                            except:
+                                                print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace complexo ({colorspace_name})")
+                                                continue
+                                    else:
+                                        # Unknown color space - try RGB as last resort
+                                        try:
+                                            img = Image.frombytes('RGB', size, data)
+                                        except:
+                                            print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace desconhecido ({colorspace})")
+                                            continue
+                                
+                                except Exception as color_error:
+                                    print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Erro ao processar ColorSpace - {color_error}")
                                     continue
 
                                 # Convert to base64
@@ -819,6 +918,15 @@ CONVENÇÕES DE COTAGEM (DIMENSÕES E POMs):
 PONTOS DE MEDIDA (POMs) OBRIGATÓRIOS:
 {poms_text}
 
+CORES E PADRÕES (REPRESENTAÇÃO TÉCNICA):
+- Cores disponíveis: {spec.colors if spec.colors else 'não especificadas'}
+- ATENÇÃO: Se a peça tiver padrão (LISTRADO, XADREZ, POÁ, ESTAMPADO, etc), REPRESENTAR graficamente usando TRAÇOS TÉCNICOS:
+  * LISTRADO: desenhar linhas horizontais ou verticais paralelas (espaçamento uniforme) cobrindo TODA a área da peça
+  * XADREZ: grid de linhas perpendiculares formando quadrados
+  * POÁ: círculos pequenos distribuídos uniformemente
+  * ESTAMPADO: indicar com padrão simplificado de formas geométricas ou orgânicas
+- NÃO usar texturas fotorrealistas; apenas linhas técnicas limpas
+
 DETALHES CONSTRUTIVOS (incluir todos aplicáveis):
 - Textura/padronagem: representar com traço técnico (nervuras verticais, canelados, tranças com cruzamento claro - sem shading realista)
 - Golas/colarinho: tipo exato, altura, acabamento
@@ -879,6 +987,15 @@ ESTILO VISUAL:
 - Cinza 15-30% APENAS para sobreposição/forro/volume
 - Simetria central indicada por linha ponto-traço (eixo central)
 - Símbolos gráficos: botão (círculo 2-4mm), ilhós (anel), rebite (ponto sólido)
+
+CORES E PADRÕES (REPRESENTAÇÃO TÉCNICA):
+- Cores disponíveis: {spec.colors if spec.colors else 'não especificadas'}
+- ATENÇÃO: Se a peça tiver padrão (LISTRADO, XADREZ, POÁ, ESTAMPADO, etc), REPRESENTAR graficamente usando TRAÇOS TÉCNICOS:
+  * LISTRADO: desenhar linhas horizontais ou verticais paralelas (espaçamento uniforme) cobrindo TODA a área da peça
+  * XADREZ: grid de linhas perpendiculares formando quadrados
+  * POÁ: círculos pequenos distribuídos uniformemente
+  * ESTAMPADO: indicar com padrão simplificado de formas geométricas ou orgânicas
+- NÃO usar texturas fotorrealistas; apenas linhas técnicas limpas
 
 DETALHES CONSTRUTIVOS (incluir todos aplicáveis):
 - Textura/padronagem: representar com traço técnico (nervuras verticais, canelados, tranças com cruzamento claro)
