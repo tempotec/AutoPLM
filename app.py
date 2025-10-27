@@ -552,9 +552,29 @@ Retorne SOMENTE o JSON, sem texto adicional."""
         return None
 
 
+def has_technical_measurements(spec):
+    """
+    Check if specification has technical measurements for dimensioned drawing.
+    Returns True if at least one measurement field is populated.
+    """
+    measurement_fields = [
+        'body_length', 'bust', 'hem_width', 'shoulder_to_shoulder',
+        'neckline_depth', 'sleeve_length', 'waist', 'straight_armhole'
+    ]
+    
+    for field in measurement_fields:
+        value = getattr(spec, field, None)
+        if value and str(value).strip():
+            return True
+    
+    return False
+
+
 def build_technical_drawing_prompt(spec, visual_analysis=None):
-    """Build professional technical flat sketch prompt with measurements and POMs for GPT-Image-1
-    Based on professional industry standards for technical flats with full dimensioning
+    """Build professional technical flat sketch prompt for GPT-Image-1
+    Creates two types of prompts based on available data:
+    - WITH measurements: Full dimensioned drawing (flat dimensionado) with POMs and cotas
+    - WITHOUT measurements: Clean flat sketch only
     
     Args:
         spec: Specification database object with measurements
@@ -575,39 +595,47 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
     if "tricô" in material_info.lower() or "malha" in material_info.lower():
         material_details = "Malha/tricô - representar textura com traço técnico"
 
+    # Check if we have measurements for dimensioned drawing
+    has_measurements = has_technical_measurements(spec)
+    
+    print(f"\n{'='*80}")
+    print(f"TIPO DE DESENHO: {'COM COTAGEM (medidas disponíveis)' if has_measurements else 'SEM COTAGEM (apenas flat sketch)'}")
+    print(f"{'='*80}\n")
+
     # Build POMs (Pontos de Medida) list with available measurements
     poms = []
     pom_counter = 1
 
-    measurement_poms = {
-        'body_length': 'Comprimento total (HPS até barra)',
-        'bust': 'Largura peito (1 cm abaixo da cava, half chest)',
-        'hem_width': 'Largura barra (hem width, half)',
-        'shoulder_to_shoulder': 'Ombro a ombro (ponto externo a externo)',
-        'neckline_depth':
-        'Abertura decote/gola (profundidade a partir do HPS)',
-        'sleeve_length':
-        'Comprimento manga (do ponto mais alto do ombro até punho, seguindo curva)',
-        'waist': 'Largura cintura (half)',
-        'straight_armhole': 'Largura da cava (vertical)'
-    }
+    if has_measurements:
+        measurement_poms = {
+            'body_length': 'Comprimento total (HPS até barra)',
+            'bust': 'Largura peito (1 cm abaixo da cava, half chest)',
+            'hem_width': 'Largura barra (hem width, half)',
+            'shoulder_to_shoulder': 'Ombro a ombro (ponto externo a externo)',
+            'neckline_depth':
+            'Abertura decote/gola (profundidade a partir do HPS)',
+            'sleeve_length':
+            'Comprimento manga (do ponto mais alto do ombro até punho, seguindo curva)',
+            'waist': 'Largura cintura (half)',
+            'straight_armhole': 'Largura da cava (vertical)'
+        }
 
-    for field, description in measurement_poms.items():
-        value = getattr(spec, field, None)
-        if value:
-            # Sanitize measurement value: remove existing "cm" unit to avoid duplication
-            value_str = str(value).strip()
-            if value_str.lower().endswith('cm'):
-                value_str = value_str[:-2].strip()
-            poms.append(f"  {pom_counter}. {description}: {value_str} cm")
+        for field, description in measurement_poms.items():
+            value = getattr(spec, field, None)
+            if value:
+                # Sanitize measurement value: remove existing "cm" unit to avoid duplication
+                value_str = str(value).strip()
+                if value_str.lower().endswith('cm'):
+                    value_str = value_str[:-2].strip()
+                poms.append(f"  {pom_counter}. {description}: {value_str} cm")
+                pom_counter += 1
+
+        # Add additional POMs for specific details if available
+        if spec.openings_details and any(
+                term in spec.openings_details.lower()
+                for term in ['botão', 'botões', 'button']):
+            poms.append(f"  {pom_counter}. Espaçamento entre botões e diâmetro")
             pom_counter += 1
-
-    # Add additional POMs for specific details if available
-    if spec.openings_details and any(
-            term in spec.openings_details.lower()
-            for term in ['botão', 'botões', 'button']):
-        poms.append(f"  {pom_counter}. Espaçamento entre botões e diâmetro")
-        pom_counter += 1
 
     poms_text = "\n".join(
         poms
@@ -749,7 +777,9 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
 """
 
     # Build complete professional prompt following industry standards
-    prompt = f"""TAREFA:
+    if has_measurements:
+        # PROMPT COM COTAGEM - quando temos medidas técnicas
+        prompt = f"""TAREFA:
 A partir da análise da peça, gere desenho técnico plano (flat sketch) vetorial DIMENSIONADO com todas as cotas e POMs (Pontos de Medida).
 Este desenho será usado em produção e ficha técnica profissional.
 
@@ -819,6 +849,63 @@ NÃO FAZER (ESTRITAMENTE PROIBIDO):
 - NÃO omitir POMs de barra, punho, decote, gola, botões
 - NÃO usar texturas fotorrealistas
 - NÃO estilizar com traço orgânico/artístico; manter técnico
+- NÃO inventar detalhes não mencionados na referência visual"""
+    
+    else:
+        # PROMPT SEM COTAGEM - quando NÃO temos medidas técnicas (apenas flat sketch limpo)
+        prompt = f"""TAREFA:
+Gere desenho técnico plano (flat sketch) vetorial LIMPO da peça de vestuário.
+Este é um flat sketch profissional SEM DIMENSÕES (sem cotas, sem POMs).
+
+TIPO DA PEÇA: {garment_type}
+
+ENTRADAS:
+- Material/composição: {material_info}
+{material_details}
+- Detalhes construtivos: {details_text}
+{visual_section}
+
+VISTAS OBRIGATÓRIAS:
+- Frente e Costas (mesma escala), alinhadas VERTICALMENTE
+- Manga em posição natural (quando aplicável)
+- Detalhes ampliados (escala 1:2) de: gola/colarinho, punho, bolso, zíper, barra, cós, casas de botão (se aplicável)
+
+ESTILO VISUAL:
+- Fundo 100% branco (#FFFFFF); SEM corpo/manequim/cabide
+- Traço preto; espessuras: 
+  * Contorno: 0,75pt contínuo
+  * Costuras/canelado: 0,35pt contínuo
+  * Pesponto/linha de malha: 0,35pt tracejado
+- Cinza 15-30% APENAS para sobreposição/forro/volume
+- Simetria central indicada por linha ponto-traço (eixo central)
+- Símbolos gráficos: botão (círculo 2-4mm), ilhós (anel), rebite (ponto sólido)
+
+DETALHES CONSTRUTIVOS (incluir todos aplicáveis):
+- Textura/padronagem: representar com traço técnico (nervuras verticais, canelados, tranças com cruzamento claro)
+- Golas/colarinho: tipo exato, altura proporcional, acabamento
+- Punhos: tipo (ribana/dobrado/abotoado)
+- Barras: acabamento (bainha/ribana/overlock)
+- Recortes, pences, pregas, franzidos, dobras funcionais
+- Fechamentos: tipo (zíper, botões, colchetes), posição e quantidade
+- Casas de botão: posição centrada, quantidade
+- Bolsos: tipo exato (faca, chapa, embutido, patch), tampas, vivos
+
+NORMALIZAÇÃO:
+- Corrigir perspectiva/distorções: alinhar eixo central
+- Garantir simetria quando aplicável
+- Remover sombras/elementos que não pertencem à construção
+- Proporções visualmente balanceadas
+
+CRITÉRIOS DE ACEITAÇÃO:
+- Frente/Costas na mesma escala, perfeitamente centradas
+- Eixo central indicado; simetria consistente
+- Visual limpo, técnico e profissional
+- SEM DIMENSÕES, SEM COTAS, SEM POMs (desenho limpo apenas)
+
+NÃO FAZER:
+- NÃO adicionar medidas ou dimensões (não solicitadas)
+- NÃO incluir modelo/sombra realista/gradiente
+- NÃO usar texturas fotorrealistas
 - NÃO inventar detalhes não mencionados na referência visual"""
 
     return prompt
