@@ -42,18 +42,19 @@
                 <h6><i class="fas fa-info-circle me-1"></i>Informações do Arquivo</h6>
             </div>
             <div class="card-body">
-                <p><strong>Arquivo PDF:</strong><br>
-                   <i class="fas fa-file-pdf text-danger me-1"></i>{{ specification.pdf_filename }}</p>
+                {% set is_image = specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
+                <p><strong>Arquivo {{ 'Imagem' if is_image else 'PDF' }}:</strong><br>
+                   <i class="fas fa-{{ 'file-image text-success' if is_image else 'file-pdf text-danger' }} me-1"></i>{{ specification.pdf_filename }}</p>
                 <p><strong>Enviado por:</strong><br>{{ specification.user.username }}</p>
                 <p><strong>Data:</strong><br>{{ specification.created_at.strftime('%d/%m/%Y às %H:%M') }}</p>
                 
                 <hr>
                 <div class="d-grid gap-2">
                     <a href="{{ url_for('download_pdf', id=specification.id) }}" class="btn btn-outline-primary">
-                        <i class="fas fa-download me-1"></i>Baixar PDF Original
+                        <i class="fas fa-download me-1"></i>Baixar {{ 'Imagem' if is_image else 'PDF' }} Original
                     </a>
                     <button type="button" class="btn btn-outline-secondary" onclick="togglePdfViewer()">
-                        <i class="fas fa-eye me-1"></i>Visualizar PDF
+                        <i class="fas fa-eye me-1"></i>Visualizar {{ 'Imagem' if is_image else 'PDF' }}
                     </button>
                 </div>
             </div>
