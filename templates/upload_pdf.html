@@ -59,7 +59,20 @@
                         <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i>Voltar
                         </a>
-                        {{ form.submit(class="btn btn-primary") }}
+                        {{ form.submit(class="btn btn-primary", id="submit-btn") }}
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="loading-indicator" class="alert alert-info mt-3" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border text-primary me-3" role="status">
+                                <span class="visually-hidden">Processando...</span>
+                            </div>
+                            <div>
+                                <strong><i class="fas fa-cog fa-spin me-2"></i>Processando arquivo...</strong>
+                                <p class="mb-0 mt-1">Extraindo dados da ficha técnica e analisando imagens. Isso pode levar alguns segundos.</p>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>
@@ -70,6 +83,16 @@
 
 {% block scripts %}
 <script>
+// Show loading indicator on form submit
+document.querySelector('form').addEventListener('submit', function(e) {
+    const fileInput = document.getElementById('pdf-input');
+    if (fileInput.files.length > 0) {
+        document.getElementById('loading-indicator').style.display = 'block';
+        document.getElementById('submit-btn').disabled = true;
+        document.getElementById('submit-btn').innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processando...';
+    }
+});
+
 function updateFileDisplay(file) {
     const fileInfo = document.getElementById('file-info');
     const fileName = document.getElementById('file-name');
