@@ -2,7 +2,11 @@
 
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
-## Recent Changes (October 27, 2025)
+## Recent Changes (October 28, 2025)
+- **Indexed ColorSpace Support**: Fixed PDF image extraction to properly handle Indexed ColorSpace with palette lookup, ensuring patterned garments (stripes, checks, etc.) are correctly extracted and colors preserved.
+- **ByteStringObject Conversion**: Implemented robust conversion of PyPDF2 ByteStringObjects to bytes for palette data, with fallbacks for various data formats.
+- **Pattern Rendering in Drawings**: Enhanced technical drawing prompts with explicit "CORES E PADRÕES" section instructing GPT-Image-1 to render patterns (LISTRADO/stripes, XADREZ/checks, POÁ/polka dots) as technical representations.
+- **Loading Indicators**: Added visual feedback for users during file upload/processing and technical drawing generation with spinners and status messages.
 - **Image Upload Support**: Extended upload functionality to accept image files (JPG, PNG, JPEG) in addition to PDFs.
 - **Dual Processing Pipeline**: Implemented intelligent file type detection with separate processing paths for images and PDFs.
 - **Enhanced Visual Analysis**: Images are directly analyzed with GPT-4o Vision for structured data extraction.
