@@ -323,7 +323,13 @@ function handleDrawingSubmit(event, form, isRegenerate) {
         }
     }
     
-    // Show loading indicator
+    // Show full-screen overlay modal
+    const overlay = document.getElementById('processingOverlay');
+    if (overlay) {
+        overlay.style.display = 'flex';
+    }
+    
+    // Show loading indicator (small one in card)
     const loadingDiv = document.getElementById('drawing-loading');
     if (loadingDiv) {
         loadingDiv.style.display = 'block';
@@ -336,6 +342,11 @@ function handleDrawingSubmit(event, form, isRegenerate) {
         const originalHTML = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
     }
+    
+    // Prevent page navigation
+    window.onbeforeunload = function() {
+        return "O desenho técnico está sendo gerado. Se você sair agora, o processo será interrompido.";
+    };
     
     return true;
 }
