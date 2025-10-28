@@ -255,6 +255,30 @@
     </div>
 </div>
 
+<!-- Processing Overlay Modal -->
+<div id="processingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background-color: white; padding: 40px; border-radius: 10px; text-align: center; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
+            <span class="visually-hidden">Gerando...</span>
+        </div>
+        <h3 class="mb-3"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Não saia desta página!</h3>
+        <p class="mb-3" style="font-size: 1.1rem;">
+            <strong>Gerando desenho técnico...</strong>
+        </p>
+        <p class="text-muted mb-0">
+            <i class="fas fa-clock me-1"></i>Este processo leva aproximadamente 30 segundos.<br>
+            A página será atualizada automaticamente quando concluir.
+        </p>
+        <div class="mt-4">
+            <div class="progress" style="height: 25px;">
+                <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%">
+                    Processando...
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- File Viewer Modal -->
 <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen">
