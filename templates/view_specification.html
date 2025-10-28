@@ -72,7 +72,7 @@
                         <a href="{{ url_for('view_drawing', id=specification.id) }}" target="_blank" class="btn btn-outline-primary btn-sm">
                             <i class="fas fa-external-link-alt me-1"></i>Abrir em Nova Aba
                         </a>
-                        <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" onsubmit="return confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.');">
+                        <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="regenerate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, true);">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                             <button type="submit" class="btn btn-outline-warning btn-sm w-100">
                                 <i class="fas fa-sync-alt me-1"></i>Gerar Novo Desenho
@@ -83,7 +83,7 @@
                     <p class="text-muted mb-3">
                         <i class="fas fa-info-circle me-1"></i>Nenhum desenho técnico gerado ainda.
                     </p>
-                    <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}">
+                    <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="generate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, false);">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                         <button type="submit" class="btn btn-primary w-100">
                             <i class="fas fa-magic me-1"></i>Gerar Desenho Técnico
@@ -92,6 +92,19 @@
                     <small class="text-muted mt-2 d-block">
                         <i class="fas fa-clock me-1"></i>Processo leva ~30 segundos
                     </small>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="drawing-loading" class="alert alert-info mt-3" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
+                                <span class="visually-hidden">Gerando...</span>
+                            </div>
+                            <div>
+                                <strong>Gerando desenho técnico...</strong>
+                                <p class="mb-0 small">Analisando especificações e criando ilustração. Aguarde ~30 segundos.</p>
+                            </div>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
         </div>
@@ -276,6 +289,33 @@
 
 {% block scripts %}
 <script>
+// Handle technical drawing form submission
+function handleDrawingSubmit(event, form, isRegenerate) {
+    // Show confirmation for regenerate
+    if (isRegenerate) {
+        if (!confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.')) {
+            event.preventDefault();
+            return false;
+        }
+    }
+    
+    // Show loading indicator
+    const loadingDiv = document.getElementById('drawing-loading');
+    if (loadingDiv) {
+        loadingDiv.style.display = 'block';
+    }
+    
+    // Disable submit button
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        const originalHTML = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
+    }
+    
+    return true;
+}
+
 function togglePdfViewer() {
     const modal = new bootstrap.Modal(document.getElementById('pdfViewerModal'));
     const isImage = {{ 'true' if specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false' }};
