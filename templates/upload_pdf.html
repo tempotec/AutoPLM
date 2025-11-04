@@ -17,11 +17,11 @@
                 <form method="POST" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
                     
-                    <!-- Collection and Stylist Fields -->
+                    <!-- Collection, Supplier and Stylist Fields -->
                     <div class="row mb-4">
-                        <div class="col-md-6">
+                        <div class="col-md-4">
                             <label for="collection" class="form-label"><i class="fas fa-folder me-1"></i>Coleção *</label>
-                            {{ form.collection(class="form-control", placeholder="Ex: Inverno 2025, Verão 2026") }}
+                            {{ form.collection(class="form-control", placeholder="Ex: Summer '24") }}
                             {% if form.collection.errors %}
                                 <div class="text-danger mt-1">
                                     {% for error in form.collection.errors %}
@@ -30,10 +30,14 @@
                                 </div>
                             {% endif %}
                         </div>
-                        <div class="col-md-6">
+                        <div class="col-md-4">
+                            <label for="supplier" class="form-label"><i class="fas fa-industry me-1"></i>Fornecedor</label>
+                            {{ form.supplier(class="form-control", placeholder="Ex: Global Textiles") }}
+                        </div>
+                        <div class="col-md-4">
                             <label for="stylist" class="form-label"><i class="fas fa-user me-1"></i>Estilista</label>
                             {{ form.stylist(class="form-control", readonly=True) }}
-                            <small class="text-muted">Preenchido automaticamente com seu usuário</small>
+                            <small class="text-muted">Auto-preenchido</small>
                         </div>
                     </div>
                     
