@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Fichas Técnicas - Upload</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #0a0e1a;
+            color: #e5e7eb;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+        }
+
+        .user-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            margin-bottom: 32px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 2px;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .collections-header {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+            padding: 0 12px;
+        }
+
+        .collections-list {
+            flex: 1;
+            margin-bottom: 16px;
+        }
+
+        .collection-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .collection-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .collection-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .collection-icon {
+            width: 20px;
+            text-align: center;
+        }
+
+        .btn-add-collection {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-add-collection:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+        }
+
+        /* Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* Filters */
+        .filters-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .filter-select {
+            min-width: 160px;
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .search-box input::placeholder {
+            color: #64748b;
+        }
+
+        /* Upload Area */
+        .upload-section {
+            background-color: #1e293b;
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            margin-bottom: 48px;
+            transition: all 0.3s;
+        }
+
+        .upload-section.dragover {
+            border-color: #2563eb;
+            background-color: #1e3a5f;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #475569;
+            margin-bottom: 16px;
+        }
+
+        .upload-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 8px;
+        }
+
+        .upload-section p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .btn-upload {
+            padding: 12px 24px;
+            background-color: #334155;
+            color: #e5e7eb;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-upload:hover {
+            background-color: #475569;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Collection Section */
+        .collection-section {
+            margin-bottom: 32px;
+        }
+
+        .collection-section-header {
+            font-size: 20px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 20px;
+        }
+
+        /* Product Cards */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .product-card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 16px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .product-badges {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-collection {
+            background-color: #1e3a8a;
+            color: #60a5fa;
+        }
+
+        .badge-supplier {
+            background-color: #713f12;
+            color: #fbbf24;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #1e293b;
+            padding: 32px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 24px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+            margin-bottom: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #0f1420;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn-secondary {
+            padding: 12px 20px;
+            background-color: #334155;
+            color: #e5e7eb;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        /* Loading Indicator */
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-content {
+            background-color: #1e293b;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #334155;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="user-header">
+                <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+                <div class="user-info">
+                    <h3>{{ current_user.username }}</h3>
+                    <p>{{ current_user.role|title }}</p>
+                </div>
+            </div>
+
+            <div class="collections-header">COLEÇÕES</div>
+            
+            <div class="collections-list">
+                {% for collection in collections %}
+                <a href="?collection={{ collection }}" class="collection-item {% if collection == selected_collection %}active{% endif %}">
+                    <i class="fas fa-folder collection-icon"></i>
+                    <span>{{ collection }}</span>
+                </a>
+                {% endfor %}
+            </div>
+
+            <button class="btn-add-collection" onclick="showNewCollectionModal()">
+                <i class="fas fa-plus"></i>
+                Adicionar Nova Coleção
+            </button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <h1 class="page-title">Minhas Fichas Técnicas</h1>
+                <button class="btn-primary" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-plus"></i>
+                    Adicionar Ficha Técnica
+                </button>
+            </header>
+
+            <!-- Filters -->
+            <div class="filters-bar">
+                <select class="filter-select" onchange="window.location.href='?supplier='+this.value+'{% if selected_collection %}&collection={{ selected_collection }}{% endif %}'">
+                    <option value="">Fornecedor</option>
+                    {% for supplier in suppliers %}
+                    <option value="{{ supplier }}" {% if supplier == selected_supplier %}selected{% endif %}>{{ supplier }}</option>
+                    {% endfor %}
+                </select>
+                
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar ficha..." id="search-input">
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-section" id="drop-zone">
+                <i class="fas fa-file-upload upload-icon"></i>
+                <h3>Arraste e solte seus arquivos aqui</h3>
+                <p>Ou clique para selecionar os arquivos. Formatos aceitos: PDF, JPG, PNG.</p>
+                <button class="btn-upload" onclick="document.getElementById('file-input').click()">
+                    Selecionar Arquivos
+                </button>
+                <form id="upload-form" method="POST" action="{{ url_for('upload_pdf') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="collection" id="collection-input" value="{{ selected_collection or '' }}">
+                    <input type="hidden" name="supplier" id="supplier-input" value="{{ selected_supplier or '' }}">
+                    <input type="hidden" name="stylist" value="{{ current_user.username }}">
+                    <input type="file" id="file-input" name="pdf_file" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFileSelect(this.files)">
+                </form>
+            </div>
+
+            <!-- Collection Products -->
+            {% if selected_collection %}
+            <div class="collection-section">
+                <h2 class="collection-section-header">Coleção: {{ selected_collection }}</h2>
+                
+                {% if products %}
+                <div class="products-grid">
+                    {% for product in products %}
+                    <div class="product-card" onclick="window.location.href='{{ url_for('view_specification', id=product.id) }}'">
+                        <div class="product-name">{{ product.description or product.ref_souq or 'Produto' }}</div>
+                        <div class="product-badges">
+                            <span class="badge badge-collection">{{ product.collection }}</span>
+                            {% if product.supplier %}
+                            <span class="badge badge-supplier">{{ product.supplier }}</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="text-align: center; color: #64748b; padding: 40px 0;">
+                    Nenhum produto nesta coleção ainda.
+                </p>
+                {% endif %}
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <!-- New Collection Modal -->
+    <div class="modal" id="new-collection-modal">
+        <div class="modal-content">
+            <h2 class="modal-header">Nova Coleção</h2>
+            <form id="new-collection-form">
+                <div class="form-group">
+                    <label class="form-label">Nome da Coleção</label>
+                    <input type="text" class="form-input" id="new-collection-name" placeholder="Ex: Verão 25" required>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="hideNewCollectionModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Criar Coleção</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3 style="color: #e5e7eb;">Processando arquivo...</h3>
+            <p style="color: #94a3b8; margin-top: 8px;">Isso pode levar alguns segundos</p>
+        </div>
+    </div>
+
+    <script>
+        // Drag & Drop functionality
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                handleFileSelect(files);
+            }
+        });
+
+        function handleFileSelect(files) {
+            if (files.length === 0) return;
+            
+            const collectionValue = '{{ selected_collection or "" }}';
+            if (!collectionValue) {
+                alert('Por favor, selecione uma coleção primeiro na barra lateral.');
+                return;
+            }
+            
+            document.getElementById('collection-input').value = collectionValue;
+            document.getElementById('loading-overlay').classList.add('active');
+            document.getElementById('upload-form').submit();
+        }
+
+        // Modal functions
+        function showNewCollectionModal() {
+            document.getElementById('new-collection-modal').classList.add('active');
+        }
+
+        function hideNewCollectionModal() {
+            document.getElementById('new-collection-modal').classList.remove('active');
+        }
+
+        document.getElementById('new-collection-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const collectionName = document.getElementById('new-collection-name').value;
+            if (collectionName) {
+                window.location.href = '?collection=' + encodeURIComponent(collectionName) + '&new=true';
+            }
+        });
+
+        // Search functionality
+        document.getElementById('search-input').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.product-card');
+            
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

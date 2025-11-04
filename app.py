@@ -1604,6 +1604,55 @@ def create_user():
     return render_template('create_user.html', form=form)
 
 
+@app.route('/upload_new')
+@login_required
+def upload_new():
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    # Get selected collection from query params
+    selected_collection = request.args.get('collection', '')
+    selected_supplier = request.args.get('supplier', '')
+    
+    # Get all collections for sidebar
+    if user.is_admin:
+        collections = db.session.query(Specification.collection).distinct().filter(
+            Specification.collection.isnot(None)).all()
+        suppliers = db.session.query(Specification.supplier).distinct().filter(
+            Specification.supplier.isnot(None)).all()
+    else:
+        collections = db.session.query(Specification.collection).distinct().filter(
+            Specification.collection.isnot(None),
+            Specification.user_id == user.id).all()
+        suppliers = db.session.query(Specification.supplier).distinct().filter(
+            Specification.supplier.isnot(None),
+            Specification.user_id == user.id).all()
+    
+    collections = sorted([c[0] for c in collections if c[0]])
+    suppliers = sorted([s[0] for s in suppliers if s[0]])
+    
+    # Get products for selected collection
+    products = []
+    if selected_collection:
+        query = Specification.query.filter_by(collection=selected_collection)
+        if not user.is_admin:
+            query = query.filter_by(user_id=user.id)
+        if selected_supplier:
+            query = query.filter_by(supplier=selected_supplier)
+        products = query.order_by(Specification.created_at.desc()).all()
+    
+    return render_template('upload_new.html',
+                           current_user=user,
+                           collections=collections,
+                           suppliers=suppliers,
+                           selected_collection=selected_collection,
+                           selected_supplier=selected_supplier,
+                           products=products)
+
+
 @app.route('/upload_pdf', methods=['GET', 'POST'])
 @login_required
 def upload_pdf():
@@ -1640,7 +1689,7 @@ def upload_pdf():
 
             flash(
                 'PDF enviado com sucesso! O processamento está em andamento.')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('upload_new', collection=spec.collection))
 
         except Exception as e:
             db.session.rollback()
