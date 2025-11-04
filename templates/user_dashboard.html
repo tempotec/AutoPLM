@@ -1,127 +1,647 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Tech Packs - StyleFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Dashboard - Fichas Técnicas{% endblock %}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #0a0e1a;
+            color: #e5e7eb;
+        }
 
-{% block content %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2><i class="fas fa-home me-2"></i>Minhas Fichas Técnicas</h2>
-            <a href="{{ url_for('upload_pdf') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i>Nova Ficha
-            </a>
-        </div>
-        <hr>
-    </div>
-</div>
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
 
-<!-- Collection Filter -->
-{% if collections %}
-<div class="row mb-3">
-    <div class="col-md-4">
-        <form method="GET" action="{{ url_for('dashboard') }}">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fas fa-filter"></i></span>
-                <select name="collection" class="form-select" onchange="this.form.submit()">
-                    <option value="">Todas as Coleções</option>
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo i {
+            color: #3b82f6;
+            font-size: 24px;
+        }
+
+        .logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .nav-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* User Profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid #1e293b;
+            margin-top: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Search and Filters */
+        .controls-bar {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .search-box input::placeholder {
+            color: #64748b;
+        }
+
+        .filter-select {
+            min-width: 160px;
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        /* Product Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .product-card {
+            background-color: #1e293b;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background-color: #0f1420;
+            object-fit: cover;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #475569;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-info {
+            padding: 16px;
+        }
+
+        .product-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 12px;
+        }
+
+        .product-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-collection {
+            background-color: #1e40af;
+            color: #60a5fa;
+        }
+
+        .badge-supplier {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .badge-draft {
+            background-color: #334155;
+            color: #94a3b8;
+        }
+
+        .badge-development {
+            background-color: #854d0e;
+            color: #fbbf24;
+        }
+
+        .badge-approved {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .badge-production {
+            background-color: #1e40af;
+            color: #60a5fa;
+        }
+
+        .badge-completed {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .badge-processing {
+            background-color: #854d0e;
+            color: #fbbf24;
+        }
+
+        .badge-error {
+            background-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 8px;
+            padding: 12px 16px;
+            border-top: 1px solid #334155;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 8px 12px;
+            background-color: #334155;
+            color: #e5e7eb;
+            border: none;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-action:hover {
+            background-color: #475569;
+        }
+
+        .btn-action.btn-danger {
+            background-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        .btn-action.btn-danger:hover {
+            background-color: #991b1b;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            color: #475569;
+            margin-bottom: 24px;
+        }
+
+        .empty-state h3 {
+            font-size: 24px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+
+        .empty-state p {
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        /* Pagination */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .page-link {
+            padding: 8px 12px;
+            background-color: #1e293b;
+            color: #e5e7eb;
+            border-radius: 6px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .page-link:hover {
+            background-color: #334155;
+        }
+
+        .page-link.active {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .page-link.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Flash Messages */
+        .flash-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .flash-message.success {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .flash-message.error {
+            background-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        .flash-message.info {
+            background-color: #1e40af;
+            color: #60a5fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-tshirt"></i>
+                <span>StyleFlow</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item active">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-layer-group"></i>
+                    <span>My Collections</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Suppliers</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </nav>
+
+            <div class="user-profile">
+                <div class="user-avatar">
+                    {{ current_user.username[0].upper() }}
+                </div>
+                <div class="user-info">
+                    <div class="user-name">{{ current_user.username }}</div>
+                    <div class="user-role">{% if current_user.is_admin %}Admin{% else %}Stylist{% endif %}</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <div class="header-top">
+                    <h1 class="page-title">My Tech Packs</h1>
+                    <a href="{{ url_for('upload_pdf') }}" class="btn-primary">
+                        <i class="fas fa-plus"></i>
+                        New Tech Pack
+                    </a>
+                </div>
+                <p class="page-subtitle">View and manage all your imported clothing tech packs</p>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-message success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Search and Filters -->
+            <div class="controls-bar">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search by product name, code, or collection..." oninput="filterProducts()">
+                </div>
+                
+                {% if collections %}
+                <select class="filter-select" id="collectionFilter" onchange="filterProducts()">
+                    <option value="">All Collections</option>
                     {% for collection in collections %}
-                    <option value="{{ collection }}" {% if collection == selected_collection %}selected{% endif %}>
-                        {{ collection }}
-                    </option>
+                    <option value="{{ collection }}">{{ collection }}</option>
                     {% endfor %}
                 </select>
+                {% endif %}
+                
+                {% if suppliers %}
+                <select class="filter-select" id="supplierFilter" onchange="filterProducts()">
+                    <option value="">All Suppliers</option>
+                    {% for supplier in suppliers %}
+                    <option value="{{ supplier }}">{{ supplier }}</option>
+                    {% endfor %}
+                </select>
+                {% endif %}
+                
+                <select class="filter-select" id="statusFilter" onchange="filterProducts()">
+                    <option value="">All Statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="in_development">In Development</option>
+                    <option value="approved">Approved</option>
+                    <option value="in_production">In Production</option>
+                </select>
             </div>
-        </form>
-    </div>
-</div>
-{% endif %}
 
-<div class="row">
-    {% if specifications %}
-        {% for spec in specifications %}
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card spec-card h-100">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <small class="text-muted">
-                        <i class="fas fa-calendar me-1"></i>
-                        {{ spec.created_at.strftime('%d/%m/%Y %H:%M') }}
-                    </small>
-                    {% if spec.processing_status == 'completed' %}
-                        <span class="badge bg-success">Completo</span>
-                    {% elif spec.processing_status == 'processing' %}
-                        <span class="badge bg-warning">Processando</span>
-                    {% elif spec.processing_status == 'error' %}
-                        <span class="badge bg-danger">Erro</span>
-                    {% else %}
-                        <span class="badge bg-secondary">Pendente</span>
-                    {% endif %}
-                </div>
-                <div class="card-body">
-                    <h6 class="card-title">
-                        <i class="fas fa-file-pdf text-danger me-1"></i>
-                        {{ spec.pdf_filename }}
-                    </h6>
-                    
-                    {% if spec.ref_souq %}
-                    <p class="card-text">
-                        <strong>REF:</strong> {{ spec.ref_souq }}
-                    </p>
-                    {% endif %}
-                    
-                    {% if spec.description %}
-                    <p class="card-text">
-                        {{ spec.description[:100] }}{% if spec.description|length > 100 %}...{% endif %}
-                    </p>
-                    {% endif %}
-                    
-                    {% if spec.collection %}
-                    <p class="card-text mb-1">
-                        <small class="text-muted">
-                            <i class="fas fa-folder me-1"></i><strong>Coleção:</strong> {{ spec.collection }}
-                        </small>
-                    </p>
-                    {% endif %}
-                    
-                    {% if spec.stylists %}
-                    <p class="card-text mb-1">
-                        <small class="text-muted">
-                            <i class="fas fa-user me-1"></i><strong>Estilista:</strong> {{ spec.stylists }}
-                        </small>
-                    </p>
-                    {% endif %}
-                </div>
-                <div class="card-footer">
-                    <div class="d-flex justify-content-between">
-                        <a href="{{ url_for('view_specification', id=spec.id) }}" class="btn btn-sm btn-outline-primary">
-                            <i class="fas fa-eye me-1"></i>Ver Detalhes
-                        </a>
-                        <div class="btn-group btn-group-sm">
-                            <a href="{{ url_for('edit_specification', id=spec.id) }}" class="btn btn-outline-secondary">
-                                <i class="fas fa-edit me-1"></i>Editar
-                            </a>
-                            <button class="btn btn-outline-danger" type="button" onclick="if(confirm('Tem certeza que deseja excluir esta especificação?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
-                                <i class="fas fa-trash me-1"></i>Excluir
-                            </button>
+            <!-- Products Grid -->
+            {% if specifications %}
+            <div class="products-grid" id="productsGrid">
+                {% for spec in specifications %}
+                <div class="product-card" data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}" data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}">
+                    <a href="{{ url_for('view_specification', id=spec.id) }}" style="text-decoration: none; color: inherit;">
+                        <div class="product-image">
+                            {% if spec.technical_drawing_url %}
+                                <img src="{{ url_for('static', filename=spec.technical_drawing_url.replace('static/', '')) }}" alt="{{ spec.pdf_filename }}">
+                            {% else %}
+                                <i class="fas fa-image fa-3x"></i>
+                            {% endif %}
                         </div>
+                        <div class="product-info">
+                            <div class="product-name">{{ spec.pdf_filename[:30] }}{% if spec.pdf_filename|length > 30 %}...{% endif %}</div>
+                            <div class="product-meta">
+                                {% if spec.collection %}
+                                <span class="badge badge-collection">
+                                    <i class="fas fa-folder"></i> {{ spec.collection }}
+                                </span>
+                                {% endif %}
+                                {% if spec.supplier %}
+                                <span class="badge badge-supplier">
+                                    <i class="fas fa-truck"></i> {{ spec.supplier }}
+                                </span>
+                                {% endif %}
+                                {% if spec.status == 'draft' %}
+                                    <span class="badge badge-draft">Draft</span>
+                                {% elif spec.status == 'in_development' %}
+                                    <span class="badge badge-development">In Development</span>
+                                {% elif spec.status == 'approved' %}
+                                    <span class="badge badge-approved">Approved</span>
+                                {% elif spec.status == 'in_production' %}
+                                    <span class="badge badge-production">In Production</span>
+                                {% endif %}
+                                
+                                {% if spec.processing_status == 'completed' %}
+                                    <span class="badge badge-completed">Complete</span>
+                                {% elif spec.processing_status == 'processing' %}
+                                    <span class="badge badge-processing">Processing</span>
+                                {% elif spec.processing_status == 'error' %}
+                                    <span class="badge badge-error">Error</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                    <div class="product-actions">
+                        <a href="{{ url_for('edit_specification', id=spec.id) }}" class="btn-action">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
+                        <button class="btn-action btn-danger" onclick="if(confirm('Are you sure you want to delete this?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
                     </div>
                     <form id="delete-form-{{ spec.id }}" method="POST" action="{{ url_for('delete_specification', id=spec.id) }}" style="display: none;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     </form>
                 </div>
+                {% endfor %}
             </div>
-        </div>
-        {% endfor %}
-    {% else %}
-    <div class="col-12">
-        <div class="text-center py-5">
-            <i class="fas fa-file-upload fa-4x text-muted mb-4"></i>
-            <h4 class="text-muted">Nenhuma ficha técnica encontrada</h4>
-            <p class="text-muted mb-4">Comece enviando seu primeiro PDF para análise</p>
-            <a href="{{ url_for('upload_pdf') }}" class="btn btn-primary btn-lg">
-                <i class="fas fa-upload me-2"></i>Fazer Upload do PDF
-            </a>
-        </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-upload"></i>
+                <h3>No tech packs yet</h3>
+                <p>Start by uploading your first PDF or image file for analysis</p>
+                <a href="{{ url_for('upload_pdf') }}" class="btn-primary">
+                    <i class="fas fa-upload"></i>
+                    Upload Tech Pack
+                </a>
+            </div>
+            {% endif %}
+        </main>
     </div>
-    {% endif %}
-</div>
-{% endblock %}
+
+    <script>
+        function filterProducts() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const collectionFilter = document.getElementById('collectionFilter') ? document.getElementById('collectionFilter').value : '';
+            const supplierFilter = document.getElementById('supplierFilter') ? document.getElementById('supplierFilter').value : '';
+            const statusFilter = document.getElementById('statusFilter').value;
+            
+            const cards = document.querySelectorAll('.product-card');
+            
+            cards.forEach(card => {
+                const name = card.dataset.name.toLowerCase();
+                const ref = card.dataset.ref.toLowerCase();
+                const collection = card.dataset.collection;
+                const supplier = card.dataset.supplier;
+                const status = card.dataset.status;
+                
+                const matchesSearch = name.includes(searchTerm) || ref.includes(searchTerm) || collection.toLowerCase().includes(searchTerm);
+                const matchesCollection = !collectionFilter || collection === collectionFilter;
+                const matchesSupplier = !supplierFilter || supplier === supplierFilter;
+                const matchesStatus = !statusFilter || status === statusFilter;
+                
+                if (matchesSearch && matchesCollection && matchesSupplier && matchesStatus) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
