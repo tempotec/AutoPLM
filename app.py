@@ -132,6 +132,11 @@ class Specification(db.Model):
     processing_status = db.Column(
         db.String(50),
         default='pending')  # pending, processing, completed, error
+    
+    # Product status workflow
+    status = db.Column(
+        db.String(50),
+        default='draft')  # draft, in_development, approved, in_production
 
 
 # Forms
@@ -157,6 +162,7 @@ class CreateUserForm(FlaskForm):
 
 class UploadPDFForm(FlaskForm):
     collection = StringField('Coleção', validators=[DataRequired()])
+    supplier = StringField('Fornecedor (Supplier)')
     stylist = StringField('Estilista')
     pdf_file = FileField(
         'File',
@@ -1443,6 +1449,87 @@ def dashboard():
                                selected_collection=collection_filter)
 
 
+@app.route('/dashboard_new')
+@login_required
+def dashboard_new():
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    # Get filter parameters
+    search_query = request.args.get('search', '').strip()
+    selected_collection = request.args.get('collection', '')
+    selected_supplier = request.args.get('supplier', '')
+    selected_status = request.args.get('status', '')
+    page = int(request.args.get('page', 1))
+    per_page = 12
+    
+    # Base query
+    if user.is_admin:
+        query = Specification.query
+    else:
+        query = Specification.query.filter_by(user_id=user.id)
+    
+    # Apply filters
+    if search_query:
+        search_filter = f'%{search_query}%'
+        query = query.filter(
+            db.or_(
+                Specification.description.ilike(search_filter),
+                Specification.ref_souq.ilike(search_filter),
+                Specification.collection.ilike(search_filter)
+            )
+        )
+    
+    if selected_collection:
+        query = query.filter_by(collection=selected_collection)
+    
+    if selected_supplier:
+        query = query.filter_by(supplier=selected_supplier)
+    
+    if selected_status:
+        query = query.filter_by(status=selected_status)
+    
+    # Get total count for pagination
+    total_specs = query.count()
+    total_pages = (total_specs + per_page - 1) // per_page
+    
+    # Get paginated results
+    specifications = query.order_by(Specification.created_at.desc()).offset(
+        (page - 1) * per_page).limit(per_page).all()
+    
+    # Get filter options
+    if user.is_admin:
+        collections = db.session.query(Specification.collection).distinct().filter(
+            Specification.collection.isnot(None)).all()
+        suppliers = db.session.query(Specification.supplier).distinct().filter(
+            Specification.supplier.isnot(None)).all()
+    else:
+        collections = db.session.query(Specification.collection).distinct().filter(
+            Specification.collection.isnot(None),
+            Specification.user_id == user.id).all()
+        suppliers = db.session.query(Specification.supplier).distinct().filter(
+            Specification.supplier.isnot(None),
+            Specification.user_id == user.id).all()
+    
+    collections = [c[0] for c in collections if c[0]]
+    suppliers = [s[0] for s in suppliers if s[0]]
+    
+    return render_template('dashboard_new.html',
+                           current_user=user,
+                           specifications=specifications,
+                           collections=collections,
+                           suppliers=suppliers,
+                           selected_collection=selected_collection,
+                           selected_supplier=selected_supplier,
+                           selected_status=selected_status,
+                           search_query=search_query,
+                           page=page,
+                           total_pages=total_pages)
+
+
 @app.route('/manage_users')
 @admin_required
 def manage_users():
@@ -1498,8 +1585,10 @@ def upload_pdf():
             spec.user_id = session['user_id']
             spec.pdf_filename = filename
             spec.collection = form.collection.data
+            spec.supplier = form.supplier.data
             spec.stylists = form.stylist.data or user.username
             spec.processing_status = 'processing'
+            spec.status = 'draft'
             spec.created_at = datetime.now()
 
             db.session.add(spec)
