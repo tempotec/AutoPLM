@@ -1411,7 +1411,7 @@ def process_pdf_specification(spec_id, file_path):
 def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return redirect(url_for('dashboard_new'))
+    return redirect(url_for('dashboard'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -1444,131 +1444,107 @@ def dashboard():
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
 
-    # Get collection filter from query string
-    collection_filter = request.args.get('collection', '')
+    # Get filter parameters
+    search_query = request.args.get('search', '').strip()
+    selected_collection = request.args.get('collection', '')
+    selected_supplier = request.args.get('supplier', '')
+    selected_status = request.args.get('status', '')
 
     if user.is_admin:
         # Admin dashboard
         total_users = User.query.count()
         total_specs = Specification.query.count()
         
-        # Get all collections for filter dropdown
+        # Base query for admin
+        query = Specification.query
+        
+        # Apply filters
+        if search_query:
+            search_filter = f'%{search_query}%'
+            query = query.filter(
+                db.or_(
+                    Specification.description.ilike(search_filter),
+                    Specification.ref_souq.ilike(search_filter),
+                    Specification.collection.ilike(search_filter),
+                    Specification.pdf_filename.ilike(search_filter)
+                )
+            )
+        
+        if selected_collection:
+            query = query.filter_by(collection=selected_collection)
+        
+        if selected_supplier:
+            query = query.filter_by(supplier=selected_supplier)
+        
+        if selected_status:
+            query = query.filter_by(status=selected_status)
+        
+        # Get filtered results (limit to prevent overwhelming the page)
+        recent_specs = query.order_by(Specification.created_at.desc()).limit(100).all()
+        
+        # Get filter options
         collections = db.session.query(Specification.collection).distinct().filter(Specification.collection.isnot(None)).all()
         collections = [c[0] for c in collections if c[0]]
         
-        # Filter specs by collection if selected
-        if collection_filter:
-            recent_specs = Specification.query.filter_by(collection=collection_filter).order_by(
-                Specification.created_at.desc()).limit(10).all()
-        else:
-            recent_specs = Specification.query.order_by(
-                Specification.created_at.desc()).limit(10).all()
+        suppliers = db.session.query(Specification.supplier).distinct().filter(Specification.supplier.isnot(None)).all()
+        suppliers = [s[0] for s in suppliers if s[0]]
         
         return render_template('admin_dashboard.html',
+                               current_user=user,
                                total_users=total_users,
                                total_specs=total_specs,
                                recent_specs=recent_specs,
                                collections=collections,
-                               selected_collection=collection_filter)
+                               suppliers=suppliers,
+                               selected_collection=selected_collection,
+                               selected_supplier=selected_supplier,
+                               selected_status=selected_status,
+                               search_query=search_query)
     else:
         # User dashboard (stylists)
-        # Get all collections for filter dropdown
+        # Base query for user
+        query = Specification.query.filter_by(user_id=user.id)
+        
+        # Apply filters
+        if search_query:
+            search_filter = f'%{search_query}%'
+            query = query.filter(
+                db.or_(
+                    Specification.description.ilike(search_filter),
+                    Specification.ref_souq.ilike(search_filter),
+                    Specification.collection.ilike(search_filter),
+                    Specification.pdf_filename.ilike(search_filter)
+                )
+            )
+        
+        if selected_collection:
+            query = query.filter_by(collection=selected_collection)
+        
+        if selected_supplier:
+            query = query.filter_by(supplier=selected_supplier)
+        
+        if selected_status:
+            query = query.filter_by(status=selected_status)
+        
+        # Get filtered results (limit to prevent overwhelming the page)
+        user_specs = query.order_by(Specification.created_at.desc()).limit(100).all()
+        
+        # Get filter options
         collections = db.session.query(Specification.collection).distinct().filter(Specification.collection.isnot(None), Specification.user_id==user.id).all()
         collections = [c[0] for c in collections if c[0]]
         
-        # Filter specs by collection if selected
-        if collection_filter:
-            user_specs = Specification.query.filter_by(user_id=user.id, collection=collection_filter).order_by(
-                Specification.created_at.desc()).all()
-        else:
-            user_specs = Specification.query.filter_by(user_id=user.id).order_by(
-                Specification.created_at.desc()).all()
+        suppliers = db.session.query(Specification.supplier).distinct().filter(Specification.supplier.isnot(None), Specification.user_id==user.id).all()
+        suppliers = [s[0] for s in suppliers if s[0]]
         
         return render_template('user_dashboard.html',
+                               current_user=user,
                                specifications=user_specs,
                                collections=collections,
-                               selected_collection=collection_filter)
-
-
-@app.route('/dashboard_new')
-@login_required
-def dashboard_new():
-    user = User.query.get(session['user_id'])
-    if not user:
-        session.clear()
-        flash('Sessão inválida. Por favor, faça login novamente.')
-        return redirect(url_for('login'))
-    
-    # Get filter parameters
-    search_query = request.args.get('search', '').strip()
-    selected_collection = request.args.get('collection', '')
-    selected_supplier = request.args.get('supplier', '')
-    selected_status = request.args.get('status', '')
-    page = int(request.args.get('page', 1))
-    per_page = 12
-    
-    # Base query
-    if user.is_admin:
-        query = Specification.query
-    else:
-        query = Specification.query.filter_by(user_id=user.id)
-    
-    # Apply filters
-    if search_query:
-        search_filter = f'%{search_query}%'
-        query = query.filter(
-            db.or_(
-                Specification.description.ilike(search_filter),
-                Specification.ref_souq.ilike(search_filter),
-                Specification.collection.ilike(search_filter)
-            )
-        )
-    
-    if selected_collection:
-        query = query.filter_by(collection=selected_collection)
-    
-    if selected_supplier:
-        query = query.filter_by(supplier=selected_supplier)
-    
-    if selected_status:
-        query = query.filter_by(status=selected_status)
-    
-    # Get total count for pagination
-    total_specs = query.count()
-    total_pages = (total_specs + per_page - 1) // per_page
-    
-    # Get paginated results
-    specifications = query.order_by(Specification.created_at.desc()).offset(
-        (page - 1) * per_page).limit(per_page).all()
-    
-    # Get filter options
-    if user.is_admin:
-        collections = db.session.query(Specification.collection).distinct().filter(
-            Specification.collection.isnot(None)).all()
-        suppliers = db.session.query(Specification.supplier).distinct().filter(
-            Specification.supplier.isnot(None)).all()
-    else:
-        collections = db.session.query(Specification.collection).distinct().filter(
-            Specification.collection.isnot(None),
-            Specification.user_id == user.id).all()
-        suppliers = db.session.query(Specification.supplier).distinct().filter(
-            Specification.supplier.isnot(None),
-            Specification.user_id == user.id).all()
-    
-    collections = [c[0] for c in collections if c[0]]
-    suppliers = [s[0] for s in suppliers if s[0]]
-    
-    return render_template('dashboard_new.html',
-                           current_user=user,
-                           specifications=specifications,
-                           collections=collections,
-                           suppliers=suppliers,
-                           selected_collection=selected_collection,
-                           selected_supplier=selected_supplier,
-                           selected_status=selected_status,
-                           search_query=search_query,
-                           page=page,
-                           total_pages=total_pages)
+                               suppliers=suppliers,
+                               selected_collection=selected_collection,
+                               selected_supplier=selected_supplier,
+                               selected_status=selected_status,
+                               search_query=search_query)
 
 
 @app.route('/manage_users')
@@ -1604,55 +1580,6 @@ def create_user():
     return render_template('create_user.html', form=form)
 
 
-@app.route('/upload_new')
-@login_required
-def upload_new():
-    user = User.query.get(session['user_id'])
-    if not user:
-        session.clear()
-        flash('Sessão inválida. Por favor, faça login novamente.')
-        return redirect(url_for('login'))
-    
-    # Get selected collection from query params
-    selected_collection = request.args.get('collection', '')
-    selected_supplier = request.args.get('supplier', '')
-    
-    # Get all collections for sidebar
-    if user.is_admin:
-        collections = db.session.query(Specification.collection).distinct().filter(
-            Specification.collection.isnot(None)).all()
-        suppliers = db.session.query(Specification.supplier).distinct().filter(
-            Specification.supplier.isnot(None)).all()
-    else:
-        collections = db.session.query(Specification.collection).distinct().filter(
-            Specification.collection.isnot(None),
-            Specification.user_id == user.id).all()
-        suppliers = db.session.query(Specification.supplier).distinct().filter(
-            Specification.supplier.isnot(None),
-            Specification.user_id == user.id).all()
-    
-    collections = sorted([c[0] for c in collections if c[0]])
-    suppliers = sorted([s[0] for s in suppliers if s[0]])
-    
-    # Get products for selected collection
-    products = []
-    if selected_collection:
-        query = Specification.query.filter_by(collection=selected_collection)
-        if not user.is_admin:
-            query = query.filter_by(user_id=user.id)
-        if selected_supplier:
-            query = query.filter_by(supplier=selected_supplier)
-        products = query.order_by(Specification.created_at.desc()).all()
-    
-    return render_template('upload_new.html',
-                           current_user=user,
-                           collections=collections,
-                           suppliers=suppliers,
-                           selected_collection=selected_collection,
-                           selected_supplier=selected_supplier,
-                           products=products)
-
-
 @app.route('/upload_pdf', methods=['GET', 'POST'])
 @login_required
 def upload_pdf():
@@ -1660,7 +1587,12 @@ def upload_pdf():
     
     # Get current user to pre-fill stylist field
     user = User.query.get(session['user_id'])
-    if request.method == 'GET' and user:
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    if request.method == 'GET':
         form.stylist.data = user.username
     
     if request.method == 'POST' and form.validate_on_submit():
@@ -1689,7 +1621,7 @@ def upload_pdf():
 
             flash(
                 'PDF enviado com sucesso! O processamento está em andamento.')
-            return redirect(url_for('upload_new', collection=spec.collection))
+            return redirect(url_for('dashboard'))
 
         except Exception as e:
             db.session.rollback()
@@ -1699,9 +1631,9 @@ def upload_pdf():
             flash(
                 'Erro ao processar o arquivo PDF. Por favor, tente novamente ou contate o suporte.'
             )
-            return render_template('upload_pdf.html', form=form)
+            return render_template('upload_pdf.html', form=form, current_user=user)
 
-    return render_template('upload_pdf.html', form=form)
+    return render_template('upload_pdf.html', form=form, current_user=user)
 
 
 @app.route('/specification/<int:id>')
