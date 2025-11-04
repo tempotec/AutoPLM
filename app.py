@@ -149,9 +149,9 @@ class CreateUserForm(FlaskForm):
     password = PasswordField('Password',
                              validators=[DataRequired(),
                                          Length(min=6)])
-    is_admin = SelectField('Role',
-                           choices=[('0', 'User'), ('1', 'Admin')],
-                           coerce=int)
+    role = SelectField('Perfil',
+                       choices=[('stylist', 'Estilista'), ('admin', 'Administrador')],
+                       default='stylist')
     submit = SubmitField('Create User')
 
 
@@ -1397,22 +1397,50 @@ def dashboard():
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
 
+    # Get collection filter from query string
+    collection_filter = request.args.get('collection', '')
+
     if user.is_admin:
         # Admin dashboard
         total_users = User.query.count()
         total_specs = Specification.query.count()
-        recent_specs = Specification.query.order_by(
-            Specification.created_at.desc()).limit(10).all()
+        
+        # Get all collections for filter dropdown
+        collections = db.session.query(Specification.collection).distinct().filter(Specification.collection.isnot(None)).all()
+        collections = [c[0] for c in collections if c[0]]
+        
+        # Filter specs by collection if selected
+        if collection_filter:
+            recent_specs = Specification.query.filter_by(collection=collection_filter).order_by(
+                Specification.created_at.desc()).limit(10).all()
+        else:
+            recent_specs = Specification.query.order_by(
+                Specification.created_at.desc()).limit(10).all()
+        
         return render_template('admin_dashboard.html',
                                total_users=total_users,
                                total_specs=total_specs,
-                               recent_specs=recent_specs)
+                               recent_specs=recent_specs,
+                               collections=collections,
+                               selected_collection=collection_filter)
     else:
-        # User dashboard
-        user_specs = Specification.query.filter_by(user_id=user.id).order_by(
-            Specification.created_at.desc()).all()
+        # User dashboard (stylists)
+        # Get all collections for filter dropdown
+        collections = db.session.query(Specification.collection).distinct().filter(Specification.collection.isnot(None), Specification.user_id==user.id).all()
+        collections = [c[0] for c in collections if c[0]]
+        
+        # Filter specs by collection if selected
+        if collection_filter:
+            user_specs = Specification.query.filter_by(user_id=user.id, collection=collection_filter).order_by(
+                Specification.created_at.desc()).all()
+        else:
+            user_specs = Specification.query.filter_by(user_id=user.id).order_by(
+                Specification.created_at.desc()).all()
+        
         return render_template('user_dashboard.html',
-                               specifications=user_specs)
+                               specifications=user_specs,
+                               collections=collections,
+                               selected_collection=collection_filter)
 
 
 @app.route('/manage_users')
@@ -1430,7 +1458,8 @@ def create_user():
         user = User()
         user.username = form.username.data
         user.email = form.email.data
-        user.is_admin = bool(form.is_admin.data)
+        user.role = form.role.data
+        user.is_admin = (form.role.data == 'admin')
         user.set_password(form.password.data)
 
         try:
