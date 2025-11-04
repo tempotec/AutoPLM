@@ -3,7 +3,7 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 4, 2025)
-- **Collections Management System**: Complete collection management feature with modern dark theme interface.
+- **Collections Management System**: Complete end-to-end collection management feature with modern dark theme interface.
   - New Collection model in database (name, description, status, cover_image, user_id)
   - Relationship between Specification and Collection via collection_id foreign key
   - /collections page with grid of collection cards, search functionality, and filters
@@ -12,6 +12,9 @@ This Flask-based platform manages technical specifications for the fashion/texti
   - Collection status tracking (em_desenvolvimento, finalizada)
   - Sidebar navigation updated across all pages with functional "My Collections" link
   - Role-based access: admins see all collections, stylists see only their own
+  - **Collection Linking in Forms**: Added dropdown selector in upload and edit forms to link specifications to existing collections
+  - Dynamic dropdown population based on user role (admins see all, stylists see own)
+  - Optional linking: users can create specs without assigning to a collection (null collection_id)
   - Consistent dark theme (#0a0e1a, #1e2538, #2a3348) matching rest of application
 - **Modern Edit Specification Page**: Completely redesigned edit_specification.html with professional dark theme and improved UX.
   - Two-column layout: form fields on left, product image preview on right (380px sticky)
