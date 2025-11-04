@@ -1,276 +1,618 @@
 {% extends "base.html" %}
 
-{% block title %}Visualizar Especificação - Fichas Técnicas{% endblock %}
+{% block title %}{{ specification.description or specification.ref_souq or 'Ficha Técnica' }} - Fichas Técnicas{% endblock %}
 
 {% block content %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2>
-                <i class="fas fa-file-alt me-2"></i>Ficha Técnica
-                {% if specification.processing_status == 'completed' %}
-                    <span class="badge bg-success ms-2">Processada</span>
-                {% elif specification.processing_status == 'processing' %}
-                    <span class="badge bg-warning ms-2">Processando</span>
-                {% elif specification.processing_status == 'error' %}
-                    <span class="badge bg-danger ms-2">Erro</span>
-                {% endif %}
-            </h2>
-            <div class="btn-group">
-                <a href="{{ url_for('edit_specification', id=specification.id) }}" class="btn btn-primary">
-                    <i class="fas fa-edit me-1"></i>Editar
-                </a>
-                <button class="btn btn-danger" onclick="if(confirm('Tem certeza que deseja excluir esta especificação? Esta ação não pode ser desfeita.')) { document.getElementById('delete-spec-form').submit(); }">
-                    <i class="fas fa-trash me-1"></i>Excluir
-                </button>
-                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
-                    <i class="fas fa-arrow-left me-1"></i>Voltar
-                </a>
-            </div>
-            <form id="delete-spec-form" method="POST" action="{{ url_for('delete_specification', id=specification.id) }}" style="display: none;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            </form>
-        </div>
-        <hr>
-    </div>
-</div>
+<style>
+    body {
+        background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+        min-height: 100vh;
+        color: #e8eaf0;
+    }
+    
+    .spec-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+    
+    .spec-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
+    
+    .spec-title-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
+    
+    .spec-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.95rem;
+        color: #8b92b0;
+        margin-top: 0.5rem;
+    }
+    
+    .spec-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+    
+    .spec-meta-divider {
+        color: #4a5072;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+    
+    .status-draft { background: #3a4a6a; color: #a5b4fc; }
+    .status-in_development { background: #1e3a8a; color: #93c5fd; }
+    .status-approved { background: #065f46; color: #6ee7b7; }
+    .status-in_production { background: #7c2d12; color: #fca5a5; }
+    
+    .btn-group-spec {
+        display: flex;
+        gap: 0.5rem;
+    }
+    
+    .btn-spec {
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+    
+    .btn-primary-spec {
+        background: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary-spec:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+    }
+    
+    .btn-danger-spec {
+        background: #dc2626;
+        color: white;
+    }
+    
+    .btn-danger-spec:hover {
+        background: #b91c1c;
+    }
+    
+    .btn-secondary-spec {
+        background: #374151;
+        color: #e8eaf0;
+    }
+    
+    .btn-secondary-spec:hover {
+        background: #4b5563;
+    }
+    
+    .spec-content {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 2rem;
+    }
+    
+    .product-image-section {
+        background: #1e2538;
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+    
+    .product-image-container {
+        background: #0f1320;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .product-image-container img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+    
+    .image-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .btn-image-action {
+        padding: 0.7rem;
+        background: #2a3348;
+        border: 1px solid #3a4560;
+        border-radius: 6px;
+        color: #e8eaf0;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+    
+    .btn-image-action:hover {
+        background: #343d56;
+        color: #fff;
+        border-color: #4a5678;
+    }
+    
+    .details-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .details-card {
+        background: #1e2538;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+    
+    .details-header {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.5rem;
+    }
+    
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+    
+    .detail-item label {
+        display: block;
+        font-size: 0.85rem;
+        color: #8b92b0;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+    }
+    
+    .detail-item .value {
+        color: #e8eaf0;
+        font-size: 1rem;
+    }
+    
+    .tabs-container {
+        margin-top: 0.5rem;
+    }
+    
+    .tabs-nav {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid #2a3348;
+        margin-bottom: 1.5rem;
+    }
+    
+    .tab-button {
+        padding: 0.8rem 1.5rem;
+        background: transparent;
+        border: none;
+        color: #8b92b0;
+        font-weight: 600;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+    
+    .tab-button.active {
+        color: #3b82f6;
+        border-bottom-color: #3b82f6;
+    }
+    
+    .tab-button:hover {
+        color: #e8eaf0;
+    }
+    
+    .tab-content {
+        display: none;
+    }
+    
+    .tab-content.active {
+        display: block;
+    }
+    
+    .measurements-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .measurements-table thead th {
+        background: #0f1320;
+        color: #8b92b0;
+        padding: 1rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 2px solid #2a3348;
+    }
+    
+    .measurements-table tbody td {
+        padding: 1rem;
+        text-align: center;
+        border-bottom: 1px solid #2a3348;
+        color: #e8eaf0;
+    }
+    
+    .measurements-table tbody tr:hover {
+        background: #0f1320;
+    }
+    
+    .measurements-table tbody td:first-child {
+        text-align: left;
+        font-weight: 600;
+        color: #a5b4fc;
+    }
+    
+    .info-section {
+        background: #0f1320;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .info-section h6 {
+        color: #a5b4fc;
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .info-section p {
+        color: #8b92b0;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+    }
+    
+    .info-section strong {
+        color: #e8eaf0;
+    }
+    
+    .technical-drawing-card {
+        background: #0f1320;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .technical-drawing-card img {
+        width: 100%;
+        border-radius: 6px;
+        margin-bottom: 1rem;
+    }
+</style>
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-info-circle me-1"></i>Informações do Arquivo</h6>
-            </div>
-            <div class="card-body">
-                {% set is_image = specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
-                <p><strong>Arquivo {{ 'Imagem' if is_image else 'PDF' }}:</strong><br>
-                   <i class="fas fa-{{ 'file-image text-success' if is_image else 'file-pdf text-danger' }} me-1"></i>{{ specification.pdf_filename }}</p>
-                <p><strong>Enviado por:</strong><br>{{ specification.user.username }}</p>
-                <p><strong>Data:</strong><br>{{ specification.created_at.strftime('%d/%m/%Y às %H:%M') }}</p>
-                
-                <hr>
-                <div class="d-grid gap-2">
-                    <a href="{{ url_for('download_pdf', id=specification.id) }}" class="btn btn-outline-primary">
-                        <i class="fas fa-download me-1"></i>Baixar {{ 'Imagem' if is_image else 'PDF' }} Original
-                    </a>
-                    <button type="button" class="btn btn-outline-secondary" onclick="togglePdfViewer()">
-                        <i class="fas fa-eye me-1"></i>Visualizar {{ 'Imagem' if is_image else 'PDF' }}
-                    </button>
+<div class="spec-container">
+    <div class="spec-header">
+        <div class="spec-title-section">
+            {% if specification.status %}
+            <span class="status-badge status-{{ specification.status }}">
+                {% if specification.status == 'draft' %}Em Desenvolvimento
+                {% elif specification.status == 'in_development' %}Em Desenvolvimento
+                {% elif specification.status == 'approved' %}Aprovado
+                {% elif specification.status == 'in_production' %}Em Produção
+                {% else %}{{ specification.status }}
+                {% endif %}
+            </span>
+            {% endif %}
+            <h1>{{ specification.description or specification.ref_souq or 'Ficha Técnica' }}</h1>
+            <div class="spec-meta">
+                <div class="spec-meta-item">
+                    <span>Ref: {{ specification.ref_souq or 'N/A' }}</span>
+                </div>
+                <span class="spec-meta-divider">/</span>
+                <div class="spec-meta-item">
+                    <i class="fas fa-folder"></i>
+                    <span>{{ specification.collection or 'Sem coleção' }}</span>
+                </div>
+                <span class="spec-meta-divider">/</span>
+                <div class="spec-meta-item">
+                    <i class="fas fa-building"></i>
+                    <span>{{ specification.supplier or 'Sem fornecedor' }}</span>
                 </div>
             </div>
         </div>
+        <div class="btn-group-spec">
+            <a href="{{ url_for('edit_specification', id=specification.id) }}" class="btn-spec btn-primary-spec">
+                <i class="fas fa-edit me-1"></i>Editar Ficha
+            </a>
+            <button class="btn-spec btn-danger-spec" onclick="if(confirm('Tem certeza que deseja excluir esta especificação?')) { document.getElementById('delete-spec-form').submit(); }">
+                <i class="fas fa-trash me-1"></i>Excluir
+            </button>
+            <a href="{{ url_for('dashboard') }}" class="btn-spec btn-secondary-spec">
+                <i class="fas fa-arrow-left me-1"></i>Voltar
+            </a>
+        </div>
+        <form id="delete-spec-form" method="POST" action="{{ url_for('delete_specification', id=specification.id) }}" style="display: none;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        </form>
+    </div>
 
-        <!-- Technical Drawing Card -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-pencil-ruler me-1"></i>Desenho Técnico</h6>
-            </div>
-            <div class="card-body">
-                {% if specification.technical_drawing_url %}
-                    <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico" class="img-fluid mb-3" style="border: 1px solid #ddd; border-radius: 4px;">
-                    <div class="d-grid gap-2">
-                        <a href="{{ url_for('view_drawing', id=specification.id) }}" target="_blank" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-external-link-alt me-1"></i>Abrir em Nova Aba
-                        </a>
-                        <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="regenerate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, true);">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="btn btn-outline-warning btn-sm w-100">
-                                <i class="fas fa-sync-alt me-1"></i>Gerar Novo Desenho
-                            </button>
-                        </form>
-                    </div>
+    <div class="spec-content">
+        <!-- Product Image Section -->
+        <div class="product-image-section">
+            <div class="product-image-container">
+                {% if specification.pdf_thumbnail %}
+                    <img src="{{ specification.pdf_thumbnail }}" alt="{{ specification.description or 'Produto' }}">
+                {% elif specification.technical_drawing_url %}
+                    <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico">
                 {% else %}
-                    <p class="text-muted mb-3">
-                        <i class="fas fa-info-circle me-1"></i>Nenhum desenho técnico gerado ainda.
-                    </p>
-                    <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="generate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, false);">
+                    <div style="padding: 4rem; text-align: center; color: #4a5072;">
+                        <i class="fas fa-image" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                        <p>Sem imagem disponível</p>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div class="image-actions">
+                {% set is_image = specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
+                <a href="{{ url_for('download_pdf', id=specification.id) }}" class="btn-image-action">
+                    <i class="fas fa-download me-2"></i>Baixar {{ 'Imagem' if is_image else 'PDF' }} Original
+                </a>
+                <button type="button" class="btn-image-action" onclick="togglePdfViewer()">
+                    <i class="fas fa-eye me-2"></i>Visualizar {{ 'Imagem' if is_image else 'PDF' }}
+                </button>
+                
+                {% if specification.technical_drawing_url %}
+                    <a href="{{ url_for('view_drawing', id=specification.id) }}" target="_blank" class="btn-image-action">
+                        <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
+                    </a>
+                    <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="regenerate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, true);">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="fas fa-magic me-1"></i>Gerar Desenho Técnico
+                        <button type="submit" class="btn-image-action">
+                            <i class="fas fa-sync-alt me-2"></i>Gerar Novo Desenho
                         </button>
                     </form>
-                    <small class="text-muted mt-2 d-block">
-                        <i class="fas fa-clock me-1"></i>Processo leva ~30 segundos
-                    </small>
-                    
-                    <!-- Loading Indicator -->
-                    <div id="drawing-loading" class="alert alert-info mt-3" style="display: none;">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm text-primary me-2" role="status">
-                                <span class="visually-hidden">Gerando...</span>
-                            </div>
-                            <div>
-                                <strong>Gerando desenho técnico...</strong>
-                                <p class="mb-0 small">Analisando especificações e criando ilustração. Aguarde ~30 segundos.</p>
-                            </div>
+                {% else %}
+                    <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="generate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, false);">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn-image-action" style="background: #3b82f6; color: white;">
+                            <i class="fas fa-magic me-2"></i>Gerar Desenho Técnico
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+            
+            <div class="info-section" style="margin-top: 1.5rem;">
+                <h6><i class="fas fa-info-circle me-1"></i>Informações do Arquivo</h6>
+                <p><strong>Arquivo:</strong> {{ specification.pdf_filename }}</p>
+                <p><strong>Enviado por:</strong> {{ specification.user.username }}</p>
+                <p><strong>Data:</strong> {{ specification.created_at.strftime('%d/%m/%Y às %H:%M') }}</p>
+            </div>
+        </div>
+
+        <!-- Details Section -->
+        <div class="details-section">
+            <!-- Main Details Card -->
+            <div class="details-card">
+                <h2 class="details-header">Detalhes Principais</h2>
+                <div class="details-grid">
+                    <div class="detail-item">
+                        <label>Coleção</label>
+                        <div class="value">{{ specification.collection or '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Designer</label>
+                        <div class="value">{{ specification.user.username or '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Fornecedor</label>
+                        <div class="value">{{ specification.supplier or '-' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <label>Tecido Principal</label>
+                        <div class="value">{{ specification.composition or '-' }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabbed Content -->
+            <div class="details-card">
+                <div class="tabs-container">
+                    <div class="tabs-nav">
+                        <button class="tab-button active" onclick="switchTab('medidas', event)">Medidas</button>
+                        <button class="tab-button" onclick="switchTab('materiais', event)">Materiais</button>
+                        <button class="tab-button" onclick="switchTab('observacoes', event)">Observações</button>
+                    </div>
+
+                    <!-- Medidas Tab -->
+                    <div class="tab-content active" id="tab-medidas">
+                        <table class="measurements-table">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left;">PONTO DE MEDIDA</th>
+                                    <th>P</th>
+                                    <th>M</th>
+                                    <th>G</th>
+                                    <th>GG</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if specification.bust %}
+                                <tr>
+                                    <td>Busto</td>
+                                    <td>{{ specification.bust }} cm</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                                {% endif %}
+                                {% if specification.waist %}
+                                <tr>
+                                    <td>Cintura</td>
+                                    <td>{{ specification.waist }} cm</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                                {% endif %}
+                                {% if specification.body_length %}
+                                <tr>
+                                    <td>Comprimento</td>
+                                    <td>{{ specification.body_length }} cm</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                                {% endif %}
+                                {% if specification.sleeve_length %}
+                                <tr>
+                                    <td>Manga</td>
+                                    <td>{{ specification.sleeve_length }} cm</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                                {% endif %}
+                                {% if specification.shoulder_to_shoulder %}
+                                <tr>
+                                    <td>Ombro</td>
+                                    <td>{{ specification.shoulder_to_shoulder }} cm</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                                {% endif %}
+                                {% if specification.hem_width %}
+                                <tr>
+                                    <td>Largura da Barra</td>
+                                    <td>{{ specification.hem_width }} cm</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                                {% endif %}
+                                {% if not specification.bust and not specification.waist and not specification.body_length %}
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #8b92b0;">
+                                        Nenhuma medida disponível
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                        
+                        {% if specification.pilot_size %}
+                        <div class="info-section">
+                            <p><strong>Tamanho Piloto:</strong> {{ specification.pilot_size }}</p>
                         </div>
+                        {% endif %}
                     </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-8">
-        <!-- 1. Identificação da Peça -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-tag me-1"></i>1. Identificação da Peça</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Referência (REF SOUQ):</strong><br>{{ specification.ref_souq or '-' }}</p>
-                        <p><strong>Coleção:</strong><br>{{ specification.collection or '-' }}</p>
-                        <p><strong>Fornecedor:</strong><br>{{ specification.supplier or '-' }}</p>
+
+                    <!-- Materiais Tab -->
+                    <div class="tab-content" id="tab-materiais">
+                        <div class="info-section">
+                            <h6>Composição</h6>
+                            <p>{{ specification.composition or 'Não especificado' }}</p>
+                        </div>
+                        
+                        {% if specification.colors %}
+                        <div class="info-section">
+                            <h6>Cores</h6>
+                            <p>{{ specification.colors }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if specification.tags_kit %}
+                        <div class="info-section">
+                            <h6>Kit Etiquetas</h6>
+                            <p>{{ specification.tags_kit }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if specification.finishes %}
+                        <div class="info-section">
+                            <h6>Acabamentos</h6>
+                            <p>{{ specification.finishes }}</p>
+                        </div>
+                        {% endif %}
                     </div>
-                    <div class="col-md-6">
-                        <p><strong>Corner:</strong><br>{{ specification.corner or '-' }}</p>
+
+                    <!-- Observações Tab -->
+                    <div class="tab-content" id="tab-observacoes">
+                        {% if specification.specific_details %}
+                        <div class="info-section">
+                            <h6>Detalhes Específicos</h6>
+                            <p>{{ specification.specific_details }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        {% if specification.openings_details %}
+                        <div class="info-section">
+                            <h6>Aberturas e Detalhes</h6>
+                            <p>{{ specification.openings_details }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="info-section">
+                            <h6>Informações Comerciais</h6>
+                            <p><strong>Target Price:</strong> {{ specification.target_price or '-' }}</p>
+                            <p><strong>Mês Loja:</strong> {{ specification.store_month or '-' }}</p>
+                            <p><strong>Mês Entrega CD:</strong> {{ specification.delivery_cd_month or '-' }}</p>
+                        </div>
+                        
+                        <div class="info-section">
+                            <h6>Prazos</h6>
+                            <p><strong>Data Ficha Técnica:</strong> {{ specification.tech_sheet_delivery_date.strftime('%d/%m/%Y') if specification.tech_sheet_delivery_date else '-' }}</p>
+                            <p><strong>Data Piloto:</strong> {{ specification.pilot_delivery_date.strftime('%d/%m/%Y') if specification.pilot_delivery_date else '-' }}</p>
+                            <p><strong>Mostruário Para:</strong> {{ specification.showcase_for or '-' }}</p>
+                        </div>
+                        
+                        {% if specification.stylists %}
+                        <div class="info-section">
+                            <h6>Equipe</h6>
+                            <p><strong>Estilista(s):</strong> {{ specification.stylists }}</p>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
-                {% if specification.description %}
-                <p><strong>Descrição:</strong><br>{{ specification.description }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- 2. Informações Comerciais -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-dollar-sign me-1"></i>2. Informações Comerciais</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <p><strong>Target Price:</strong><br>{{ specification.target_price or '-' }}</p>
-                    </div>
-                    <div class="col-md-4">
-                        <p><strong>Mês Loja:</strong><br>{{ specification.store_month or '-' }}</p>
-                    </div>
-                    <div class="col-md-4">
-                        <p><strong>Mês Entrega CD:</strong><br>{{ specification.delivery_cd_month or '-' }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. Prazos e Entregas -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-calendar me-1"></i>3. Prazos e Entregas</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <p><strong>Data Ficha Técnica:</strong><br>
-                        {{ specification.tech_sheet_delivery_date.strftime('%d/%m/%Y') if specification.tech_sheet_delivery_date else '-' }}</p>
-                    </div>
-                    <div class="col-md-4">
-                        <p><strong>Data Piloto:</strong><br>
-                        {{ specification.pilot_delivery_date.strftime('%d/%m/%Y') if specification.pilot_delivery_date else '-' }}</p>
-                    </div>
-                    <div class="col-md-4">
-                        <p><strong>Mostruário Para:</strong><br>{{ specification.showcase_for or '-' }}</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 4. Equipe -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-users me-1"></i>4. Equipe Envolvida</h6>
-            </div>
-            <div class="card-body">
-                <p><strong>Estilista(s):</strong><br>{{ specification.stylists or '-' }}</p>
-            </div>
-        </div>
-
-        <!-- 5. Matéria-Prima -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-tshirt me-1"></i>5. Matéria-Prima e Aviamentos</h6>
-            </div>
-            <div class="card-body">
-                {% if specification.composition %}
-                <p><strong>Composição:</strong><br>{{ specification.composition }}</p>
-                {% endif %}
-                {% if specification.colors %}
-                <p><strong>Cores:</strong><br>{{ specification.colors }}</p>
-                {% endif %}
-                {% if specification.tags_kit %}
-                <p><strong>Kit Etiquetas:</strong><br>{{ specification.tags_kit }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- 6. Especificações Técnicas -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-ruler me-1"></i>6. Especificações Técnicas</h6>
-            </div>
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-3">
-                        <p><strong>Tam. Piloto:</strong><br>{{ specification.pilot_size or '-' }}</p>
-                        <p><strong>Comp. Corpo:</strong><br>{{ specification.body_length or '-' }}</p>
-                        <p><strong>Comp. Manga:</strong><br>{{ specification.sleeve_length or '-' }}</p>
-                    </div>
-                    <div class="col-md-3">
-                        <p><strong>Larg. Barra:</strong><br>{{ specification.hem_width or '-' }}</p>
-                        <p><strong>Ombro:</strong><br>{{ specification.shoulder_to_shoulder or '-' }}</p>
-                        <p><strong>Busto:</strong><br>{{ specification.bust or '-' }}</p>
-                    </div>
-                    <div class="col-md-3">
-                        <p><strong>Cintura:</strong><br>{{ specification.waist or '-' }}</p>
-                        <p><strong>Cava Reta:</strong><br>{{ specification.straight_armhole or '-' }}</p>
-                        <p><strong>Prof. Decote:</strong><br>{{ specification.neckline_depth or '-' }}</p>
-                    </div>
-                </div>
-                {% if specification.openings_details %}
-                <p><strong>Aberturas/Detalhes:</strong><br>{{ specification.openings_details }}</p>
-                {% endif %}
-                {% if specification.finishes %}
-                <p><strong>Acabamentos:</strong><br>{{ specification.finishes }}</p>
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- 7. Design -->
-        <div class="card mb-4">
-            <div class="card-header">
-                <h6><i class="fas fa-palette me-1"></i>7. Design e Estilo</h6>
-            </div>
-            <div class="card-body">
-                {% if specification.technical_drawing %}
-                <p><strong>Desenho Técnico:</strong><br>{{ specification.technical_drawing }}</p>
-                {% endif %}
-                {% if specification.reference_photos %}
-                <p><strong>Fotos de Referência:</strong><br>{{ specification.reference_photos }}</p>
-                {% endif %}
-                {% if specification.specific_details %}
-                <p><strong>Detalhes Específicos:</strong><br>{{ specification.specific_details }}</p>
-                {% endif %}
             </div>
         </div>
     </div>
 </div>
 
 <!-- Processing Overlay Modal -->
-<div id="processingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 9999; justify-content: center; align-items: center;">
-    <div style="background-color: white; padding: 40px; border-radius: 10px; text-align: center; max-width: 500px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+<div id="processingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 9999; justify-content: center; align-items: center;">
+    <div style="background: linear-gradient(135deg, #1e2538 0%, #2a3348 100%); padding: 40px; border-radius: 16px; text-align: center; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid #3a4560;">
         <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
             <span class="visually-hidden">Gerando...</span>
         </div>
-        <h3 class="mb-3"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Não saia desta página!</h3>
-        <p class="mb-3" style="font-size: 1.1rem;">
+        <h3 class="mb-3" style="color: #fff;"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Não saia desta página!</h3>
+        <p class="mb-3" style="font-size: 1.1rem; color: #e8eaf0;">
             <strong>Gerando desenho técnico...</strong>
         </p>
-        <p class="text-muted mb-0">
+        <p class="mb-0" style="color: #8b92b0;">
             <i class="fas fa-clock me-1"></i>Este processo leva aproximadamente 30 segundos.<br>
             A página será atualizada automaticamente quando concluir.
         </p>
         <div class="mt-4">
-            <div class="progress" style="height: 25px;">
+            <div class="progress" style="height: 25px; background: #0f1320;">
                 <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%">
                     Processando...
                 </div>
@@ -282,25 +624,25 @@
 <!-- File Viewer Modal -->
 <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-fullscreen">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="pdfViewerModalLabel">
+        <div class="modal-content" style="background: #1e2538;">
+            <div class="modal-header" style="border-bottom: 1px solid #2a3348;">
+                <h5 class="modal-title" id="pdfViewerModalLabel" style="color: #fff;">
                     {% set is_image = specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
                     <i class="fas fa-{{ 'file-image text-success' if is_image else 'file-pdf text-danger' }} me-2"></i>{{ specification.pdf_filename }}
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body p-0">
                 {% set is_image = specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
                 {% if is_image %}
-                <div class="text-center p-3" style="background-color: #f8f9fa; height: 90vh; overflow: auto;">
+                <div class="text-center p-3" style="background-color: #0f1320; height: 90vh; overflow: auto;">
                     <img id="imageDisplay" src="" alt="{{ specification.pdf_filename }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
                 </div>
                 {% else %}
                 <iframe id="pdfFrame" src="" style="width: 100%; height: 90vh; border: none;"></iframe>
                 {% endif %}
             </div>
-            <div class="modal-footer">
+            <div class="modal-footer" style="border-top: 1px solid #2a3348;">
                 <a href="{{ url_for('download_pdf', id=specification.id) }}" class="btn btn-primary">
                     <i class="fas fa-download me-1"></i>Baixar {{ 'Imagem' if is_image else 'PDF' }}
                 </a>
@@ -313,9 +655,17 @@
 
 {% block scripts %}
 <script>
-// Handle technical drawing form submission
+function switchTab(tabName, event) {
+    // Remove active class from all tabs and buttons
+    document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Add active class to clicked button and corresponding content
+    event.target.classList.add('active');
+    document.getElementById('tab-' + tabName).classList.add('active');
+}
+
 function handleDrawingSubmit(event, form, isRegenerate) {
-    // Show confirmation for regenerate
     if (isRegenerate) {
         if (!confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.')) {
             event.preventDefault();
@@ -323,27 +673,17 @@ function handleDrawingSubmit(event, form, isRegenerate) {
         }
     }
     
-    // Show full-screen overlay modal
     const overlay = document.getElementById('processingOverlay');
     if (overlay) {
         overlay.style.display = 'flex';
     }
     
-    // Show loading indicator (small one in card)
-    const loadingDiv = document.getElementById('drawing-loading');
-    if (loadingDiv) {
-        loadingDiv.style.display = 'block';
-    }
-    
-    // Disable submit button
     const submitBtn = form.querySelector('button[type="submit"]');
     if (submitBtn) {
         submitBtn.disabled = true;
-        const originalHTML = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Gerando...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gerando...';
     }
     
-    // Prevent page navigation
     window.onbeforeunload = function() {
         return "O desenho técnico está sendo gerado. Se você sair agora, o processo será interrompido.";
     };
@@ -365,7 +705,6 @@ function togglePdfViewer() {
     modal.show();
 }
 
-// Clear src when modal is closed to stop loading
 document.getElementById('pdfViewerModal').addEventListener('hidden.bs.modal', function() {
     const isImage = {{ 'true' if specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false' }};
     if (isImage) {
