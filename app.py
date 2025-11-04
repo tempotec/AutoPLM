@@ -126,6 +126,9 @@ class Specification(db.Model):
 
     # Generated technical drawing
     technical_drawing_url = db.Column(db.String(500))
+    
+    # PDF thumbnail for preview
+    pdf_thumbnail = db.Column(db.String(500))
 
     # Raw extracted text and status
     raw_extracted_text = db.Column(db.Text)
