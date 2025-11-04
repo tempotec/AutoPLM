@@ -2024,6 +2024,62 @@ def delete_user(id):
     return redirect(url_for('manage_users'))
 
 
+@app.route('/admin/generate_thumbnails', methods=['GET'])
+@admin_required
+def generate_all_thumbnails():
+    """Generate thumbnails for all PDFs that don't have them yet"""
+    try:
+        # Find all specifications with PDFs but no thumbnails
+        specs = Specification.query.filter(
+            Specification.pdf_filename.like('%.pdf'),
+            Specification.pdf_thumbnail.is_(None)
+        ).all()
+        
+        if not specs:
+            flash('Todos os PDFs já têm thumbnails!')
+            return redirect(url_for('dashboard'))
+        
+        processed = 0
+        errors = 0
+        
+        for spec in specs:
+            try:
+                pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+                
+                if not os.path.exists(pdf_path):
+                    print(f"PDF não encontrado: {pdf_path}")
+                    errors += 1
+                    continue
+                
+                thumbnail_url = generate_pdf_thumbnail(pdf_path, spec.id)
+                if thumbnail_url:
+                    spec.pdf_thumbnail = thumbnail_url
+                    db.session.commit()
+                    processed += 1
+                    print(f"✓ Thumbnail gerado para spec #{spec.id}: {thumbnail_url}")
+                else:
+                    errors += 1
+                    print(f"✗ Erro ao gerar thumbnail para spec #{spec.id}")
+                    
+            except Exception as e:
+                errors += 1
+                print(f"✗ Erro ao processar spec #{spec.id}: {e}")
+                continue
+        
+        if processed > 0:
+            flash(f'✓ {processed} thumbnails gerados com sucesso! ({errors} erros)')
+        else:
+            flash(f'Nenhum thumbnail foi gerado. ({errors} erros)')
+            
+    except Exception as e:
+        flash(f'Erro ao gerar thumbnails: {str(e)}')
+        print(f"Erro ao gerar thumbnails: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    return redirect(url_for('dashboard'))
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
