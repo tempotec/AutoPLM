@@ -1178,6 +1178,31 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
         return None
 
 
+def save_product_image(spec_id, image_b64_or_path, is_b64=True):
+    """Save product image to static folder"""
+    try:
+        import uuid
+        product_image_filename = f"product_{spec_id}_{uuid.uuid4().hex[:8]}.png"
+        product_image_path = os.path.join('static', 'product_images', product_image_filename)
+        
+        if is_b64:
+            # Decode base64 image
+            import base64
+            image_data = base64.b64decode(image_b64_or_path.split(',')[1] if ',' in image_b64_or_path else image_b64_or_path)
+            with open(product_image_path, 'wb') as f:
+                f.write(image_data)
+        else:
+            # Copy image file
+            import shutil
+            shutil.copy(image_b64_or_path, product_image_path)
+        
+        # Return URL path (without static/)
+        return f"/static/product_images/{product_image_filename}"
+    except Exception as e:
+        print(f"Error saving product image: {e}")
+        return None
+
+
 def process_pdf_specification(spec_id, file_path):
     """Process PDF or image file and extract specification data using OpenAI"""
     try:
@@ -1193,6 +1218,12 @@ def process_pdf_specification(spec_id, file_path):
             print(f"\n{'='*80}")
             print(f"PROCESSAMENTO DE IMAGEM DETECTADO: {filename}")
             print(f"{'='*80}\n")
+            
+            # Save uploaded image as product image
+            product_img_url = save_product_image(spec_id, file_path, is_b64=False)
+            if product_img_url:
+                spec.technical_drawing_url = product_img_url
+                print(f"✓ Imagem do produto salva: {product_img_url}")
             
             # For images, skip text extraction and use ONLY visual analysis
             print("⚠️ Arquivo de imagem: pulando extração de texto.")
@@ -1307,6 +1338,16 @@ def process_pdf_specification(spec_id, file_path):
             print(f"PROCESSAMENTO DE PDF DETECTADO: {filename}")
             print(f"{'='*80}\n")
             
+            # Extract images from PDF and save the first one as product image
+            pdf_images = extract_images_from_pdf(file_path)
+            if pdf_images and len(pdf_images) > 0:
+                # Get largest image (likely the product photo, not a logo)
+                largest_img = max(pdf_images, key=lambda x: x.get('area', 0))
+                product_img_url = save_product_image(spec_id, largest_img['base64'], is_b64=True)
+                if product_img_url:
+                    spec.technical_drawing_url = product_img_url
+                    print(f"✓ Imagem do produto extraída do PDF e salva: {product_img_url}")
+            
             # Extract text from PDF
             text_content = extract_text_from_pdf(file_path)
 
@@ -1370,7 +1411,7 @@ def process_pdf_specification(spec_id, file_path):
 def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard_new'))
 
 
 @app.route('/login', methods=['GET', 'POST'])
