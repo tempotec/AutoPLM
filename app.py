@@ -182,6 +182,7 @@ class CreateUserForm(FlaskForm):
 
 class UploadPDFForm(FlaskForm):
     collection = StringField('Coleção', validators=[DataRequired()])
+    collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
     supplier = StringField('Fornecedor (Supplier)')
     stylist = StringField('Estilista')
     pdf_file = FileField(
@@ -196,6 +197,7 @@ class SpecificationForm(FlaskForm):
     ref_souq = StringField('Referência (REF SOUQ)')
     description = TextAreaField('Descrição')
     collection = StringField('Coleção')
+    collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
     supplier = StringField('Fornecedor')
     corner = StringField('Corner')
 
@@ -1658,6 +1660,14 @@ def upload_pdf():
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
     
+    # Populate collection choices
+    if user.is_admin:
+        user_collections = Collection.query.order_by(Collection.name).all()
+    else:
+        user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
+    
+    form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
+    
     if request.method == 'GET':
         form.stylist.data = user.username
     
@@ -1673,6 +1683,7 @@ def upload_pdf():
             spec.user_id = session['user_id']
             spec.pdf_filename = filename
             spec.collection = form.collection.data
+            spec.collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
             spec.supplier = form.supplier.data
             spec.stylists = form.stylist.data or user.username
             spec.processing_status = 'processing'
@@ -1962,8 +1973,20 @@ def edit_specification(id):
         return redirect(url_for('dashboard'))
 
     form = SpecificationForm(obj=spec)
+    
+    # Populate collection choices
+    if user.is_admin:
+        user_collections = Collection.query.order_by(Collection.name).all()
+    else:
+        user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
+    
+    form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
+    
     if form.validate_on_submit():
+        # Handle collection_id specially to allow null values
+        collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
         form.populate_obj(spec)
+        spec.collection_id = collection_id
         try:
             db.session.commit()
             flash('Especificação atualizada com sucesso!')
@@ -2095,6 +2118,87 @@ def generate_all_thumbnails():
         traceback.print_exc()
     
     return redirect(url_for('dashboard'))
+
+
+# Collections Routes
+@app.route('/collections')
+@login_required
+def collections():
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    # Get user's collections
+    if user.is_admin:
+        user_collections = Collection.query.order_by(Collection.created_at.desc()).all()
+    else:
+        user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.created_at.desc()).all()
+    
+    return render_template('collections.html',
+                           current_user=user,
+                           collections=user_collections)
+
+
+@app.route('/create_collection', methods=['POST'])
+@login_required
+def create_collection():
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    status = request.form.get('status', 'em_desenvolvimento')
+    
+    if not name:
+        flash('Nome da coleção é obrigatório!')
+        return redirect(url_for('collections'))
+    
+    try:
+        new_collection = Collection(
+            user_id=user.id,
+            name=name,
+            description=description,
+            status=status
+        )
+        db.session.add(new_collection)
+        db.session.commit()
+        flash(f'Coleção "{name}" criada com sucesso!')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao criar coleção: {str(e)}')
+        print(f"Erro ao criar coleção: {e}")
+    
+    return redirect(url_for('collections'))
+
+
+@app.route('/collection/<int:id>')
+@login_required
+def view_collection(id):
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    collection = Collection.query.get_or_404(id)
+    
+    # Check access permissions
+    if not user.is_admin and collection.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('collections'))
+    
+    # Get specifications in this collection
+    specs = Specification.query.filter_by(collection_id=id).order_by(Specification.created_at.desc()).all()
+    
+    return render_template('view_collection.html',
+                           current_user=user,
+                           collection=collection,
+                           specifications=specs)
 
 
 if __name__ == '__main__':
