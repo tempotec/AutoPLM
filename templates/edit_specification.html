@@ -1,257 +1,569 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Editar Ficha Técnica - StyleFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block title %}Editar Especificação - Fichas Técnicas{% endblock %}
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+            min-height: 100vh;
+            color: #e8eaf0;
+        }
 
-{% block content %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2><i class="fas fa-edit me-2"></i>Editar Ficha Técnica</h2>
-            <a href="{{ url_for('view_specification', id=specification.id) }}" class="btn btn-secondary">
-                <i class="fas fa-arrow-left me-1"></i>Voltar
-            </a>
-        </div>
-        <hr>
-    </div>
-</div>
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
 
-<form method="POST">
-    {{ form.hidden_tag() }}
-    
-    <div class="row">
-        <div class="col-12">
-            <!-- 1. Identificação da Peça -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6><i class="fas fa-tag me-1"></i>1. Identificação da Peça</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.ref_souq.label(class="form-label") }}
-                                {{ form.ref_souq(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.collection.label(class="form-label") }}
-                                {{ form.collection(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.supplier.label(class="form-label") }}
-                                {{ form.supplier(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.corner.label(class="form-label") }}
-                                {{ form.corner(class="form-control") }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        {{ form.description.label(class="form-label") }}
-                        {{ form.description(class="form-control", rows="3") }}
-                    </div>
-                </div>
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo i {
+            color: #3b82f6;
+            font-size: 24px;
+        }
+
+        .logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .nav-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid #1e293b;
+            margin-top: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: 2rem;
+        }
+
+        .edit-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2rem;
+        }
+
+        .header-left h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.3rem;
+        }
+
+        .header-subtitle {
+            color: #8b92b0;
+            font-size: 0.95rem;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.65rem 1.3rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-secondary {
+            background: #374151;
+            color: #e8eaf0;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .edit-content {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+        }
+
+        .form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: #1e2538;
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .card-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #8b92b0;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            background: #0f1320;
+            border: 1px solid #2a3348;
+            border-radius: 6px;
+            padding: 0.75rem;
+            color: #e8eaf0;
+            font-size: 0.95rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            background: #141825;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .image-section {
+            position: sticky;
+            top: 2rem;
+            height: fit-content;
+        }
+
+        .image-card {
+            background: #1e2538;
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .image-card-header {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 1.5rem;
+        }
+
+        .image-preview {
+            background: #0f1320;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 1rem;
+            min-height: 300px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        .image-placeholder {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #4a5072;
+        }
+
+        .image-placeholder i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i class="fas fa-tshirt"></i>
+                <span>StyleFlow</span>
             </div>
 
-            <!-- 2. Informações Comerciais -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6><i class="fas fa-dollar-sign me-1"></i>2. Informações Comerciais</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.target_price.label(class="form-label") }}
-                                {{ form.target_price(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.store_month.label(class="form-label") }}
-                                {{ form.store_month(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.delivery_cd_month.label(class="form-label") }}
-                                {{ form.delivery_cd_month(class="form-control") }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. Prazos e Entregas -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6><i class="fas fa-calendar me-1"></i>3. Prazos e Entregas</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.tech_sheet_delivery_date.label(class="form-label") }}
-                                {{ form.tech_sheet_delivery_date(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.pilot_delivery_date.label(class="form-label") }}
-                                {{ form.pilot_delivery_date(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.showcase_for.label(class="form-label") }}
-                                {{ form.showcase_for(class="form-control") }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 4. Equipe -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6><i class="fas fa-users me-1"></i>4. Equipe Envolvida</h6>
-                </div>
-                <div class="card-body">
-                    <div class="mb-3">
-                        {{ form.stylists.label(class="form-label") }}
-                        {{ form.stylists(class="form-control") }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- 5. Matéria-Prima -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6><i class="fas fa-tshirt me-1"></i>5. Matéria-Prima e Aviamentos</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.composition.label(class="form-label") }}
-                                {{ form.composition(class="form-control", rows="3") }}
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                {{ form.colors.label(class="form-label") }}
-                                {{ form.colors(class="form-control", rows="3") }}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="mb-3">
-                        {{ form.tags_kit.label(class="form-label") }}
-                        {{ form.tags_kit(class="form-control", rows="2") }}
-                    </div>
-                </div>
-            </div>
-
-            <!-- 6. Especificações Técnicas -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6><i class="fas fa-ruler me-1"></i>6. Especificações Técnicas</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                {{ form.pilot_size.label(class="form-label") }}
-                                {{ form.pilot_size(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.body_length.label(class="form-label") }}
-                                {{ form.body_length(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.sleeve_length.label(class="form-label") }}
-                                {{ form.sleeve_length(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                {{ form.hem_width.label(class="form-label") }}
-                                {{ form.hem_width(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.shoulder_to_shoulder.label(class="form-label") }}
-                                {{ form.shoulder_to_shoulder(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.bust.label(class="form-label") }}
-                                {{ form.bust(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                {{ form.waist.label(class="form-label") }}
-                                {{ form.waist(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.straight_armhole.label(class="form-label") }}
-                                {{ form.straight_armhole(class="form-control") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.neckline_depth.label(class="form-label") }}
-                                {{ form.neckline_depth(class="form-control") }}
-                            </div>
-                        </div>
-                        <div class="col-md-3">
-                            <div class="mb-3">
-                                {{ form.openings_details.label(class="form-label") }}
-                                {{ form.openings_details(class="form-control", rows="3") }}
-                            </div>
-                            <div class="mb-3">
-                                {{ form.finishes.label(class="form-label") }}
-                                {{ form.finishes(class="form-control", rows="3") }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 7. Design -->
-            <div class="card mb-4">
-                <div class="card-header">
-                    <h6><i class="fas fa-palette me-1"></i>7. Design e Estilo</h6>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.technical_drawing.label(class="form-label") }}
-                                {{ form.technical_drawing(class="form-control", rows="3") }}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.reference_photos.label(class="form-label") }}
-                                {{ form.reference_photos(class="form-control", rows="3") }}
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="mb-3">
-                                {{ form.specific_details.label(class="form-label") }}
-                                {{ form.specific_details(class="form-control", rows="3") }}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="d-flex justify-content-between mb-4">
-                <a href="{{ url_for('view_specification', id=specification.id) }}" class="btn btn-secondary">
-                    <i class="fas fa-times me-1"></i>Cancelar
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard') }}" class="nav-item active">
+                    <i class="fas fa-th-large"></i>
+                    <span>Dashboard</span>
                 </a>
-                {{ form.submit(class="btn btn-primary") }}
+                <a href="#" class="nav-item">
+                    <i class="fas fa-layer-group"></i>
+                    <span>My Collections</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Suppliers</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Analytics</span>
+                </a>
+            </nav>
+
+            <div class="user-profile">
+                <div class="user-avatar">
+                    {{ specification.user.username[0].upper() }}
+                </div>
+                <div class="user-info">
+                    <div class="user-name">{{ specification.user.username }}</div>
+                    <div class="user-role">{{ 'Admin' if specification.user.is_admin else 'Stylist' }}</div>
+                </div>
             </div>
-        </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="edit-header">
+                    <div class="header-left">
+                        <h1>Editar Ficha Técnica</h1>
+                        <p class="header-subtitle">{{ specification.description or specification.ref_souq or 'Sem título' }}</p>
+                    </div>
+                    <div class="header-actions">
+                        <a href="{{ url_for('view_specification', id=specification.id) }}" class="btn btn-secondary">
+                            Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </div>
+
+                <div class="edit-content">
+                    <!-- Left Column: Forms -->
+                    <div class="form-section">
+                        <!-- Informações Gerais -->
+                        <div class="card">
+                            <div class="card-header">Informações Gerais</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Nome da Peça</label>
+                                    {{ form.description(class="form-input", placeholder="Ex: Blusa de Seda") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Referência/Código</label>
+                                    {{ form.ref_souq(class="form-input", placeholder="Ex: BLS-001-24") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Coleção</label>
+                                    {{ form.collection(class="form-input", placeholder="Ex: Primavera/Verão 2024") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Designer Responsável</label>
+                                    <input type="text" class="form-input" value="{{ specification.user.username }}" readonly>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Fornecedor</label>
+                                    {{ form.supplier(class="form-input", placeholder="Ex: Têxtil ABC") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Corner</label>
+                                    {{ form.corner(class="form-input") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Detalhes e Materiais -->
+                        <div class="card">
+                            <div class="card-header">Detalhes e Materiais</div>
+                            
+                            <div class="form-group full-width" style="margin-bottom: 1.25rem;">
+                                <label class="form-label">Descrição da Peça</label>
+                                {{ form.specific_details(class="form-textarea", placeholder="Detalhes específicos da peça...") }}
+                            </div>
+
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Composição</label>
+                                    {{ form.composition(class="form-input", placeholder="Ex: 100% Seda") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cores</label>
+                                    {{ form.colors(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Kit Etiquetas</label>
+                                    {{ form.tags_kit(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Acabamentos</label>
+                                    {{ form.finishes(class="form-input") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Medidas do Tamanho Piloto -->
+                        <div class="card">
+                            <div class="card-header">Medidas (Tamanho Piloto)</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Tamanho Piloto</label>
+                                    {{ form.pilot_size(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Busto (cm)</label>
+                                    {{ form.bust(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cintura (cm)</label>
+                                    {{ form.waist(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Comp. Corpo (cm)</label>
+                                    {{ form.body_length(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Comp. Manga (cm)</label>
+                                    {{ form.sleeve_length(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Larg. Barra (cm)</label>
+                                    {{ form.hem_width(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Ombro (cm)</label>
+                                    {{ form.shoulder_to_shoulder(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Cava Reta (cm)</label>
+                                    {{ form.straight_armhole(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Prof. Decote (cm)</label>
+                                    {{ form.neckline_depth(class="form-input") }}
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Aberturas/Detalhes</label>
+                                    {{ form.openings_details(class="form-input") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Informações Comerciais -->
+                        <div class="card">
+                            <div class="card-header">Informações Comerciais</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Target Price</label>
+                                    {{ form.target_price(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Mês Loja</label>
+                                    {{ form.store_month(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Mês Entrega CD</label>
+                                    {{ form.delivery_cd_month(class="form-input") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Mostruário Para</label>
+                                    {{ form.showcase_for(class="form-input") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prazos e Entregas -->
+                        <div class="card">
+                            <div class="card-header">Prazos e Entregas</div>
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label class="form-label">Data Ficha Técnica</label>
+                                    {{ form.tech_sheet_delivery_date(class="form-input", type="date") }}
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Data Piloto</label>
+                                    {{ form.pilot_delivery_date(class="form-input", type="date") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Equipe e Design -->
+                        <div class="card">
+                            <div class="card-header">Equipe e Design</div>
+                            <div class="form-grid">
+                                <div class="form-group full-width">
+                                    <label class="form-label">Estilista(s)</label>
+                                    {{ form.stylists(class="form-input") }}
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Desenho Técnico</label>
+                                    {{ form.technical_drawing(class="form-textarea", rows="3") }}
+                                </div>
+                                <div class="form-group full-width">
+                                    <label class="form-label">Fotos de Referência</label>
+                                    {{ form.reference_photos(class="form-textarea", rows="3") }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column: Image -->
+                    <div class="image-section">
+                        <div class="image-card">
+                            <div class="image-card-header">Imagem da Peça</div>
+                            <div class="image-preview">
+                                {% if specification.pdf_thumbnail %}
+                                    <img src="{{ specification.pdf_thumbnail }}" alt="{{ specification.description or 'Produto' }}">
+                                {% elif specification.technical_drawing_url %}
+                                    <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico">
+                                {% else %}
+                                    <div class="image-placeholder">
+                                        <i class="fas fa-image"></i>
+                                        <p>Sem imagem disponível</p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div style="margin-top: 1rem; padding: 1rem; background: #0f1320; border-radius: 6px;">
+                                <p style="font-size: 0.85rem; color: #8b92b0; margin-bottom: 0.5rem;">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    A imagem é gerada automaticamente do PDF enviado.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </main>
     </div>
-</form>
-{% endblock %}
+</body>
+</html>
