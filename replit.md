@@ -3,6 +3,14 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 4, 2025)
+- **Modern Specification Details Page**: Completely redesigned view_specification.html with professional dark theme.
+  - Two-column layout: sticky product image section (380px) on left, detailed specs on right
+  - Tabbed interface for Medidas, Materiais, Observações with smooth transitions
+  - Professional measurements table with P, M, G, GG columns (currently displays pilot size data)
+  - Dark theme colors: #0a0e1a background, #1e2538 cards, #2a3348 accents
+  - Large product image display (pdf_thumbnail or technical_drawing) with action buttons
+  - Clean information hierarchy with proper spacing and typography
+  - All existing features preserved: PDF viewer, technical drawing generation, edit/delete actions
 - **PDF Thumbnail Previews**: Dashboard cards now display actual PDF preview thumbnails generated from the first page using PyMuPDF.
   - New `pdf_thumbnail` field in Specification model stores thumbnail paths
   - Automatic thumbnail generation during PDF upload and processing
