@@ -3,6 +3,12 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 4, 2025)
+- **PDF Thumbnail Previews**: Dashboard cards now display actual PDF preview thumbnails generated from the first page using PyMuPDF.
+  - New `pdf_thumbnail` field in Specification model stores thumbnail paths
+  - Automatic thumbnail generation during PDF upload and processing
+  - Thumbnails stored in `static/thumbnails/` directory at 300px width
+  - Migration script (`generate_thumbnails_script.py`) for existing PDFs (5 thumbnails generated successfully)
+  - Priority display: pdf_thumbnail → technical_drawing_url → product_image → fallback icon
 - **Dark Theme Applied to Main Templates**: Applied professional dark theme directly to existing templates (user_dashboard.html, admin_dashboard.html, upload_pdf.html) instead of creating separate files.
 - **Product Image Display in Cards**: Dashboard cards now display product images from both legacy (`drawing_XX_HASH.png`) and new (`/static/product_images/product_XX_HASH.png`) formats with proper fallback to Font Awesome icon.
 - **Image Styling**: Product images displayed with 200px height, object-fit: cover for proper aspect ratio, and centered positioning.
