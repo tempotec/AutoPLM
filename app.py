@@ -491,6 +491,46 @@ def extract_images_from_pdf(pdf_path):
     return [img['base64'] for img in images_data]
 
 
+def generate_pdf_thumbnail(pdf_path, spec_id):
+    """Generate a thumbnail from the first page of a PDF"""
+    try:
+        import fitz
+        import uuid
+        
+        print(f"\n{'='*80}")
+        print(f"GERANDO THUMBNAIL DO PDF: {pdf_path}")
+        print(f"{'='*80}")
+        
+        doc = fitz.open(pdf_path)
+        
+        if len(doc) == 0:
+            print("PDF não tem páginas")
+            return None
+        
+        page = doc[0]
+        
+        mat = fitz.Matrix(2.0, 2.0)
+        pix = page.get_pixmap(matrix=mat)
+        
+        thumbnail_filename = f"thumbnail_{spec_id}_{uuid.uuid4().hex[:8]}.png"
+        thumbnail_path = os.path.join('static', 'thumbnails', thumbnail_filename)
+        
+        pix.save(thumbnail_path)
+        doc.close()
+        
+        thumbnail_url = f"/static/thumbnails/{thumbnail_filename}"
+        print(f"✓ Thumbnail gerado com sucesso: {thumbnail_url}")
+        print(f"{'='*80}\n")
+        
+        return thumbnail_url
+        
+    except Exception as e:
+        print(f"Erro ao gerar thumbnail: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 def analyze_images_with_gpt4_vision(images_base64):
     """Use GPT-4 Vision to analyze garment images with structured JSON output"""
     if not images_base64:
