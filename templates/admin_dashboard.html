@@ -276,17 +276,23 @@
             width: 100%;
             height: 200px;
             background-color: #0f1420;
-            object-fit: cover;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #475569;
+            overflow: hidden;
+            position: relative;
         }
 
         .product-image img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            display: block;
+        }
+
+        .product-image i {
+            font-size: 48px;
         }
 
         .product-info {
@@ -565,9 +571,13 @@
                     <a href="{{ url_for('view_specification', id=spec.id) }}" style="text-decoration: none; color: inherit;">
                         <div class="product-image">
                             {% if spec.technical_drawing_url %}
-                                <img src="{{ url_for('static', filename=spec.technical_drawing_url.replace('static/', '')) }}" alt="{{ spec.pdf_filename }}">
+                                {% if spec.technical_drawing_url.startswith('/static/') %}
+                                    <img src="{{ spec.technical_drawing_url }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename=spec.technical_drawing_url) }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
+                                {% endif %}
                             {% else %}
-                                <i class="fas fa-image fa-3x"></i>
+                                <i class="fas fa-image"></i>
                             {% endif %}
                         </div>
                         <div class="product-info">
