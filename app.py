@@ -494,7 +494,7 @@ def extract_images_from_pdf(pdf_path):
 def generate_pdf_thumbnail(pdf_path, spec_id):
     """Generate a thumbnail from the first page of a PDF"""
     try:
-        import fitz
+        import pymupdf as fitz
         import uuid
         
         print(f"\n{'='*80}")
