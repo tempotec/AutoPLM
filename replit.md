@@ -13,6 +13,14 @@ This Flask-based platform manages technical specifications for the fashion/texti
 - **Automatic Product Images**: System now saves largest extracted PDF image or uploaded image file to static/product_images/ for display in dashboard cards.
 - **Sidebar Navigation**: Professional sidebar with Dashboard, My Collections, Suppliers, Analytics sections and user profile display.
 - **Role-Based Dashboard**: Stylists see only their specifications; admins see all with full filtering capabilities.
+- **New Upload Interface** (upload_new.html): Collection-centric upload page with:
+  - Sidebar navigation by collection with quick-access collection cards
+  - Drag & drop upload area with multi-file support
+  - Products organized and displayed by selected collection
+  - Filter by supplier dropdown
+  - Search functionality within collections
+  - "Add New Collection" button for quick collection creation
+  - Loading overlay during file processing
 
 ## Previous Changes (October 28, 2025)
 - **Indexed ColorSpace Support**: Fixed PDF image extraction to properly handle Indexed ColorSpace with palette lookup.
