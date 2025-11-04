@@ -2,16 +2,23 @@
 
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
-## Recent Changes (October 28, 2025)
-- **Indexed ColorSpace Support**: Fixed PDF image extraction to properly handle Indexed ColorSpace with palette lookup, ensuring patterned garments (stripes, checks, etc.) are correctly extracted and colors preserved.
-- **ByteStringObject Conversion**: Implemented robust conversion of PyPDF2 ByteStringObjects to bytes for palette data, with fallbacks for various data formats.
-- **Pattern Rendering in Drawings**: Enhanced technical drawing prompts with explicit "CORES E PADRÕES" section instructing GPT-Image-1 to render patterns (LISTRADO/stripes, XADREZ/checks, POÁ/polka dots) as technical representations.
-- **Loading Indicators**: Added visual feedback for users during file upload/processing and technical drawing generation with spinners and status messages.
-- **Image Upload Support**: Extended upload functionality to accept image files (JPG, PNG, JPEG) in addition to PDFs.
-- **Dual Processing Pipeline**: Implemented intelligent file type detection with separate processing paths for images and PDFs.
-- **Enhanced Visual Analysis**: Images are directly analyzed with GPT-4o Vision for structured data extraction.
-- **Robust Fallback**: When Vision returns text instead of JSON, the system processes it through OpenAI extraction pipeline to ensure fields are always populated.
-- **UI Updates**: Upload interface now accepts multiple formats with appropriate file type icons and validation.
+## Recent Changes (November 4, 2025)
+- **New Dark Theme Dashboard**: Implemented professional dark-themed dashboard (dashboard_new.html) with modern PLM interface inspired by StyleFlow design.
+- **Product Grid View**: Cards display product images, name, collection, supplier, and status badges with color-coded workflow states.
+- **Advanced Filtering**: Multi-criteria filtering by collection, supplier, status (Draft, In Development, Approved, In Production).
+- **Full-Text Search**: Search functionality across product names, codes, and collections with real-time results.
+- **Pagination**: Efficient pagination system for large product catalogs (12 items per page).
+- **Product Status Workflow**: Added `status` field to track product lifecycle (draft → in_development → approved → in_production).
+- **Supplier Management**: Added `supplier` field to upload form and database for supplier-based organization.
+- **Automatic Product Images**: System now saves largest extracted PDF image or uploaded image file to static/product_images/ for display in dashboard cards.
+- **Sidebar Navigation**: Professional sidebar with Dashboard, My Collections, Suppliers, Analytics sections and user profile display.
+- **Role-Based Dashboard**: Stylists see only their specifications; admins see all with full filtering capabilities.
+
+## Previous Changes (October 28, 2025)
+- **Indexed ColorSpace Support**: Fixed PDF image extraction to properly handle Indexed ColorSpace with palette lookup.
+- **Pattern Rendering in Drawings**: Enhanced technical drawing prompts for accurate pattern representation.
+- **Image Upload Support**: Extended upload to accept JPG, PNG, JPEG files with GPT-4o Vision analysis.
+- **Loading Indicators**: Added visual feedback during processing operations.
 
 # User Preferences
 
