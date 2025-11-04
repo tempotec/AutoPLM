@@ -60,6 +60,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
+    role = db.Column(db.String(20), default='stylist')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationship with specifications
@@ -155,6 +156,8 @@ class CreateUserForm(FlaskForm):
 
 
 class UploadPDFForm(FlaskForm):
+    collection = StringField('Coleção', validators=[DataRequired()])
+    stylist = StringField('Estilista')
     pdf_file = FileField(
         'File',
         validators=[FileRequired(),
@@ -1448,6 +1451,12 @@ def create_user():
 @login_required
 def upload_pdf():
     form = UploadPDFForm()
+    
+    # Get current user to pre-fill stylist field
+    user = User.query.get(session['user_id'])
+    if request.method == 'GET' and user:
+        form.stylist.data = user.username
+    
     if request.method == 'POST' and form.validate_on_submit():
         try:
             file = form.pdf_file.data
@@ -1459,6 +1468,8 @@ def upload_pdf():
             spec = Specification()
             spec.user_id = session['user_id']
             spec.pdf_filename = filename
+            spec.collection = form.collection.data
+            spec.stylists = form.stylist.data or user.username
             spec.processing_status = 'processing'
             spec.created_at = datetime.now()
 

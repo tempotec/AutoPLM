@@ -17,6 +17,26 @@
                 <form method="POST" enctype="multipart/form-data">
                     {{ form.hidden_tag() }}
                     
+                    <!-- Collection and Stylist Fields -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label for="collection" class="form-label"><i class="fas fa-folder me-1"></i>Coleção *</label>
+                            {{ form.collection(class="form-control", placeholder="Ex: Inverno 2025, Verão 2026") }}
+                            {% if form.collection.errors %}
+                                <div class="text-danger mt-1">
+                                    {% for error in form.collection.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <label for="stylist" class="form-label"><i class="fas fa-user me-1"></i>Estilista</label>
+                            {{ form.stylist(class="form-control", readonly=True) }}
+                            <small class="text-muted">Preenchido automaticamente com seu usuário</small>
+                        </div>
+                    </div>
+                    
                     <div class="upload-area mb-4">
                         <i class="fas fa-file-upload fa-3x text-muted mb-3"></i>
                         <h5>Selecione sua ficha técnica em PDF ou Imagem</h5>
