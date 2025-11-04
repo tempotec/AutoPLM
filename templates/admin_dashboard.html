@@ -31,6 +31,24 @@
     </div>
 </div>
 
+<div class="row mb-3">
+    <div class="col-md-4">
+        <form method="GET" action="{{ url_for('dashboard') }}">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                <select name="collection" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todas as Coleções</option>
+                    {% for collection in collections %}
+                    <option value="{{ collection }}" {% if collection == selected_collection %}selected{% endif %}>
+                        {{ collection }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+
 <div class="row">
     <div class="col-12">
         <div class="card">
@@ -47,9 +65,10 @@
                         <thead>
                             <tr>
                                 <th>Usuário</th>
-                                <th>Arquivo PDF</th>
+                                <th>Arquivo</th>
+                                <th>Coleção</th>
+                                <th>Estilista</th>
                                 <th>Status</th>
-                                <th>Referência</th>
                                 <th>Data</th>
                                 <th>Ações</th>
                             </tr>
@@ -59,9 +78,12 @@
                             <tr>
                                 <td>{{ spec.user.username }}</td>
                                 <td>
-                                    <i class="fas fa-file-pdf text-danger me-1"></i>
-                                    {{ spec.pdf_filename }}
+                                    {% set is_image = spec.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
+                                    <i class="fas fa-{{ 'file-image text-success' if is_image else 'file-pdf text-danger' }} me-1"></i>
+                                    {{ spec.pdf_filename[:25] }}{% if spec.pdf_filename|length > 25 %}...{% endif %}
                                 </td>
+                                <td><span class="badge bg-info">{{ spec.collection or '-' }}</span></td>
+                                <td>{{ spec.stylists or '-' }}</td>
                                 <td>
                                     {% if spec.processing_status == 'completed' %}
                                         <span class="badge bg-success">Completo</span>
@@ -73,7 +95,6 @@
                                         <span class="badge bg-secondary">Pendente</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ spec.ref_souq or '-' }}</td>
                                 <td>{{ spec.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
                                 <td>
                                     <a href="{{ url_for('view_specification', id=spec.id) }}" class="btn btn-sm btn-outline-primary">

@@ -15,6 +15,27 @@
     </div>
 </div>
 
+<!-- Collection Filter -->
+{% if collections %}
+<div class="row mb-3">
+    <div class="col-md-4">
+        <form method="GET" action="{{ url_for('dashboard') }}">
+            <div class="input-group">
+                <span class="input-group-text"><i class="fas fa-filter"></i></span>
+                <select name="collection" class="form-select" onchange="this.form.submit()">
+                    <option value="">Todas as Coleções</option>
+                    {% for collection in collections %}
+                    <option value="{{ collection }}" {% if collection == selected_collection %}selected{% endif %}>
+                        {{ collection }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
 <div class="row">
     {% if specifications %}
         {% for spec in specifications %}
@@ -54,9 +75,17 @@
                     {% endif %}
                     
                     {% if spec.collection %}
-                    <p class="card-text">
+                    <p class="card-text mb-1">
                         <small class="text-muted">
-                            <i class="fas fa-tag me-1"></i>{{ spec.collection }}
+                            <i class="fas fa-folder me-1"></i><strong>Coleção:</strong> {{ spec.collection }}
+                        </small>
+                    </p>
+                    {% endif %}
+                    
+                    {% if spec.stylists %}
+                    <p class="card-text mb-1">
+                        <small class="text-muted">
+                            <i class="fas fa-user me-1"></i><strong>Estilista:</strong> {{ spec.stylists }}
                         </small>
                     </p>
                     {% endif %}
