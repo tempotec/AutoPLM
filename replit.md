@@ -3,6 +3,14 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 4, 2025)
+- **Modern Edit Specification Page**: Completely redesigned edit_specification.html with professional dark theme and improved UX.
+  - Two-column layout: form fields on left, product image preview on right (380px sticky)
+  - Card-based organization: Informações Gerais, Detalhes e Materiais, Medidas (Tamanho Piloto), Informações Comerciais, Prazos e Entregas, Equipe e Design
+  - All WTForms fields properly integrated for correct data persistence
+  - Clean, modern interface with Cancelar and Salvar Alterações action buttons
+  - Fixed 240px left sidebar matching other modern pages
+  - Dark theme colors: #0a0e1a background, #1e2538 cards, #2a3348 accents
+  - Standalone template (not extending base.html) for full design control, consistent with view_specification.html approach
 - **Sidebar Navigation on Specification Page**: Added consistent sidebar navigation to view_specification.html matching dashboard design.
   - Fixed 240px left sidebar with StyleFlow logo and navigation menu
   - Menu items: Dashboard (active/highlighted), My Collections, Suppliers, Analytics
