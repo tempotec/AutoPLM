@@ -3,24 +3,18 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 4, 2025)
-- **New Dark Theme Dashboard**: Implemented professional dark-themed dashboard (dashboard_new.html) with modern PLM interface inspired by StyleFlow design.
+- **Dark Theme Applied to Main Templates**: Applied professional dark theme directly to existing templates (user_dashboard.html, admin_dashboard.html, upload_pdf.html) instead of creating separate files.
+- **Product Image Display in Cards**: Dashboard cards now display product images from both legacy (`drawing_XX_HASH.png`) and new (`/static/product_images/product_XX_HASH.png`) formats with proper fallback to Font Awesome icon.
+- **Image Styling**: Product images displayed with 200px height, object-fit: cover for proper aspect ratio, and centered positioning.
 - **Product Grid View**: Cards display product images, name, collection, supplier, and status badges with color-coded workflow states.
-- **Advanced Filtering**: Multi-criteria filtering by collection, supplier, status (Draft, In Development, Approved, In Production).
+- **Advanced Filtering**: Multi-criteria filtering by collection, supplier, status (Draft, In Development, Approved, In Production) with 100-result limit for performance.
 - **Full-Text Search**: Search functionality across product names, codes, and collections with real-time results.
-- **Pagination**: Efficient pagination system for large product catalogs (12 items per page).
 - **Product Status Workflow**: Added `status` field to track product lifecycle (draft → in_development → approved → in_production).
 - **Supplier Management**: Added `supplier` field to upload form and database for supplier-based organization.
-- **Automatic Product Images**: System now saves largest extracted PDF image or uploaded image file to static/product_images/ for display in dashboard cards.
+- **Automatic Product Images**: System saves largest extracted PDF image or uploaded image file to static/product_images/ for display in dashboard cards.
 - **Sidebar Navigation**: Professional sidebar with Dashboard, My Collections, Suppliers, Analytics sections and user profile display.
 - **Role-Based Dashboard**: Stylists see only their specifications; admins see all with full filtering capabilities.
-- **New Upload Interface** (upload_new.html): Collection-centric upload page with:
-  - Sidebar navigation by collection with quick-access collection cards
-  - Drag & drop upload area with multi-file support
-  - Products organized and displayed by selected collection
-  - Filter by supplier dropdown
-  - Search functionality within collections
-  - "Add New Collection" button for quick collection creation
-  - Loading overlay during file processing
+- **Clean Code Structure**: Removed temporary template files (dashboard_new.html, upload_new.html) and routes after applying design to existing templates.
 
 ## Previous Changes (October 28, 2025)
 - **Indexed ColorSpace Support**: Fixed PDF image extraction to properly handle Indexed ColorSpace with palette lookup.
