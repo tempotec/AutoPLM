@@ -3,6 +3,12 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 4, 2025)
+- **Sidebar Navigation on Specification Page**: Added consistent sidebar navigation to view_specification.html matching dashboard design.
+  - Fixed 240px left sidebar with StyleFlow logo and navigation menu
+  - Menu items: Dashboard (active/highlighted), My Collections, Suppliers, Analytics
+  - User profile display at bottom with avatar, name, and role
+  - Main content area adjusted with left margin to accommodate sidebar
+  - Consistent dark theme across entire interface
 - **Modern Specification Details Page**: Completely redesigned view_specification.html with professional dark theme.
   - Two-column layout: sticky product image section (380px) on left, detailed specs on right
   - Tabbed interface for Medidas, Materiais, Observações with smooth transitions
