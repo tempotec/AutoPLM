@@ -75,9 +75,23 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
 
+class Collection(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    status = db.Column(db.String(50), default='em_desenvolvimento')  # em_desenvolvimento, finalizada
+    cover_image = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship with user
+    user = db.relationship('User', backref=db.backref('collections', lazy=True))
+
+
 class Specification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    collection_id = db.Column(db.Integer, db.ForeignKey('collection.id'), nullable=True)
     pdf_filename = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -140,6 +154,9 @@ class Specification(db.Model):
     status = db.Column(
         db.String(50),
         default='draft')  # draft, in_development, approved, in_production
+    
+    # Relationship to collection
+    collection_obj = db.relationship('Collection', backref='specifications', lazy=True)
 
 
 # Forms
