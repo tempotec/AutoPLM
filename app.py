@@ -1381,6 +1381,12 @@ def process_pdf_specification(spec_id, file_path):
             print(f"PROCESSAMENTO DE PDF DETECTADO: {filename}")
             print(f"{'='*80}\n")
             
+            # Generate PDF thumbnail for preview
+            thumbnail_url = generate_pdf_thumbnail(file_path, spec_id)
+            if thumbnail_url:
+                spec.pdf_thumbnail = thumbnail_url
+                print(f"✓ Thumbnail do PDF gerado: {thumbnail_url}")
+            
             # Extract images from PDF and save the first one as product image
             pdf_images = extract_images_from_pdf(file_path)
             if pdf_images and len(pdf_images) > 0:
