@@ -3,6 +3,15 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 5, 2025)
+- **Replit Object Storage Integration**: Migração de armazenamento de desenhos técnicos para persistência cloud.
+  - Desenhos técnicos agora salvos no Replit Object Storage ao invés do filesystem local
+  - URLs públicas permanentes e acessíveis de qualquer dispositivo
+  - Fallback automático para filesystem local se Object Storage falhar
+  - Rotas atualizadas: `/drawing/<int:id>` e `/drawing/<path:filename>` com suporte a Object Storage
+  - Templates atualizados para usar `url_for('view_drawing')` consistentemente
+  - Script de migração (`migrate_drawings.py`) para mover desenhos existentes
+  - Biblioteca `replit.object-storage` instalada e integrada
+  - Estrutura de pastas: `technical-drawings/drawing_<id>_<hash>.png`
 - **Galeria de Desenhos Técnicos**: Nova página dedicada para visualizar todos os desenhos técnicos gerados.
   - Nova rota /technical-drawings com filtros (busca, coleção, fornecedor) e paginação (12 itens/página)
   - Template technical_drawings.html com grid responsivo de cards
