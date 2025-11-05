@@ -2249,6 +2249,90 @@ def view_collection(id):
                            specifications=specs)
 
 
+@app.route('/technical-drawings')
+@login_required
+def technical_drawings():
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    # Pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 12
+    
+    # Base query: only specifications with technical drawings
+    if user.is_admin:
+        query = Specification.query.filter(Specification.technical_drawing_url.isnot(None))
+    else:
+        query = Specification.query.filter(
+            Specification.user_id == user.id,
+            Specification.technical_drawing_url.isnot(None)
+        )
+    
+    # Search filter
+    search = request.args.get('search', '').strip()
+    if search:
+        query = query.filter(
+            db.or_(
+                Specification.description.ilike(f'%{search}%'),
+                Specification.ref_souq.ilike(f'%{search}%'),
+                Specification.collection.ilike(f'%{search}%')
+            )
+        )
+    
+    # Collection filter
+    collection_filter = request.args.get('collection', '').strip()
+    if collection_filter:
+        query = query.filter(Specification.collection_id == collection_filter)
+    
+    # Supplier filter
+    supplier_filter = request.args.get('supplier', '').strip()
+    if supplier_filter:
+        query = query.filter(Specification.supplier.ilike(f'%{supplier_filter}%'))
+    
+    # Get all collections for filter dropdown
+    if user.is_admin:
+        all_collections = Collection.query.order_by(Collection.name).all()
+    else:
+        all_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
+    
+    # Get unique suppliers for filter dropdown
+    if user.is_admin:
+        suppliers_query = db.session.query(Specification.supplier).filter(
+            Specification.supplier.isnot(None),
+            Specification.supplier != '',
+            Specification.technical_drawing_url.isnot(None)
+        ).distinct().order_by(Specification.supplier)
+    else:
+        suppliers_query = db.session.query(Specification.supplier).filter(
+            Specification.user_id == user.id,
+            Specification.supplier.isnot(None),
+            Specification.supplier != '',
+            Specification.technical_drawing_url.isnot(None)
+        ).distinct().order_by(Specification.supplier)
+    
+    all_suppliers = [s[0] for s in suppliers_query.all()]
+    
+    # Paginate results
+    pagination = query.order_by(Specification.created_at.desc()).paginate(
+        page=page,
+        per_page=per_page,
+        error_out=False
+    )
+    
+    return render_template('technical_drawings.html',
+                           current_user=user,
+                           specifications=pagination.items,
+                           pagination=pagination,
+                           collections=all_collections,
+                           suppliers=all_suppliers,
+                           search=search,
+                           selected_collection=collection_filter,
+                           selected_supplier=supplier_filter)
+
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
