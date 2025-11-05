@@ -2,7 +2,31 @@
 
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
-## Recent Changes (November 4, 2025)
+## Recent Changes (November 5, 2025)
+- **User Settings & Profile Management**: Complete settings page with modern dark theme interface.
+  - New /settings route with GET/POST handling, login protection, and form validation
+  - SettingsForm with username, email, and password change functionality
+  - Uniqueness validation for username and email before updates
+  - Profile card with avatar initials matching user branding
+  - Settings submenu with Meu Perfil, Segurança, and Preferências sections
+  - Flash messaging for success/error feedback on profile updates
+  - Transactional database updates with rollback safety
+- **Sidebar Navigation Controls**: Settings and logout buttons added across all templates.
+  - Settings button (gear icon) linking to /settings
+  - Logout button (red sign-out icon) linking to /logout
+  - Consistent dark theme styling (.settings-btn, .logout-btn classes)
+  - Updated templates: user_dashboard, upload_pdf, collections, view_collection, view_specification, edit_specification
+  - Settings section positioned above user profile in sidebar
+  - Hover states and visual feedback matching application design language
+- **Modern Login Page**: Redesigned login.html with StyleSheet branding and professional dark theme.
+  - Centered card layout with gradient blue CTA button
+  - StyleSheet logo with blue icon and white text
+  - "Bem-vindo(a) de volta!" heading with Portuguese localization
+  - Remember me checkbox and "Esqueceu a senha?" link
+  - "Crie uma agora" registration link
+  - Dark theme colors: #0a0e1a background, #1e2538 card, #2563eb accent
+
+## Previous Changes (November 4, 2025)
 - **Collections Management System**: Complete end-to-end collection management feature with modern dark theme interface.
   - New Collection model in database (name, description, status, cover_image, user_id)
   - Relationship between Specification and Collection via collection_id foreign key
