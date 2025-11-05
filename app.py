@@ -512,8 +512,8 @@ def extract_images_from_pdf(pdf_path):
         import traceback
         traceback.print_exc()
 
-    # Return only base64 strings in priority order
-    return [img['base64'] for img in images_data]
+    # Return complete image data (not just base64)
+    return images_data
 
 
 def generate_pdf_thumbnail(pdf_path, spec_id):
@@ -1951,8 +1951,10 @@ def generate_technical_drawing(id):
                 images = [image_b64]
         elif is_pdf_file(spec.pdf_filename):
             print(f"📄 Arquivo PDF detectado: {spec.pdf_filename}")
-            # Extract images from PDF
-            images = extract_images_from_pdf(file_path)
+            # Extract images from PDF (returns list of dicts with metadata)
+            pdf_images_data = extract_images_from_pdf(file_path)
+            # Extract only base64 strings for GPT-4 Vision
+            images = [img['base64'] for img in pdf_images_data] if pdf_images_data else []
         else:
             flash('Formato de arquivo não suportado para geração de desenho.')
             return redirect(url_for('view_specification', id=id))
