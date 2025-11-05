@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Tech Packs - StyleFlow</title>
+    <title>Minhas Fichas Técnicas - StyleFlow</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -513,11 +513,11 @@
             <nav class="nav-menu">
                 <a href="{{ url_for('dashboard') }}" class="nav-item active">
                     <i class="fas fa-th-large"></i>
-                    <span>Dashboard</span>
+                    <span>Painel</span>
                 </a>
                 <a href="{{ url_for('collections') }}" class="nav-item">
                     <i class="fas fa-layer-group"></i>
-                    <span>My Collections</span>
+                    <span>Minhas Coleções</span>
                 </a>
                 <a href="{{ url_for('technical_drawings') }}" class="nav-item">
                     <i class="fas fa-pencil-ruler"></i>
@@ -525,11 +525,11 @@
                 </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-truck"></i>
-                    <span>Suppliers</span>
+                    <span>Fornecedores</span>
                 </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-chart-line"></i>
-                    <span>Analytics</span>
+                    <span>Relatórios</span>
                 </a>
             </nav>
 
@@ -561,13 +561,13 @@
             <!-- Header -->
             <header class="page-header">
                 <div class="header-top">
-                    <h1 class="page-title">My Tech Packs</h1>
+                    <h1 class="page-title">Minhas Fichas Técnicas</h1>
                     <a href="{{ url_for('upload_pdf') }}" class="btn-primary">
                         <i class="fas fa-plus"></i>
-                        New Tech Pack
+                        Nova Ficha Técnica
                     </a>
                 </div>
-                <p class="page-subtitle">View and manage all your imported clothing tech packs</p>
+                <p class="page-subtitle">Visualize e gerencie todas as suas fichas técnicas de vestuário</p>
             </header>
 
             <!-- Flash Messages -->
@@ -586,12 +586,12 @@
             <div class="controls-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Search by product name, code, or collection..." oninput="filterProducts()">
+                    <input type="text" id="searchInput" placeholder="Buscar por nome do produto, código ou coleção..." oninput="filterProducts()">
                 </div>
                 
                 {% if collections %}
                 <select class="filter-select" id="collectionFilter" onchange="filterProducts()">
-                    <option value="">All Collections</option>
+                    <option value="">Todas as Coleções</option>
                     {% for collection in collections %}
                     <option value="{{ collection }}">{{ collection }}</option>
                     {% endfor %}
@@ -600,7 +600,7 @@
                 
                 {% if suppliers %}
                 <select class="filter-select" id="supplierFilter" onchange="filterProducts()">
-                    <option value="">All Suppliers</option>
+                    <option value="">Todos os Fornecedores</option>
                     {% for supplier in suppliers %}
                     <option value="{{ supplier }}">{{ supplier }}</option>
                     {% endfor %}
@@ -608,11 +608,11 @@
                 {% endif %}
                 
                 <select class="filter-select" id="statusFilter" onchange="filterProducts()">
-                    <option value="">All Statuses</option>
-                    <option value="draft">Draft</option>
-                    <option value="in_development">In Development</option>
-                    <option value="approved">Approved</option>
-                    <option value="in_production">In Production</option>
+                    <option value="">Todos os Status</option>
+                    <option value="draft">Rascunho</option>
+                    <option value="in_development">Em Desenvolvimento</option>
+                    <option value="approved">Aprovado</option>
+                    <option value="in_production">Em Produção</option>
                 </select>
             </div>
 
@@ -645,31 +645,31 @@
                                 </span>
                                 {% endif %}
                                 {% if spec.status == 'draft' %}
-                                    <span class="badge badge-draft">Draft</span>
+                                    <span class="badge badge-draft">Rascunho</span>
                                 {% elif spec.status == 'in_development' %}
-                                    <span class="badge badge-development">In Development</span>
+                                    <span class="badge badge-development">Em Desenvolvimento</span>
                                 {% elif spec.status == 'approved' %}
-                                    <span class="badge badge-approved">Approved</span>
+                                    <span class="badge badge-approved">Aprovado</span>
                                 {% elif spec.status == 'in_production' %}
-                                    <span class="badge badge-production">In Production</span>
+                                    <span class="badge badge-production">Em Produção</span>
                                 {% endif %}
                                 
                                 {% if spec.processing_status == 'completed' %}
-                                    <span class="badge badge-completed">Complete</span>
+                                    <span class="badge badge-completed">Completo</span>
                                 {% elif spec.processing_status == 'processing' %}
-                                    <span class="badge badge-processing">Processing</span>
+                                    <span class="badge badge-processing">Processando</span>
                                 {% elif spec.processing_status == 'error' %}
-                                    <span class="badge badge-error">Error</span>
+                                    <span class="badge badge-error">Erro</span>
                                 {% endif %}
                             </div>
                         </div>
                     </a>
                     <div class="product-actions">
                         <a href="{{ url_for('edit_specification', id=spec.id) }}" class="btn-action">
-                            <i class="fas fa-edit"></i> Edit
+                            <i class="fas fa-edit"></i> Editar
                         </a>
-                        <button class="btn-action btn-danger" onclick="if(confirm('Are you sure you want to delete this?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
-                            <i class="fas fa-trash"></i> Delete
+                        <button class="btn-action btn-danger" onclick="if(confirm('Tem certeza que deseja excluir esta ficha?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
+                            <i class="fas fa-trash"></i> Excluir
                         </button>
                     </div>
                     <form id="delete-form-{{ spec.id }}" method="POST" action="{{ url_for('delete_specification', id=spec.id) }}" style="display: none;">
@@ -681,11 +681,11 @@
             {% else %}
             <div class="empty-state">
                 <i class="fas fa-file-upload"></i>
-                <h3>No tech packs yet</h3>
-                <p>Start by uploading your first PDF or image file for analysis</p>
+                <h3>Nenhuma ficha técnica ainda</h3>
+                <p>Comece enviando seu primeiro arquivo PDF ou imagem para análise</p>
                 <a href="{{ url_for('upload_pdf') }}" class="btn-primary">
                     <i class="fas fa-upload"></i>
-                    Upload Tech Pack
+                    Enviar Ficha Técnica
                 </a>
             </div>
             {% endif %}
