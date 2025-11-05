@@ -40,7 +40,8 @@ Preferred communication style: Simple, everyday language.
 - **Feature Set**:
     - **Data Extraction**: Transforms unstructured PDF content into structured records (product identification, commercial info, deadlines, materials, technical measurements).
     - **Technical Drawing Generation**: Produces professional flat sketches focused on visual representation without dimensions.
-    - **Collections Management**: End-to-end management of collections with linking specifications, search, and filtering.
+    - **Collections Management**: End-to-end management of collections with linking specifications, search, filtering, cover image upload, and editing functionality.
+    - **Collection Cover Images**: Upload and display custom cover images for collections (stored in static/covers/).
     - **User Settings & Profile Management**: Comprehensive user profile and security settings.
     - **Technical Drawings Gallery**: Dedicated page to view all generated drawings with filters, search, pagination, and lightbox functionality.
     - **Workflow Management**: Product status tracking (Draft, In Development, Approved, In Production) and supplier management.
