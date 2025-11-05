@@ -3,6 +3,17 @@
 This Flask-based platform manages technical specifications for the fashion/textile industry. It processes PDF files and image files (JPG, PNG, JPEG) containing technical specs using OpenAI's API for OCR and structured data extraction. A key feature is AI-powered technical drawing generation using GPT-Image-1, which automatically creates professional flat sketches with precise dimensions and measurement points (POMs) based on extracted specifications and visual analysis of garment images. The system includes role-based access control for users and administrators, alongside comprehensive activity tracking.
 
 ## Recent Changes (November 5, 2025)
+- **Galeria de Desenhos Técnicos**: Nova página dedicada para visualizar todos os desenhos técnicos gerados.
+  - Nova rota /technical-drawings com filtros (busca, coleção, fornecedor) e paginação (12 itens/página)
+  - Template technical_drawings.html com grid responsivo de cards
+  - Exibição de desenho, nome/descrição, REF, badges de coleção e fornecedor
+  - Busca nos campos: description, ref_souq, collection
+  - Filtros por coleção e fornecedor com dropdowns dinâmicos
+  - Paginação preservando parâmetros de busca/filtros
+  - Empty state para quando não há desenhos gerados
+  - Role-based access: admins veem todos, stylists veem apenas os seus
+  - Link "Desenhos Técnicos" adicionado na sidebar de todos os templates
+  - Design dark theme consistente: #0a0e1a background, #1e2538 cards, #2563eb accent
 - **User Settings & Profile Management**: Complete settings page with modern dark theme interface.
   - New /settings route with GET/POST handling, login protection, and form validation
   - SettingsForm with username, email, and password change functionality
