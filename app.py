@@ -180,6 +180,12 @@ class CreateUserForm(FlaskForm):
     submit = SubmitField('Create User')
 
 
+class SettingsForm(FlaskForm):
+    username = StringField('Nome Completo', validators=[DataRequired(), Length(min=3, max=80)])
+    email = StringField('E-mail', validators=[DataRequired(), Email()])
+    submit = SubmitField('Salvar Alterações')
+
+
 class UploadPDFForm(FlaskForm):
     collection = StringField('Coleção', validators=[DataRequired()])
     collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
@@ -1501,6 +1507,46 @@ def logout():
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('login'))
+
+
+@app.route('/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    form = SettingsForm(obj=user)
+    
+    if form.validate_on_submit():
+        # Check if username is already taken by another user
+        existing_user = User.query.filter_by(username=form.username.data).first()
+        if existing_user and existing_user.id != user.id:
+            flash('Este nome de usuário já está em uso.')
+            return render_template('settings.html', form=form, user=user)
+        
+        # Check if email is already taken by another user
+        existing_email = User.query.filter_by(email=form.email.data).first()
+        if existing_email and existing_email.id != user.id:
+            flash('Este e-mail já está em uso.')
+            return render_template('settings.html', form=form, user=user)
+        
+        # Update user data
+        user.username = form.username.data
+        user.email = form.email.data
+        
+        try:
+            db.session.commit()
+            flash('Suas informações foram atualizadas com sucesso!')
+            return redirect(url_for('settings'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Erro ao atualizar suas informações. Tente novamente.')
+            print(f"Error updating user: {e}")
+    
+    return render_template('settings.html', form=form, user=user)
 
 
 @app.route('/dashboard')
