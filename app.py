@@ -2141,12 +2141,39 @@ def create_collection():
         flash('Nome da coleção é obrigatório!')
         return redirect(url_for('collections'))
     
+    cover_image_path = None
+    
+    if 'cover_image' in request.files:
+        cover_image = request.files['cover_image']
+        if cover_image and cover_image.filename:
+            filename = secure_filename(cover_image.filename)
+            
+            if filename:
+                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+                
+                if ext in ['jpg', 'jpeg', 'png']:
+                    import hashlib
+                    import time
+                    
+                    unique_name = f"collection_{int(time.time())}_{hashlib.md5(filename.encode()).hexdigest()[:8]}.{ext}"
+                    
+                    covers_dir = os.path.join('static', 'covers')
+                    os.makedirs(covers_dir, exist_ok=True)
+                    
+                    filepath = os.path.join(covers_dir, unique_name)
+                    cover_image.save(filepath)
+                    
+                    cover_image_path = f"covers/{unique_name}"
+                else:
+                    flash('Formato de imagem inválido. Use JPG, JPEG ou PNG.')
+    
     try:
         new_collection = Collection(
             user_id=user.id,
             name=name,
             description=description,
-            status=status
+            status=status,
+            cover_image=cover_image_path
         )
         db.session.add(new_collection)
         db.session.commit()
@@ -2182,6 +2209,80 @@ def view_collection(id):
                            current_user=user,
                            collection=collection,
                            specifications=specs)
+
+
+@app.route('/collection/<int:id>/edit', methods=['POST'])
+@login_required
+def edit_collection(id):
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    collection = Collection.query.get_or_404(id)
+    
+    # Check access permissions
+    if not user.is_admin and collection.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('collections'))
+    
+    name = request.form.get('name', '').strip()
+    description = request.form.get('description', '').strip()
+    status = request.form.get('status', 'em_desenvolvimento')
+    
+    if not name:
+        flash('Nome da coleção é obrigatório!')
+        return redirect(url_for('collections'))
+    
+    # Handle cover image upload
+    if 'cover_image' in request.files:
+        cover_image = request.files['cover_image']
+        if cover_image and cover_image.filename:
+            filename = secure_filename(cover_image.filename)
+            
+            if filename:
+                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
+                
+                if ext in ['jpg', 'jpeg', 'png']:
+                    import hashlib
+                    import time
+                    
+                    # Delete old cover image if exists
+                    if collection.cover_image:
+                        old_image_path = os.path.join('static', collection.cover_image)
+                        if os.path.exists(old_image_path):
+                            try:
+                                os.remove(old_image_path)
+                            except Exception as e:
+                                print(f"Erro ao remover imagem antiga: {e}")
+                    
+                    # Save new image
+                    unique_name = f"collection_{int(time.time())}_{hashlib.md5(filename.encode()).hexdigest()[:8]}.{ext}"
+                    
+                    covers_dir = os.path.join('static', 'covers')
+                    os.makedirs(covers_dir, exist_ok=True)
+                    
+                    filepath = os.path.join(covers_dir, unique_name)
+                    cover_image.save(filepath)
+                    
+                    collection.cover_image = f"covers/{unique_name}"
+                else:
+                    flash('Formato de imagem inválido. Use JPG, JPEG ou PNG.')
+    
+    try:
+        collection.name = name
+        collection.description = description
+        collection.status = status
+        
+        db.session.commit()
+        flash(f'Coleção "{name}" atualizada com sucesso!')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao atualizar coleção: {str(e)}')
+        print(f"Erro ao atualizar coleção: {e}")
+    
+    return redirect(url_for('collections'))
 
 
 @app.route('/technical-drawings')
