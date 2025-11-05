@@ -15,6 +15,7 @@ Preferred communication style: Simple, everyday language.
 - **File Upload**: Drag-and-drop interface with client-side validation.
 - **Localization**: User interface is 100% in Brazilian Portuguese.
 - **Design Theme**: Professional dark theme applied consistently across all templates.
+- **Branding**: Custom logo (PDF with gear icon) displayed across all pages at 32px height in sidebar and login page.
 - **Image Display**: Dashboard cards display PDF preview thumbnails, technical drawings, or product images with proper styling and fallbacks.
 - **Navigation**: Professional sidebar with key sections and user profile display.
 
