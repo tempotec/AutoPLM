@@ -574,8 +574,8 @@
         {% if specifications %}
         <div class="gallery-grid">
             {% for spec in specifications %}
-            <a href="{{ url_for('view_specification', id=spec.id) }}" class="drawing-card">
-                <div class="card-image">
+            <div class="drawing-card">
+                <div class="card-image" onclick="openDrawingModal('{{ url_for('view_drawing', id=spec.id) }}', '{{ spec.product_name or spec.description or 'Sem nome' }}', '{{ spec.id }}')" style="cursor: pointer;">
                     {% if spec.technical_drawing_url %}
                         <img src="{{ url_for('view_drawing', id=spec.id) }}" alt="{{ spec.product_name or spec.description }}">
                     {% else %}
@@ -597,8 +597,11 @@
                         </span>
                         {% endif %}
                     </div>
+                    <a href="{{ url_for('view_specification', id=spec.id) }}" class="view-details-btn">
+                        <i class="fas fa-eye"></i> Ver Detalhes
+                    </a>
                 </div>
-            </a>
+            </div>
             {% endfor %}
         </div>
 
@@ -648,5 +651,181 @@
         </div>
         {% endif %}
     </main>
+
+    <!-- Drawing Modal (Lightbox) -->
+    <div id="drawingModal" class="drawing-modal" onclick="closeDrawingModal()">
+        <span class="modal-close">&times;</span>
+        <div class="modal-content-wrapper">
+            <img id="modalImage" class="modal-image" onclick="event.stopPropagation()">
+            <div class="modal-caption">
+                <h3 id="modalTitle"></h3>
+                <a id="modalDetailsBtn" href="#" class="modal-details-btn">
+                    <i class="fas fa-eye"></i> Ver Detalhes Completos
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        /* Drawing Modal Styles */
+        .drawing-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(10, 14, 26, 0.95);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .drawing-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+            z-index: 10001;
+        }
+
+        .modal-close:hover {
+            color: #2563eb;
+        }
+
+        .modal-content-wrapper {
+            max-width: 95%;
+            max-height: 95%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .modal-image {
+            max-width: 100%;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            animation: zoomIn 0.3s ease;
+        }
+
+        @keyframes zoomIn {
+            from {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .modal-caption {
+            text-align: center;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .modal-caption h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .modal-details-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: #2563eb;
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .modal-details-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* View Details Button in Card */
+        .view-details-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #2a3348;
+            color: #8b92b0;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin-top: 0.75rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .view-details-btn:hover {
+            background: #2563eb;
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .view-details-btn i {
+            font-size: 0.875rem;
+        }
+    </style>
+
+    <script>
+        function openDrawingModal(imageUrl, title, specId) {
+            const modal = document.getElementById('drawingModal');
+            const modalImage = document.getElementById('modalImage');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalDetailsBtn = document.getElementById('modalDetailsBtn');
+            
+            modalImage.src = imageUrl;
+            modalTitle.textContent = title;
+            modalDetailsBtn.href = `/specification/${specId}`;
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        }
+
+        function closeDrawingModal() {
+            const modal = document.getElementById('drawingModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto'; // Restore scrolling
+        }
+
+        // Close modal with ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeDrawingModal();
+            }
+        });
+    </script>
 </body>
 </html>

@@ -15,6 +15,11 @@ This Flask-based platform manages technical specifications for the fashion/texti
 - **Galeria de Desenhos Técnicos**: Nova página dedicada para visualizar todos os desenhos técnicos gerados.
   - Nova rota /technical-drawings com filtros (busca, coleção, fornecedor) e paginação (12 itens/página)
   - Template technical_drawings.html com grid responsivo de cards
+  - **Modal Lightbox**: Clique no desenho para visualizar em tela cheia dentro da galeria
+  - Animações suaves de fade-in e zoom-in
+  - Botão "Ver Detalhes Completos" na modal para acessar ficha técnica
+  - Botão "Ver Detalhes" em cada card para navegação direta
+  - Atalho ESC para fechar a modal
   - Exibição de desenho, nome/descrição, REF, badges de coleção e fornecedor
   - Busca nos campos: description, ref_souq, collection
   - Filtros por coleção e fornecedor com dropdowns dinâmicos
