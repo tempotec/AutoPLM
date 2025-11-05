@@ -18,6 +18,9 @@ import io
 # Import OpenAI functionality
 from openai import OpenAI
 
+# Import Replit Object Storage
+from replit.object_storage import Client
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET')
 if not app.config['SECRET_KEY']:
@@ -1900,7 +1903,21 @@ def view_drawing(id):
             # Legacy URL from DALL-E 3 - redirect to external URL
             return redirect(spec.technical_drawing_url)
         else:
-            # New local file from GPT-Image-1
+            # Try Object Storage first
+            try:
+                storage_client = Client()
+                if storage_client.exists(spec.technical_drawing_url):
+                    image_data = storage_client.download_as_bytes(spec.technical_drawing_url)
+                    return send_file(
+                        io.BytesIO(image_data),
+                        mimetype='image/png',
+                        as_attachment=False,
+                        download_name=f"desenho_{spec.id}.png"
+                    )
+            except Exception as storage_error:
+                print(f"Object Storage lookup failed: {storage_error}")
+            
+            # Fallback: Try local file from GPT-Image-1
             drawing_path = os.path.join(app.config['UPLOAD_FOLDER'],
                                         spec.technical_drawing_url)
             if os.path.exists(drawing_path):
@@ -1982,17 +1999,27 @@ def generate_technical_drawing(id):
         image_data = base64.b64decode(response.data[0].b64_json)
 
         # Generate unique filename
-        drawing_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
-        drawing_path = os.path.join(app.config['UPLOAD_FOLDER'],
-                                    drawing_filename)
+        drawing_filename = f"technical-drawings/drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
 
-        # Save image to disk
-        with open(drawing_path, 'wb') as f:
-            f.write(image_data)
-
-        # Save the filename (we'll serve it via a route)
-        spec.technical_drawing_url = drawing_filename
-        db.session.commit()
+        # Upload to Replit Object Storage
+        try:
+            storage_client = Client()
+            storage_client.upload_from_bytes(drawing_filename, image_data)
+            print(f"✅ Desenho técnico salvo no Object Storage: {drawing_filename}")
+            
+            # Save the Object Storage path in the database
+            spec.technical_drawing_url = drawing_filename
+            db.session.commit()
+        except Exception as storage_error:
+            print(f"❌ Erro ao fazer upload para Object Storage: {storage_error}")
+            # Fallback: save locally if Object Storage fails
+            local_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
+            local_path = os.path.join(app.config['UPLOAD_FOLDER'], local_filename)
+            with open(local_path, 'wb') as f:
+                f.write(image_data)
+            spec.technical_drawing_url = local_filename
+            db.session.commit()
+            print(f"⚠️ Fallback: Desenho salvo localmente como {local_filename}")
 
         flash('Desenho técnico gerado com sucesso!')
         return redirect(url_for('view_specification', id=id))
@@ -2003,6 +2030,46 @@ def generate_technical_drawing(id):
         traceback.print_exc()
         flash('Erro ao gerar desenho técnico. Tente novamente.')
         return redirect(url_for('view_specification', id=id))
+
+
+@app.route('/drawing/<path:filename>')
+def serve_drawing(filename):
+    """Serve technical drawings from Object Storage"""
+    try:
+        storage_client = Client()
+        
+        # Try to get from Object Storage first
+        if storage_client.exists(filename):
+            image_data = storage_client.download_as_bytes(filename)
+            return send_file(
+                io.BytesIO(image_data),
+                mimetype='image/png',
+                as_attachment=False,
+                download_name=os.path.basename(filename)
+            )
+        
+        # Fallback: try local file (for backwards compatibility)
+        local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        if os.path.exists(local_path):
+            return send_file(local_path, mimetype='image/png')
+        
+        # Not found anywhere
+        return "Imagem não encontrada", 404
+        
+    except Exception as e:
+        print(f"Error serving drawing {filename}: {e}")
+        import traceback
+        traceback.print_exc()
+        
+        # Last resort: try serving from local filesystem
+        try:
+            local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            if os.path.exists(local_path):
+                return send_file(local_path, mimetype='image/png')
+        except:
+            pass
+            
+        return "Erro ao carregar imagem", 500
 
 
 @app.route('/specification/<int:id>/edit', methods=['GET', 'POST'])

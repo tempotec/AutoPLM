@@ -577,7 +577,7 @@
             <a href="{{ url_for('view_specification', id=spec.id) }}" class="drawing-card">
                 <div class="card-image">
                     {% if spec.technical_drawing_url %}
-                        <img src="/static/{{ spec.technical_drawing_url }}" alt="{{ spec.product_name or spec.description }}">
+                        <img src="{{ url_for('view_drawing', id=spec.id) }}" alt="{{ spec.product_name or spec.description }}">
                     {% else %}
                         <i class="fas fa-image" style="font-size: 48px; color: #cbd5e1;"></i>
                     {% endif %}
