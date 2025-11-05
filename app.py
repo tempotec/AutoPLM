@@ -751,20 +751,15 @@ def has_technical_measurements(spec):
 
 def build_technical_drawing_prompt(spec, visual_analysis=None):
     """Build professional technical flat sketch prompt for GPT-Image-1
-    Creates two types of prompts based on available data:
-    - WITH measurements: Full dimensioned drawing (flat dimensionado) with POMs and cotas
-    - WITHOUT measurements: Clean flat sketch only
+    Generates clean flat sketch WITHOUT dimensions, POMs, or cotas.
     
     Args:
-        spec: Specification database object with measurements
+        spec: Specification database object
         visual_analysis: Structured JSON dict from GPT-4o Vision analysis (or legacy text string)
     """
 
     # Determine garment type from description
     garment_type = spec.description or "peça de vestuário"
-
-    # Build size information
-    size_base = spec.pilot_size or "M"
 
     # Build material and composition info
     material_info = spec.composition or "malha/tecido padrão"
@@ -773,52 +768,10 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
     material_details = ""
     if "tricô" in material_info.lower() or "malha" in material_info.lower():
         material_details = "Malha/tricô - representar textura com traço técnico"
-
-    # Check if we have measurements for dimensioned drawing
-    has_measurements = has_technical_measurements(spec)
     
     print(f"\n{'='*80}")
-    print(f"TIPO DE DESENHO: {'COM COTAGEM (medidas disponíveis)' if has_measurements else 'SEM COTAGEM (apenas flat sketch)'}")
+    print(f"GERANDO DESENHO TÉCNICO: Flat sketch limpo SEM COTAGEM")
     print(f"{'='*80}\n")
-
-    # Build POMs (Pontos de Medida) list with available measurements
-    poms = []
-    pom_counter = 1
-
-    if has_measurements:
-        measurement_poms = {
-            'body_length': 'Comprimento total (HPS até barra)',
-            'bust': 'Largura peito (1 cm abaixo da cava, half chest)',
-            'hem_width': 'Largura barra (hem width, half)',
-            'shoulder_to_shoulder': 'Ombro a ombro (ponto externo a externo)',
-            'neckline_depth':
-            'Abertura decote/gola (profundidade a partir do HPS)',
-            'sleeve_length':
-            'Comprimento manga (do ponto mais alto do ombro até punho, seguindo curva)',
-            'waist': 'Largura cintura (half)',
-            'straight_armhole': 'Largura da cava (vertical)'
-        }
-
-        for field, description in measurement_poms.items():
-            value = getattr(spec, field, None)
-            if value:
-                # Sanitize measurement value: remove existing "cm" unit to avoid duplication
-                value_str = str(value).strip()
-                if value_str.lower().endswith('cm'):
-                    value_str = value_str[:-2].strip()
-                poms.append(f"  {pom_counter}. {description}: {value_str} cm")
-                pom_counter += 1
-
-        # Add additional POMs for specific details if available
-        if spec.openings_details and any(
-                term in spec.openings_details.lower()
-                for term in ['botão', 'botões', 'button']):
-            poms.append(f"  {pom_counter}. Espaçamento entre botões e diâmetro")
-            pom_counter += 1
-
-    poms_text = "\n".join(
-        poms
-    ) if poms else "  (usar medidas proporcionais padrão para o tipo de peça)"
 
     # Build constructive details
     constructive_details = []
@@ -955,93 +908,8 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
 {visual_description}
 """
 
-    # Build complete professional prompt following industry standards
-    if has_measurements:
-        # PROMPT COM COTAGEM - quando temos medidas técnicas
-        prompt = f"""TAREFA:
-A partir da análise da peça, gere desenho técnico plano (flat sketch) vetorial DIMENSIONADO com todas as cotas e POMs (Pontos de Medida).
-Este desenho será usado em produção e ficha técnica profissional.
-
-TIPO DA PEÇA: {garment_type}
-
-ENTRADAS:
-- Tamanho-base para cotagem: {size_base}
-- Material/composição: {material_info}
-{material_details}
-- Detalhes construtivos: {details_text}
-{visual_section}
-
-VISTAS OBRIGATÓRIAS:
-- Frente e Costas (mesma escala), alinhadas VERTICALMENTE
-- Manga em posição natural (quando aplicável)
-- Detalhes ampliados (escala 1:2) de: gola/colarinho, punho, bolso, zíper, barra, cós, casas de botão
-- Seções/cortes: mostrar em corte simples a sobreposição do placket (se houver) e a espessura da malha no punho/barra (quando aplicável)
-
-ESTILO VISUAL:
-- Fundo 100% branco (#FFFFFF); SEM corpo/manequim/cabide
-- Traço preto; espessuras: 
-  * Contorno: 0,75pt contínuo
-  * Costuras/canelado: 0,35pt contínuo
-  * Pesponto/linha de malha: 0,35pt tracejado
-- Cinza 15-30% APENAS para sobreposição/forro/volume
-- Simetria central indicada por linha ponto-traço (eixo central)
-- Símbolos gráficos: botão (círculo 2-4mm), ilhós (anel), rebite (ponto sólido)
-
-CONVENÇÕES DE COTAGEM (DIMENSÕES E POMs):
-- Linhas de cota: finas (0,35pt), com setas cheias
-- Linhas de chamada perpendiculares, afastamento mínimo 3mm do contorno
-- Texto de medida: sans-serif 8-9pt, sempre acima da linha de cota; unidade em cm
-- Centro/espelhamento: indicar eixo central com ponto-traço; usar "(x2)" quando medida refere-se a metade simétrica
-- Tolerâncias: padrão ±1,0 cm para medidas totais e ±0,5 cm para detalhes
-- Cada POM numerado no desenho (1, 2, 3...)
-
-PONTOS DE MEDIDA (POMs) OBRIGATÓRIOS:
-{poms_text}
-
-CORES E PADRÕES (REPRESENTAÇÃO TÉCNICA):
-- Cores disponíveis: {spec.colors if spec.colors else 'não especificadas'}
-- ATENÇÃO: Se a peça tiver padrão (LISTRADO, XADREZ, POÁ, ESTAMPADO, etc), REPRESENTAR graficamente usando TRAÇOS TÉCNICOS:
-  * LISTRADO: desenhar linhas horizontais ou verticais paralelas (espaçamento uniforme) cobrindo TODA a área da peça
-  * XADREZ: grid de linhas perpendiculares formando quadrados
-  * POÁ: círculos pequenos distribuídos uniformemente
-  * ESTAMPADO: indicar com padrão simplificado de formas geométricas ou orgânicas
-- NÃO usar texturas fotorrealistas; apenas linhas técnicas limpas
-
-DETALHES CONSTRUTIVOS (incluir todos aplicáveis):
-- Textura/padronagem: representar com traço técnico (nervuras verticais, canelados, tranças com cruzamento claro - sem shading realista)
-- Golas/colarinho: tipo exato, altura, acabamento
-- Punhos: tipo (ribana/dobrado/abotoado), altura em cm
-- Barras: acabamento (bainha/ribana/overlock), altura quando aplicável
-- Recortes, pences, pregas, franzidos, dobras funcionais
-- Fechamentos: tipo (zíper invisível/aparente/destacável, botões, colchetes), posição exata e quantidade
-- Casas de botão: posição centrada no placket, distância da borda, quantidade
-- Bolsos: tipo exato (faca, chapa, embutido, patch), dimensões, tampas, vivos
-- Placket/cós: largura, lado do abotoamento (masculino/feminino)
-
-NORMALIZAÇÃO DA IMAGEM:
-- Corrigir perspectiva/distorções: alinhar eixo central
-- Garantir simetria quando aplicável (espelhar quando necessário)
-- Remover sombras/elementos que não pertencem à construção
-- Medidas referem-se a peça relaxada (sem esticar)
-
-CRITÉRIOS DE ACEITAÇÃO:
-- Todas as POMs numeradas, visíveis e legíveis
-- Frente/Costas na mesma escala, perfeitamente centradas
-- Eixo central indicado; simetria consistente
-- Linhas de cota não colidem com textura/contornos (usar afastamentos adequados)
-- Proporções consistentes com as medidas de referência fornecidas
-- Visual limpo, técnico e profissional para produção
-
-NÃO FAZER (ESTRITAMENTE PROIBIDO):
-- NÃO incluir modelo/sombra realista/gradiente orgânico
-- NÃO omitir POMs de barra, punho, decote, gola, botões
-- NÃO usar texturas fotorrealistas
-- NÃO estilizar com traço orgânico/artístico; manter técnico
-- NÃO inventar detalhes não mencionados na referência visual"""
-    
-    else:
-        # PROMPT SEM COTAGEM - quando NÃO temos medidas técnicas (apenas flat sketch limpo)
-        prompt = f"""TAREFA:
+    # Build professional prompt - ALWAYS without dimensions, POMs, or cotas
+    prompt = f"""TAREFA:
 Gere desenho técnico plano (flat sketch) vetorial LIMPO da peça de vestuário.
 Este é um flat sketch profissional SEM DIMENSÕES (sem cotas, sem POMs).
 
