@@ -41,9 +41,10 @@
             margin-bottom: 32px;
         }
 
-        .logo i {
-            color: #3b82f6;
-            font-size: 24px;
+        .logo img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
         }
 
         .logo span {
@@ -506,7 +507,7 @@
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="logo">
-                <i class="fas fa-tshirt"></i>
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
                 <span>StyleFlow</span>
             </div>
 

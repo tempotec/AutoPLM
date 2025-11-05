@@ -42,15 +42,10 @@
             padding: 0 8px;
         }
 
-        .logo-icon {
-            width: 32px;
+        .logo img {
             height: 32px;
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
+            width: auto;
+            object-fit: contain;
         }
 
         .logo-text {
@@ -459,9 +454,7 @@
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">
-            <div class="logo-icon">
-                <i class="fas fa-layer-group"></i>
-            </div>
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
             <span class="logo-text">StyleSheet</span>
         </div>
 
