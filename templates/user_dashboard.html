@@ -626,11 +626,7 @@
                             {% if spec.pdf_thumbnail %}
                                 <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
                             {% elif spec.technical_drawing_url %}
-                                {% if spec.technical_drawing_url.startswith('/static/') %}
-                                    <img src="{{ spec.technical_drawing_url }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
-                                {% else %}
-                                    <img src="{{ url_for('static', filename=spec.technical_drawing_url) }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
-                                {% endif %}
+                                <img src="{{ url_for('view_drawing', id=spec.id) }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
                             {% else %}
                                 <i class="fas fa-file-pdf"></i>
                             {% endif %}
