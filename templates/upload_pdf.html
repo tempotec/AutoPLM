@@ -84,6 +84,60 @@
             text-align: center;
         }
 
+        /* Settings & Logout Section */
+        .settings-section {
+            border-top: 1px solid #1e293b;
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .settings-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .settings-btn:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .settings-btn i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #ef4444;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
+
+        .logout-btn i {
+            width: 18px;
+            text-align: center;
+        }
+
         /* User Profile */
         .user-profile {
             display: flex;
@@ -454,6 +508,18 @@
                     <span>Suppliers</span>
                 </a>
             </nav>
+
+            <!-- Settings & Logout -->
+            <div class="settings-section">
+                <a href="{{ url_for('settings') }}" class="settings-btn">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </a>
+            </div>
 
             <div class="user-profile">
                 <div class="user-avatar">
