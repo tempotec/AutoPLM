@@ -693,8 +693,8 @@
                     </div>
 
                     <div class="materials-tags">
-                        {% if item.supplier.materials %}
-                            {% set materials_list = item.supplier.materials | from_json %}
+                        {% if item.supplier.materials_json %}
+                            {% set materials_list = item.supplier.materials_json | from_json %}
                             {% for material in materials_list[:3] %}
                                 <span class="material-tag" style="background-color: {{ material.color }}; color: white;">
                                     {{ material.name }}
