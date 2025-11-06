@@ -29,7 +29,7 @@ Preferred communication style: Simple, everyday language.
 - **Security**: CSRF protection, secure filename handling, file size limits.
 
 ## System Design Choices
-- **Data Model**: Includes Specifications, Collections, and relationships between them.
+- **Data Model**: Includes Specifications, Collections, Suppliers, and relationships between them. Suppliers can be linked to specifications for better tracking of manufacturing partners.
 - **AI Integration Workflow**:
     1. PDF/Image upload and data extraction (GPT-4-Turbo).
     2. Image extraction from PDF (PyPDF2).
@@ -42,10 +42,11 @@ Preferred communication style: Simple, everyday language.
     - **Technical Drawing Generation**: Produces professional flat sketches focused on visual representation without dimensions.
     - **Collections Management**: End-to-end management of collections with linking specifications, search, filtering, cover image upload, and editing functionality.
     - **Collection Cover Images**: Upload and display custom cover images for collections (stored in static/covers/).
+    - **Suppliers Management**: Complete CRUD interface for managing suppliers with name, location, contact info, materials (with color-coded tags), custom avatar colors, and automatic counting of associated specifications.
     - **User Settings & Profile Management**: Comprehensive user profile and security settings.
     - **Technical Drawings Gallery**: Dedicated page to view all generated drawings with filters, search, pagination, and lightbox functionality.
-    - **Workflow Management**: Product status tracking (Draft, In Development, Approved, In Production) and supplier management.
-    - **Advanced Filtering**: Multi-criteria filtering and full-text search capabilities.
+    - **Workflow Management**: Product status tracking (Draft, In Development, Approved, In Production) and supplier management with dropdown integration in specification forms.
+    - **Advanced Filtering**: Multi-criteria filtering and full-text search capabilities across collections, suppliers, and specifications.
 
 # External Dependencies
 
