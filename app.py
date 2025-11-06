@@ -95,7 +95,7 @@ class Supplier(db.Model):
     contact_name = db.Column(db.String(200))
     contact_email = db.Column(db.String(200))
     contact_phone = db.Column(db.String(50))
-    materials = db.Column(db.Text)  # JSON string of materials with colors
+    materials_json = db.Column(db.Text)  # JSON string of materials with colors
     avatar_color = db.Column(db.String(20), default='#667eea')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -219,7 +219,6 @@ class SettingsForm(FlaskForm):
 class UploadPDFForm(FlaskForm):
     collection = StringField('Coleção', validators=[DataRequired()])
     collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
-    supplier = StringField('Fornecedor (Supplier)')
     supplier_id = SelectField('Fornecedor', coerce=int, validators=[])
     stylist = StringField('Estilista')
     pdf_file = FileField(
@@ -1651,7 +1650,7 @@ def create_supplier():
         supplier.contact_name = data.get('contact_name')
         supplier.contact_email = data.get('contact_email')
         supplier.contact_phone = data.get('contact_phone')
-        supplier.materials = json.dumps(data.get('materials', []))
+        supplier.materials_json = json.dumps(data.get('materials', []))
         supplier.avatar_color = data.get('avatar_color', '#667eea')
         
         db.session.add(supplier)
@@ -1681,7 +1680,7 @@ def get_supplier(id):
         'contact_name': supplier.contact_name,
         'contact_email': supplier.contact_email,
         'contact_phone': supplier.contact_phone,
-        'materials': json.loads(supplier.materials) if supplier.materials else [],
+        'materials': json.loads(supplier.materials_json) if supplier.materials_json else [],
         'avatar_color': supplier.avatar_color
     })
 
@@ -1704,7 +1703,7 @@ def update_supplier(id):
         supplier.contact_name = data.get('contact_name', supplier.contact_name)
         supplier.contact_email = data.get('contact_email', supplier.contact_email)
         supplier.contact_phone = data.get('contact_phone', supplier.contact_phone)
-        supplier.materials = json.dumps(data.get('materials', []))
+        supplier.materials_json = json.dumps(data.get('materials', []))
         supplier.avatar_color = data.get('avatar_color', supplier.avatar_color)
         
         db.session.commit()
@@ -1774,8 +1773,16 @@ def upload_pdf():
             spec.pdf_filename = filename
             spec.collection = form.collection.data
             spec.collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
-            spec.supplier = form.supplier.data
-            spec.supplier_id = form.supplier_id.data if form.supplier_id.data and form.supplier_id.data != 0 else None
+            
+            # Handle supplier - save both ID and name
+            if form.supplier_id.data and form.supplier_id.data != 0:
+                spec.supplier_id = form.supplier_id.data
+                selected_supplier = Supplier.query.get(form.supplier_id.data)
+                spec.supplier = selected_supplier.name if selected_supplier else None
+            else:
+                spec.supplier_id = None
+                spec.supplier = None
+                
             spec.stylists = form.stylist.data or user.username
             spec.processing_status = 'processing'
             spec.status = 'draft'
