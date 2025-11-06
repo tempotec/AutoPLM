@@ -122,6 +122,33 @@
             color: #64748b;
         }
 
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            margin-top: 12px;
+            background-color: #dc2626;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        .logout-btn i {
+            font-size: 16px;
+        }
+
         /* Main Content */
         .main-content {
             flex: 1;
@@ -488,6 +515,11 @@
                     <div class="user-role">Administrador</div>
                 </div>
             </div>
+            
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Sair</span>
+            </a>
         </aside>
 
         <!-- Main Content -->
