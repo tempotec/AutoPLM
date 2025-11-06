@@ -220,6 +220,7 @@ class UploadPDFForm(FlaskForm):
     collection = StringField('Coleção', validators=[DataRequired()])
     collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
     supplier = StringField('Fornecedor (Supplier)')
+    supplier_id = SelectField('Fornecedor', coerce=int, validators=[])
     stylist = StringField('Estilista')
     pdf_file = FileField(
         'File',
@@ -1749,10 +1750,13 @@ def upload_pdf():
     # Populate collection choices
     if user.is_admin:
         user_collections = Collection.query.order_by(Collection.name).all()
+        user_suppliers = Supplier.query.order_by(Supplier.name).all()
     else:
         user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
+        user_suppliers = Supplier.query.filter_by(user_id=user.id).order_by(Supplier.name).all()
     
     form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
+    form.supplier_id.choices = [(0, '-- Sem fornecedor --')] + [(s.id, s.name) for s in user_suppliers]
     
     if request.method == 'GET':
         form.stylist.data = user.username
@@ -1771,6 +1775,7 @@ def upload_pdf():
             spec.collection = form.collection.data
             spec.collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
             spec.supplier = form.supplier.data
+            spec.supplier_id = form.supplier_id.data if form.supplier_id.data and form.supplier_id.data != 0 else None
             spec.stylists = form.stylist.data or user.username
             spec.processing_status = 'processing'
             spec.status = 'draft'
