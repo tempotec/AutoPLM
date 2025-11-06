@@ -48,6 +48,15 @@ def inject_csrf_token():
     return dict(csrf_token=generate_csrf)
 
 
+@app.template_filter('from_json')
+def from_json_filter(value):
+    import json
+    try:
+        return json.loads(value) if value else []
+    except:
+        return []
+
+
 # Initialize OpenAI client
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
 openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
@@ -78,6 +87,22 @@ class User(db.Model):
         return check_password_hash(self.password_hash, password)
 
 
+class Supplier(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    location = db.Column(db.String(200))
+    contact_name = db.Column(db.String(200))
+    contact_email = db.Column(db.String(200))
+    contact_phone = db.Column(db.String(50))
+    materials = db.Column(db.Text)  # JSON string of materials with colors
+    avatar_color = db.Column(db.String(20), default='#667eea')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship with user
+    user = db.relationship('User', backref=db.backref('suppliers', lazy=True))
+
+
 class Collection(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -95,6 +120,7 @@ class Specification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     collection_id = db.Column(db.Integer, db.ForeignKey('collection.id'), nullable=True)
+    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=True)
     pdf_filename = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -158,8 +184,9 @@ class Specification(db.Model):
         db.String(50),
         default='draft')  # draft, in_development, approved, in_production
     
-    # Relationship to collection
+    # Relationship to collection and supplier
     collection_obj = db.relationship('Collection', backref='specifications', lazy=True)
+    supplier_obj = db.relationship('Supplier', backref='specifications', lazy=True)
 
 
 # Forms
@@ -1563,6 +1590,148 @@ def create_user():
             )
 
     return render_template('create_user.html', form=form)
+
+
+@app.route('/suppliers')
+@login_required
+def suppliers():
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    search_query = request.args.get('search', '')
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    
+    if user.is_admin:
+        query = Supplier.query
+    else:
+        query = Supplier.query.filter_by(user_id=user.id)
+    
+    if search_query:
+        query = query.filter(Supplier.name.ilike(f'%{search_query}%'))
+    
+    suppliers_paginated = query.order_by(Supplier.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    suppliers_with_counts = []
+    for supplier in suppliers_paginated.items:
+        spec_count = Specification.query.filter_by(supplier_id=supplier.id).count()
+        suppliers_with_counts.append({
+            'supplier': supplier,
+            'spec_count': spec_count
+        })
+    
+    return render_template('suppliers.html',
+                         current_user=user,
+                         suppliers=suppliers_with_counts,
+                         pagination=suppliers_paginated,
+                         search_query=search_query)
+
+
+@app.route('/suppliers/create', methods=['POST'])
+@login_required
+def create_supplier():
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'success': False, 'message': 'Sessão inválida'}), 401
+    
+    try:
+        import json
+        data = request.get_json()
+        
+        supplier = Supplier()
+        supplier.user_id = user.id
+        supplier.name = data.get('name')
+        supplier.location = data.get('location')
+        supplier.contact_name = data.get('contact_name')
+        supplier.contact_email = data.get('contact_email')
+        supplier.contact_phone = data.get('contact_phone')
+        supplier.materials = json.dumps(data.get('materials', []))
+        supplier.avatar_color = data.get('avatar_color', '#667eea')
+        
+        db.session.add(supplier)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Fornecedor criado com sucesso!', 'supplier_id': supplier.id})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error creating supplier: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/suppliers/<int:id>', methods=['GET'])
+@login_required
+def get_supplier(id):
+    supplier = Supplier.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    
+    if not user.is_admin and supplier.user_id != user.id:
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    import json
+    return jsonify({
+        'id': supplier.id,
+        'name': supplier.name,
+        'location': supplier.location,
+        'contact_name': supplier.contact_name,
+        'contact_email': supplier.contact_email,
+        'contact_phone': supplier.contact_phone,
+        'materials': json.loads(supplier.materials) if supplier.materials else [],
+        'avatar_color': supplier.avatar_color
+    })
+
+
+@app.route('/suppliers/<int:id>/update', methods=['POST'])
+@login_required
+def update_supplier(id):
+    supplier = Supplier.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    
+    if not user.is_admin and supplier.user_id != user.id:
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    try:
+        import json
+        data = request.get_json()
+        
+        supplier.name = data.get('name', supplier.name)
+        supplier.location = data.get('location', supplier.location)
+        supplier.contact_name = data.get('contact_name', supplier.contact_name)
+        supplier.contact_email = data.get('contact_email', supplier.contact_email)
+        supplier.contact_phone = data.get('contact_phone', supplier.contact_phone)
+        supplier.materials = json.dumps(data.get('materials', []))
+        supplier.avatar_color = data.get('avatar_color', supplier.avatar_color)
+        
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Fornecedor atualizado com sucesso!'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error updating supplier: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/suppliers/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_supplier(id):
+    supplier = Supplier.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    
+    if not user.is_admin and supplier.user_id != user.id:
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+    
+    try:
+        db.session.delete(supplier)
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Fornecedor excluído com sucesso!'})
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error deleting supplier: {e}")
+        return jsonify({'success': False, 'message': str(e)}), 500
 
 
 @app.route('/upload_pdf', methods=['GET', 'POST'])
