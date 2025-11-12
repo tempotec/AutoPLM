@@ -55,12 +55,12 @@
                                 </td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary" title="Ver detalhes">
+                                        <a href="{{ url_for('view_user', id=user.id) }}" class="btn btn-outline-primary" title="Ver detalhes">
                                             <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-outline-secondary" title="Editar">
+                                        </a>
+                                        <a href="{{ url_for('edit_user', id=user.id) }}" class="btn btn-outline-secondary" title="Editar">
                                             <i class="fas fa-edit"></i>
-                                        </button>
+                                        </a>
                                         {% if not user.is_admin or user.id != session.user_id %}
                                         <button class="btn btn-outline-danger" title="Excluir usuário" 
                                                 onclick="if(confirm('Tem certeza que deseja excluir o usuário {{ user.username }}? Todas as especificações deste usuário também serão excluídas.')) { 
