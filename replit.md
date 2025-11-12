@@ -43,6 +43,7 @@ Preferred communication style: Simple, everyday language.
     - **Collections Management**: End-to-end management of collections with linking specifications, search, filtering, cover image upload, and editing functionality.
     - **Collection Cover Images**: Upload and display custom cover images for collections (stored in static/covers/).
     - **Suppliers Management**: Complete CRUD interface for managing suppliers with name, location, contact info, materials (with color-coded tags), custom avatar colors, and automatic counting of associated specifications.
+    - **User Management** (Admin only): Complete user administration with view details, edit user info (username, email, role, password), and delete functionality. Includes validation for unique usernames/emails and secure password handling.
     - **User Settings & Profile Management**: Comprehensive user profile and security settings.
     - **Technical Drawings Gallery**: Dedicated page to view all generated drawings with filters, search, pagination, and lightbox functionality.
     - **Workflow Management**: Product status tracking (Draft, In Development, Approved, In Production) and supplier management with dropdown integration in specification forms.
