@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Usuário - {{ user_to_view.username }}{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+                <h2 class="mb-0">
+                    <i class="fas fa-user me-2"></i>Detalhes do Usuário
+                </h2>
+            </div>
+            <div class="btn-group">
+                <a href="{{ url_for('edit_user', id=user_to_view.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit me-2"></i>Editar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-body text-center">
+                <div class="user-avatar-large mb-3">
+                    {{ user_to_view.username[0].upper() }}
+                </div>
+                <h4>{{ user_to_view.username }}</h4>
+                <p class="text-muted">{{ user_to_view.email }}</p>
+                {% if user_to_view.is_admin %}
+                    <span class="badge bg-danger fs-6">Admin</span>
+                {% else %}
+                    <span class="badge bg-primary fs-6">Estilista</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Informações</h5>
+            </div>
+            <div class="card-body">
+                <div class="info-item mb-3">
+                    <small class="text-muted d-block">Data de Criação</small>
+                    <strong>{{ user_to_view.created_at.strftime('%d/%m/%Y às %H:%M') }}</strong>
+                </div>
+                <div class="info-item mb-3">
+                    <small class="text-muted d-block">Total de Fichas</small>
+                    <strong>{{ specifications|length }}</strong>
+                </div>
+                <div class="info-item mb-3">
+                    <small class="text-muted d-block">Coleções</small>
+                    <strong>{{ collections|length }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Status das Fichas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-3">
+                        <div class="status-card">
+                            <div class="status-count">{{ status_counts['Draft'] }}</div>
+                            <div class="status-label">Rascunho</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="status-card">
+                            <div class="status-count text-primary">{{ status_counts['In Development'] }}</div>
+                            <div class="status-label">Em Desenvolvimento</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="status-card">
+                            <div class="status-count text-success">{{ status_counts['Approved'] }}</div>
+                            <div class="status-label">Aprovado</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="status-card">
+                            <div class="status-count text-warning">{{ status_counts['In Production'] }}</div>
+                            <div class="status-label">Em Produção</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-file-alt me-2"></i>Fichas Técnicas Recentes</h5>
+            </div>
+            <div class="card-body">
+                {% if specifications %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Código</th>
+                                <th>Nome</th>
+                                <th>Coleção</th>
+                                <th>Status</th>
+                                <th>Data</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for spec in specifications[:10] %}
+                            <tr>
+                                <td><strong>{{ spec.product_code }}</strong></td>
+                                <td>{{ spec.product_name }}</td>
+                                <td>
+                                    {% if spec.collection %}
+                                        <span class="badge bg-info">{{ spec.collection }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if spec.status == 'Draft' %}
+                                        <span class="badge bg-secondary">Rascunho</span>
+                                    {% elif spec.status == 'In Development' %}
+                                        <span class="badge bg-primary">Em Desenvolvimento</span>
+                                    {% elif spec.status == 'Approved' %}
+                                        <span class="badge bg-success">Aprovado</span>
+                                    {% elif spec.status == 'In Production' %}
+                                        <span class="badge bg-warning">Em Produção</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ spec.created_at.strftime('%d/%m/%Y') }}</td>
+                                <td>
+                                    <a href="{{ url_for('view_specification', id=spec.id) }}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if specifications|length > 10 %}
+                <div class="text-center mt-3">
+                    <small class="text-muted">Mostrando 10 de {{ specifications|length }} fichas</small>
+                </div>
+                {% endif %}
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Nenhuma ficha técnica encontrada</h5>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if collections %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-layer-group me-2"></i>Coleções</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    {% for collection in collections %}
+                    <span class="badge bg-info fs-6 px-3 py-2">{{ collection }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.user-avatar-large {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 48px;
+    margin: 0 auto;
+}
+
+.info-item {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #1e293b;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.status-card {
+    padding: 16px;
+    border-radius: 8px;
+    background-color: #0f1420;
+}
+
+.status-count {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.status-label {
+    font-size: 12px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.card {
+    background-color: #0f1420;
+    border: 1px solid #1e293b;
+    color: #e5e7eb;
+}
+
+.card-header {
+    background-color: #141b2b;
+    border-bottom: 1px solid #1e293b;
+}
+
+.table {
+    color: #e5e7eb;
+}
+
+.table-hover tbody tr:hover {
+    background-color: #1e293b;
+}
+
+.btn-outline-secondary {
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #334155;
+    border-color: #334155;
+    color: #e5e7eb;
+}
+
+.btn-outline-primary {
+    color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.btn-outline-primary:hover {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+</style>
+{% endblock %}
