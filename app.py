@@ -1592,6 +1592,96 @@ def create_user():
     return render_template('create_user.html', form=form)
 
 
+@app.route('/user/<int:id>/view')
+@admin_required
+def view_user(id):
+    user_to_view = User.query.get_or_404(id)
+    
+    # Get user's specifications with collection and supplier info
+    specifications = Specification.query.filter_by(user_id=user_to_view.id).order_by(Specification.created_at.desc()).all()
+    
+    # Get unique collections
+    collections = db.session.query(Specification.collection).distinct().filter(
+        Specification.collection.isnot(None), 
+        Specification.user_id==user_to_view.id
+    ).all()
+    collections = [c[0] for c in collections if c[0]]
+    
+    # Count specifications by status
+    status_counts = {
+        'Draft': Specification.query.filter_by(user_id=user_to_view.id, status='Draft').count(),
+        'In Development': Specification.query.filter_by(user_id=user_to_view.id, status='In Development').count(),
+        'Approved': Specification.query.filter_by(user_id=user_to_view.id, status='Approved').count(),
+        'In Production': Specification.query.filter_by(user_id=user_to_view.id, status='In Production').count(),
+    }
+    
+    current_user = User.query.get(session['user_id'])
+    
+    return render_template('view_user.html',
+                         current_user=current_user,
+                         user_to_view=user_to_view,
+                         specifications=specifications,
+                         collections=collections,
+                         status_counts=status_counts)
+
+
+@app.route('/user/<int:id>/edit', methods=['GET', 'POST'])
+@admin_required
+def edit_user(id):
+    user_to_edit = User.query.get_or_404(id)
+    current_user = User.query.get(session['user_id'])
+    
+    if request.method == 'POST':
+        # Get form data
+        username = request.form.get('username')
+        email = request.form.get('email')
+        role = request.form.get('role')
+        new_password = request.form.get('password')
+        
+        # Validate
+        if not username or not email or not role:
+            flash('Todos os campos obrigatórios devem ser preenchidos.')
+            return redirect(url_for('edit_user', id=id))
+        
+        # Check if username is unique (if changed)
+        if username != user_to_edit.username:
+            existing_user = User.query.filter_by(username=username).first()
+            if existing_user:
+                flash('Nome de usuário já existe. Escolha outro.')
+                return redirect(url_for('edit_user', id=id))
+        
+        # Check if email is unique (if changed)
+        if email != user_to_edit.email:
+            existing_email = User.query.filter_by(email=email).first()
+            if existing_email:
+                flash('E-mail já está em uso. Escolha outro.')
+                return redirect(url_for('edit_user', id=id))
+        
+        try:
+            # Update user data
+            user_to_edit.username = username
+            user_to_edit.email = email
+            user_to_edit.role = role
+            user_to_edit.is_admin = (role == 'admin')
+            
+            # Update password only if provided
+            if new_password:
+                user_to_edit.set_password(new_password)
+            
+            db.session.commit()
+            flash(f'Usuário {user_to_edit.username} atualizado com sucesso!')
+            return redirect(url_for('manage_users'))
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error updating user: {e}")
+            flash('Erro ao atualizar usuário. Tente novamente.')
+            return redirect(url_for('edit_user', id=id))
+    
+    return render_template('edit_user.html',
+                         current_user=current_user,
+                         user_to_edit=user_to_edit)
+
+
 @app.route('/suppliers')
 @login_required
 def suppliers():
