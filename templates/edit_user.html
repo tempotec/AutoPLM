@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Editar Usuário - {{ user_to_edit.username }}{% endblock %}
+
+{% block content %}
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('manage_users') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+                <h2 class="mb-0">
+                    <i class="fas fa-user-edit me-2"></i>Editar Usuário
+                </h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Informações do Usuário</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_user', id=user_to_edit.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Nome de Usuário <span class="text-danger">*</span></label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               value="{{ user_to_edit.username }}" 
+                               required>
+                        <small class="form-text text-muted">Nome único para identificação no sistema</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">E-mail <span class="text-danger">*</span></label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               value="{{ user_to_edit.email }}" 
+                               required>
+                        <small class="form-text text-muted">E-mail deve ser único no sistema</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Tipo de Usuário <span class="text-danger">*</span></label>
+                        <select class="form-select" id="role" name="role" required>
+                            <option value="stylist" {% if user_to_edit.role == 'stylist' %}selected{% endif %}>Estilista</option>
+                            <option value="admin" {% if user_to_edit.role == 'admin' %}selected{% endif %}>Administrador</option>
+                        </select>
+                        <small class="form-text text-muted">
+                            Estilista: Acesso às próprias fichas técnicas<br>
+                            Administrador: Acesso total ao sistema
+                        </small>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            Nova Senha 
+                            <span class="badge bg-secondary ms-2">Opcional</span>
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Deixe em branco para manter a senha atual">
+                        <small class="form-text text-muted">Mínimo de 6 caracteres. Deixe em branco se não deseja alterar a senha.</small>
+                    </div>
+
+                    <div class="alert alert-info d-flex align-items-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <div>
+                            <strong>Atenção:</strong> As alterações entrarão em vigor imediatamente após salvar.
+                            {% if user_to_edit.id == session.user_id %}
+                            Você está editando seu próprio usuário.
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('manage_users') }}" class="btn btn-secondary">
+                            <i class="fas fa-times me-2"></i>Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Zona de Perigo</h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted mb-3">
+                    Excluir um usuário é uma ação permanente e não pode ser desfeita. Todas as fichas técnicas deste usuário também serão excluídas.
+                </p>
+                {% if not user_to_edit.is_admin or user_to_edit.id != session.user_id %}
+                <button type="button" 
+                        class="btn btn-danger" 
+                        onclick="if(confirm('ATENÇÃO: Tem certeza que deseja excluir o usuário {{ user_to_edit.username }}?\n\nTodas as fichas técnicas deste usuário também serão excluídas permanentemente.\n\nEsta ação não pode ser desfeita!')) { 
+                            document.getElementById('delete-user-form').submit(); 
+                        }">
+                    <i class="fas fa-trash me-2"></i>Excluir Usuário Permanentemente
+                </button>
+                <form id="delete-user-form" method="POST" action="{{ url_for('delete_user', id=user_to_edit.id) }}" style="display: none;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                </form>
+                {% else %}
+                <p class="text-warning mb-0">
+                    <i class="fas fa-lock me-2"></i>Não é possível excluir seu próprio usuário administrador.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    background-color: #0f1420;
+    border: 1px solid #1e293b;
+    color: #e5e7eb;
+}
+
+.card-header {
+    background-color: #141b2b;
+    border-bottom: 1px solid #1e293b;
+}
+
+.form-control, .form-select {
+    background-color: #0a0e1a;
+    border-color: #334155;
+    color: #e5e7eb;
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: #0f1420;
+    border-color: #3b82f6;
+    color: #e5e7eb;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.form-control::placeholder {
+    color: #64748b;
+}
+
+.form-label {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.form-text {
+    color: #64748b;
+}
+
+.alert-info {
+    background-color: #1e3a5f;
+    border-color: #3b82f6;
+    color: #93c5fd;
+}
+
+.btn-outline-secondary {
+    color: #94a3b8;
+    border-color: #334155;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #334155;
+    border-color: #334155;
+    color: #e5e7eb;
+}
+
+.btn-primary {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+}
+
+.btn-primary:hover {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.btn-secondary {
+    background-color: #475569;
+    border-color: #475569;
+}
+
+.btn-secondary:hover {
+    background-color: #334155;
+    border-color: #334155;
+}
+
+.btn-danger {
+    background-color: #dc2626;
+    border-color: #dc2626;
+}
+
+.btn-danger:hover {
+    background-color: #b91c1c;
+    border-color: #b91c1c;
+}
+
+.bg-danger {
+    background-color: #dc2626 !important;
+}
+
+.text-danger {
+    color: #ef4444 !important;
+}
+
+.text-warning {
+    color: #fbbf24 !important;
+}
+</style>
+{% endblock %}
