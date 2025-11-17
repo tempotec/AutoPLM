@@ -1050,6 +1050,48 @@ def convert_value_to_string(value):
     return value
 
 
+def get_or_create_supplier(supplier_name, user_id):
+    """
+    Get existing supplier by name or create a new one.
+    Returns the supplier object.
+    """
+    if not supplier_name or supplier_name.strip() == "":
+        return None
+    
+    # Clean up supplier name
+    supplier_name = supplier_name.strip()
+    
+    try:
+        # Check if supplier already exists for this user (case-insensitive)
+        existing_supplier = Supplier.query.filter(
+            db.func.lower(Supplier.name) == supplier_name.lower(),
+            Supplier.user_id == user_id
+        ).first()
+        
+        if existing_supplier:
+            print(f"✓ Fornecedor encontrado: {existing_supplier.name} (ID: {existing_supplier.id})")
+            return existing_supplier
+        
+        # Create new supplier
+        import random
+        colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0', '#a8edea']
+        new_supplier = Supplier(
+            user_id=user_id,
+            name=supplier_name,
+            avatar_color=random.choice(colors)
+        )
+        db.session.add(new_supplier)
+        db.session.commit()
+        
+        print(f"✨ Novo fornecedor criado: {new_supplier.name} (ID: {new_supplier.id})")
+        return new_supplier
+        
+    except Exception as e:
+        print(f"⚠️ Erro ao buscar/criar fornecedor: {e}")
+        db.session.rollback()
+        return None
+
+
 def process_specification_with_openai(text_content):
     """Process specification text using OpenAI to extract structured data"""
     if not openai_client:
@@ -1320,6 +1362,16 @@ def process_pdf_specification(spec_id, file_path):
                             # Convert lists/dicts to strings
                             setattr(spec, key, convert_value_to_string(value))
                     
+                    # AUTO-CADASTRO DE FORNECEDOR (fallback text analysis)
+                    supplier_name = extracted_data.get('supplier')
+                    if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
+                        print(f"\n📦 Fornecedor detectado na análise: {supplier_name}")
+                        supplier = get_or_create_supplier(supplier_name, spec.user_id)
+                        if supplier:
+                            spec.supplier_id = supplier.id
+                            spec.supplier = supplier.name
+                            print(f"✓ Ficha técnica vinculada ao fornecedor ID {supplier.id}\n")
+                    
                     print(f"✓ Dados extraídos via OpenAI do texto visual (fallback):")
                     print(f"  - Descrição: {spec.description}")
                     print(f"  - Composição: {spec.composition}")
@@ -1404,6 +1456,24 @@ def process_pdf_specification(spec_id, file_path):
                                 continue
                     # Convert lists/dicts to strings
                     setattr(spec, key, convert_value_to_string(value))
+
+            # AUTO-CADASTRO DE FORNECEDOR
+            # Se o PDF contém informação de fornecedor, criar/buscar automaticamente
+            supplier_name = extracted_data.get('supplier')
+            if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
+                print(f"\n{'='*80}")
+                print(f"AUTO-CADASTRO DE FORNECEDOR")
+                print(f"{'='*80}")
+                print(f"📦 Fornecedor detectado no PDF: {supplier_name}")
+                
+                supplier = get_or_create_supplier(supplier_name, spec.user_id)
+                if supplier:
+                    spec.supplier_id = supplier.id
+                    spec.supplier = supplier.name
+                    print(f"✓ Ficha técnica vinculada ao fornecedor ID {supplier.id}")
+                else:
+                    print(f"⚠️ Não foi possível cadastrar o fornecedor")
+                print(f"{'='*80}\n")
 
             spec.processing_status = 'completed'
             db.session.commit()
