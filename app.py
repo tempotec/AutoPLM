@@ -130,6 +130,8 @@ class Specification(db.Model):
     collection = db.Column(db.String(100))
     supplier = db.Column(db.String(100))
     corner = db.Column(db.String(100))
+    main_group = db.Column(db.String(30))  # TECIDO PLANO / MALHA / TRICOT / JEANS
+    sub_group = db.Column(db.String(30))   # BLUSA / CALÇA / etc.
 
     # 2. Informações Comerciais
     target_price = db.Column(db.String(100))
@@ -228,6 +230,33 @@ class UploadPDFForm(FlaskForm):
     submit = SubmitField('Upload and Process')
 
 
+# Choices para Grupo e Subgrupo
+GROUP_CHOICES = [
+    ('', 'Selecione...'),
+    ('TECIDO PLANO', 'Tecido Plano'),
+    ('MALHA', 'Malha'),
+    ('TRICOT', 'Tricot'),
+    ('JEANS', 'Jeans'),
+]
+
+SUBGROUP_CHOICES = [
+    ('', 'Selecione...'),
+    ('BLAZER', 'Blazer'),
+    ('BLUSA', 'Blusa'),
+    ('BRINCO', 'Brinco'),
+    ('CALÇA', 'Calça'),
+    ('CAMISA', 'Camisa'),
+    ('CAMISA/CAMISÃO', 'Camisa/Camisão'),
+    ('CAMISETA', 'Camiseta'),
+    ('CARDIGÃ', 'Cardigã'),
+    ('JAQUETA', 'Jaqueta'),
+    ('KAFTAN', 'Kaftan'),
+    ('REGATA', 'Regata'),
+    ('SAIA', 'Saia'),
+    ('TÚNICA', 'Túnica'),
+]
+
+
 class SpecificationForm(FlaskForm):
     # 1. Identificação da Peça
     ref_souq = StringField('Referência (REF SOUQ)')
@@ -236,6 +265,8 @@ class SpecificationForm(FlaskForm):
     collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
     supplier = StringField('Fornecedor')
     corner = StringField('Corner')
+    main_group = SelectField('Grupo', choices=GROUP_CHOICES)
+    sub_group = SelectField('Subgrupo', choices=SUBGROUP_CHOICES)
 
     # 2. Informações Comerciais
     target_price = StringField('Target Price')
@@ -623,12 +654,19 @@ Procedimento em 3 PASSOS (obrigatório):
    - Etiquetas/elementos externos: etiqueta de marca aparente, patches, bordados, termocolantes.
    - Assimetria e diferenças Frente vs Costas; Esquerda vs Direita (se houver).
 
+⚠️ IMPORTANTE - Classificação de Grupo e Subgrupo:
+- No campo "grupo", retorne EXATAMENTE um destes valores: TECIDO PLANO, MALHA, TRICOT, JEANS.
+- No campo "subgrupo", retorne EXATAMENTE um destes valores: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA, TÚNICA.
+- Use LETRAS MAIÚSCULAS e NÃO crie novos valores fora dessas listas.
+
 SAÍDA: responda SOMENTE um JSON válido com este esquema (preencha tudo que conseguir; use "nao_visivel" quando não der):
 
 {
   "identificacao": {
     "tipo_peca": "",
     "categoria": "",
+    "grupo": "",
+    "subgrupo": "",
     "confianca": 0.0
   },
   "visoes": {
@@ -737,6 +775,8 @@ Retorne SOMENTE o JSON, sem texto adicional."""
             print(f"{'='*80}")
             print(f"Tipo de peça: {analysis_data.get('identificacao', {}).get('tipo_peca', 'N/A')}")
             print(f"Categoria: {analysis_data.get('identificacao', {}).get('categoria', 'N/A')}")
+            print(f"Grupo: {analysis_data.get('identificacao', {}).get('grupo', 'N/A')}")
+            print(f"Subgrupo: {analysis_data.get('identificacao', {}).get('subgrupo', 'N/A')}")
             print(f"Confiança: {analysis_data.get('identificacao', {}).get('confianca', 0.0)}")
             print(f"Gola/Decote: {analysis_data.get('gola_decote', {}).get('tipo', 'N/A')}")
             print(f"Mangas: {analysis_data.get('mangas', {}).get('comprimento', 'N/A')} - {analysis_data.get('mangas', {}).get('modelo', 'N/A')}")
@@ -1034,6 +1074,8 @@ CAMPOS OBRIGATÓRIOS A EXTRAIR:
    - collection: Coleção (ex: "Inverno 2025", "W26")
    - supplier: Fornecedor/fabricante
    - corner: Corner/departamento
+   - main_group: Grupo do produto - DEVE SER EXATAMENTE um destes valores: TECIDO PLANO, MALHA, TRICOT, JEANS (em MAIÚSCULAS)
+   - sub_group: Subgrupo do produto - DEVE SER EXATAMENTE um destes valores: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA, TÚNICA (em MAIÚSCULAS)
 
 2. **Informações Comerciais:**
    - target_price: Preço alvo/target
@@ -1114,7 +1156,7 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                 # Log what was extracted for debugging
                 campos_importantes = [
                     'ref_souq', 'description', 'collection', 'composition',
-                    'pilot_size', 'body_length', 'bust', 'sleeve_length'
+                    'main_group', 'sub_group', 'pilot_size', 'body_length', 'bust', 'sleeve_length'
                 ]
 
                 print("\n📋 CAMPOS PRINCIPAIS:")
@@ -1224,9 +1266,15 @@ def process_pdf_specification(spec_id, file_path):
                 # Populate spec fields from visual analysis
                 tipo_peca = ident.get('tipo_peca', '')
                 categoria = ident.get('categoria', '')
+                grupo = ident.get('grupo', '')
+                subgrupo = ident.get('subgrupo', '')
                 
                 spec.description = f"{tipo_peca}" if tipo_peca else "Peça de Vestuário (Imagem)"
                 spec.composition = categoria if categoria else None
+                
+                # Preencher grupo e subgrupo automaticamente (apenas na criação)
+                spec.main_group = grupo if grupo else None
+                spec.sub_group = subgrupo if subgrupo else None
                 
                 # Build a descriptive summary for finishes
                 detalhes = []
@@ -1243,6 +1291,8 @@ def process_pdf_specification(spec_id, file_path):
                 print(f"✓ Dados extraídos da análise visual (JSON estruturado):")
                 print(f"  - Descrição: {spec.description}")
                 print(f"  - Categoria: {spec.composition}")
+                print(f"  - Grupo: {spec.main_group}")
+                print(f"  - Subgrupo: {spec.sub_group}")
                 print(f"  - Detalhes: {spec.finishes}")
             else:
                 # Fallback: text response (when JSON parsing failed)
