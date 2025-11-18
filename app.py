@@ -238,7 +238,6 @@ class SettingsForm(FlaskForm):
 
 
 class UploadPDFForm(FlaskForm):
-    collection = StringField('Coleção', validators=[DataRequired()])
     collection_id = SelectField('Vincular à Coleção',
                                 coerce=int,
                                 validators=[])
@@ -2267,7 +2266,6 @@ def upload_pdf():
             spec = Specification()
             spec.user_id = session['user_id']
             spec.pdf_filename = filename
-            spec.collection = form.collection.data
             spec.collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
 
             # Handle supplier - save both ID and name
