@@ -78,7 +78,7 @@ function pollSpecStatus(specId, onComplete) {
     const maxAttempts = 150; // 5 minutes max
     let attempts = 0;
     
-    const toast = Toast.processing('Processando arquivo em segundo plano...');
+    const toast = Toast.processing('Processando...');
     
     const check = () => {
         attempts++;
