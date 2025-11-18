@@ -1315,6 +1315,7 @@ CAMPOS OBRIGATÓRIOS A EXTRAIR:
 
 5. **Matéria-Prima e Composição:**
    - composition: Composição do tecido (ex: "100% algodão", "60% poliéster 40% viscose")
+   - pattern: Estampa/padrão do tecido (ex: "Listrado", "Floral", "Xadrez", "Liso", "Poá")
    - colors: Cores disponíveis
    - tags_kit: Kit de etiquetas/aviamentos
 
@@ -1552,6 +1553,7 @@ def process_pdf_specification(spec_id, file_path):
                 print(f"  - Categoria: {spec.composition}")
                 print(f"  - Grupo: {spec.main_group}")
                 print(f"  - Subgrupo: {spec.sub_group}")
+                print(f"  - Estampa/Padrão: {spec.pattern}")
                 print(f"  - Detalhes: {spec.finishes}")
             else:
                 # Fallback: text response (when JSON parsing failed)
