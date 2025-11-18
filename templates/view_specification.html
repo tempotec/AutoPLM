@@ -669,6 +669,9 @@
                                         <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
                                     </a>
                                 {% endif %}
+                                <a href="{{ url_for('download_drawing', id=specification.id) }}" class="btn-image-action" style="background: #10b981; color: white;">
+                                    <i class="fas fa-download me-2"></i>Baixar Desenho Técnico
+                                </a>
                                 <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="regenerate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, true);">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <button type="submit" class="btn-image-action">

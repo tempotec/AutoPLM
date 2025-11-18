@@ -2558,6 +2558,76 @@ def view_drawing(id):
         return redirect(url_for('view_specification', id=id))
 
 
+@app.route('/download-drawing/<int:id>')
+@login_required
+def download_drawing(id):
+    """Download technical drawing - forces browser download"""
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+
+    # Allow access if user is admin or owns the specification
+    if not user.is_admin and spec.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('dashboard'))
+
+    if not spec.technical_drawing_url:
+        flash('Desenho técnico não encontrado.')
+        return redirect(url_for('view_specification', id=id))
+
+    try:
+        # Generate download filename
+        download_filename = f"desenho_tecnico_{spec.reference or spec.id}.png"
+        
+        # New format: static file path
+        if spec.technical_drawing_url.startswith('/static/'):
+            # Extract the actual file path from /static/...
+            file_path = spec.technical_drawing_url.replace('/static/', 'static/')
+            if os.path.exists(file_path):
+                return send_file(file_path, 
+                               mimetype='image/png',
+                               as_attachment=True,
+                               download_name=download_filename)
+        
+        # Legacy format: external URL (HTTPS)
+        if spec.technical_drawing_url.startswith('http://') or spec.technical_drawing_url.startswith('https://'):
+            # For external URLs, redirect to them (browser will handle download)
+            return redirect(spec.technical_drawing_url)
+        
+        # Legacy format: Object Storage
+        try:
+            storage_client = Client()
+            if storage_client.exists(spec.technical_drawing_url):
+                image_data = storage_client.download_as_bytes(spec.technical_drawing_url)
+                return send_file(io.BytesIO(image_data),
+                               mimetype='image/png',
+                               as_attachment=True,
+                               download_name=download_filename)
+        except Exception as storage_error:
+            print(f"Object Storage lookup failed: {storage_error}")
+
+        # Fallback: local file
+        drawing_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.technical_drawing_url)
+        if os.path.exists(drawing_path):
+            return send_file(drawing_path, 
+                           mimetype='image/png',
+                           as_attachment=True,
+                           download_name=download_filename)
+        else:
+            flash('Arquivo de desenho não encontrado.')
+            return redirect(url_for('view_specification', id=id))
+            
+    except Exception as e:
+        print(f"Error downloading drawing: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Erro ao baixar desenho técnico.')
+        return redirect(url_for('view_specification', id=id))
+
+
 def generate_drawing_background(spec_id, file_path):
     """Background task to generate technical drawing using the original image as base (image-to-image)"""
     from sqlalchemy.orm import sessionmaker

@@ -27,7 +27,7 @@ Preferred communication style: Simple, everyday language.
 - **AI Processing**: OpenAI API for data parsing, vision analysis, and image generation.
 - **Asynchronous Processing**: Background threading for PDF/image processing with dedicated database sessions, allowing users to navigate freely while files process.
 - **Real-time Notifications**: Toast notification system (toast.js) with AJAX polling for processing status updates.
-- **Data Storage**: SQL database for primary data. Replit Object Storage for technical drawings, with local filesystem fallback.
+- **Data Storage**: SQL database for primary data. Technical drawings saved to `static/drawings/` for instant loading with browser caching. Legacy support for Replit Object Storage drawings.
 - **Security**: CSRF protection, secure filename handling, file size limits.
 
 ## System Design Choices
@@ -38,7 +38,7 @@ Preferred communication style: Simple, everyday language.
     3. **Análise Visual**: GPT-4o Vision analisa imagens para produzir JSON estruturado com detalhes de construção.
     4. **Geração de Desenho Técnico (Image-to-Image)**: Usuário clica em "Gerar Desenho Técnico", requisição retorna instantaneamente. GPT-Image-1 usa `images.edit()` recebendo a imagem original como base + prompt técnico, transformando a foto/ilustração real em desenho técnico plano. Isso preserva proporções, detalhes construtivos, e características da peça original (golas, bolsos, recortes, listras), resultando em desenhos muito mais fiéis. Fallback para `images.generate()` (text-to-image) se nenhuma imagem base for encontrada.
     5. **Notificações em Tempo Real**: Sistema de toast mostra "Processando..." com polling automático do status.
-    6. **Armazenamento**: Object Storage para desenhos gerados, com fallback para sistema de arquivos local.
+    6. **Armazenamento Otimizado**: Desenhos salvos em `static/drawings/` para carregamento instantâneo com cache automático do navegador. Compatibilidade retroativa com desenhos legados do Object Storage.
 - **Feature Set**:
     - **Asynchronous File Upload & Drawing Generation**: Files and technical drawings are processed in background threads while users can navigate freely. Real-time status updates via AJAX polling with toast notifications showing "Processando", "Completo", or "Erro" states. Users never experience blocked UI - all AI operations happen asynchronously.
     - **Data Extraction**: Transforms unstructured PDF content into structured records (product identification, commercial info, deadlines, materials, technical measurements).
@@ -46,7 +46,7 @@ Preferred communication style: Simple, everyday language.
     - **Pattern/Print Extraction**: Automatic extraction of fabric pattern/print information (Listrado, Floral, Xadrez, Liso, Poá, etc.) using GPT-4o Vision for images and GPT-4 for PDFs. Extracted pattern is displayed separately from composition and is fully editable by users.
     - **Manual Price Range Classification (P1-P4)**: Stylist-defined price range field with manual selection during upload and editing. Not AI-generated - allows stylists to classify garments into one of four price tiers (P1, P2, P3, P4) with color-coded badges and filtering capabilities.
     - **Auto-Registration of Suppliers**: When processing PDFs/images, the system automatically extracts supplier names and creates supplier records if they don't exist. Suppliers are matched case-insensitively to avoid duplicates, then linked to specifications.
-    - **Technical Drawing Generation (Image-to-Image)**: Produces professional flat sketches using GPT-Image-1's `images.edit()` method. The system extracts the original garment image (from uploaded image files or largest image in PDFs) and passes it as a visual base alongside the technical prompt. This image-to-image approach preserves the actual proportions, construction details, and design elements of the original piece, resulting in technical drawings that accurately reflect the garment's real appearance. Automatic fallback to text-to-image generation if no base image is available.
+    - **Technical Drawing Generation & Download (Image-to-Image)**: Produces professional flat sketches using GPT-Image-1's `images.edit()` method. The system extracts the original garment image (from uploaded image files or largest image in PDFs) and passes it as a visual base alongside the technical prompt. This image-to-image approach preserves the actual proportions, construction details, and design elements of the original piece, resulting in technical drawings that accurately reflect the garment's real appearance. Automatic fallback to text-to-image generation if no base image is available. Includes one-click download functionality for technical drawings with intelligent naming (desenho_tecnico_[reference].png).
     - **Image Thumbnail Generation**: Automatic thumbnail generation for both PDF files (using PyMuPDF) and image files (using Pillow), providing consistent preview cards across all media types in the dashboard.
     - **Collections Management**: End-to-end management of collections with linking specifications, search, filtering, cover image upload, and editing functionality.
     - **Collection Cover Images**: Upload and display custom cover images for collections (stored in static/covers/).
