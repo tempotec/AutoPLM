@@ -899,7 +899,7 @@
             if (data.success) {
                 // Show processing toast
                 if (typeof Toast !== 'undefined') {
-                    Toast.success('Geração iniciada! Processamento em segundo plano...');
+                    Toast.processing('Processando desenho técnico...');
                     // Start polling for status
                     if (typeof pollSpecStatus !== 'undefined') {
                         pollSpecStatus(data.spec_id, function(statusData) {
