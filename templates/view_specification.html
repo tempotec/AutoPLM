@@ -772,6 +772,13 @@
                                         <p>{{ specification.composition or 'Não especificado' }}</p>
                                     </div>
                                     
+                                    {% if specification.pattern %}
+                                    <div class="info-section">
+                                        <h6>Estampa/Padrão</h6>
+                                        <p>{{ specification.pattern }}</p>
+                                    </div>
+                                    {% endif %}
+                                    
                                     {% if specification.colors %}
                                     <div class="info-section">
                                         <h6>Cores</h6>
