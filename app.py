@@ -301,6 +301,14 @@ class SpecificationForm(FlaskForm):
     corner = StringField('Corner')
     main_group = SelectField('Grupo', choices=GROUP_CHOICES)
     sub_group = SelectField('Subgrupo', choices=SUBGROUP_CHOICES)
+    price_range = SelectField('Faixa de Preço',
+                             choices=[
+                                 ('', 'Selecione...'),
+                                 ('P1', 'P1'),
+                                 ('P2', 'P2'),
+                                 ('P3', 'P3'),
+                                 ('P4', 'P4')
+                             ])
 
     # 2. Informações Comerciais
     target_price = StringField('Target Price')
