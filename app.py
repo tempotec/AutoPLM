@@ -2580,7 +2580,7 @@ def download_drawing(id):
 
     try:
         # Generate download filename
-        download_filename = f"desenho_tecnico_{spec.reference or spec.id}.png"
+        download_filename = f"desenho_tecnico_{spec.ref_souq or spec.id}.png"
         
         # New format: static file path
         if spec.technical_drawing_url.startswith('/static/'):
