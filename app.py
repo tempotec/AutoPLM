@@ -578,6 +578,39 @@ def extract_images_from_pdf(pdf_path):
     return images_data
 
 
+def generate_image_thumbnail(image_path, spec_id):
+    """Generate a thumbnail from an image file (JPG, PNG, etc)"""
+    try:
+        from PIL import Image
+        import uuid
+        
+        print(f"\n{'='*80}")
+        print(f"GERANDO THUMBNAIL DA IMAGEM: {image_path}")
+        print(f"{'='*80}")
+        
+        img = Image.open(image_path)
+        
+        max_size = (800, 800)
+        img.thumbnail(max_size, Image.Resampling.LANCZOS)
+        
+        thumbnail_filename = f"thumbnail_{spec_id}_{uuid.uuid4().hex[:8]}.png"
+        thumbnail_path = os.path.join('static', 'thumbnails', thumbnail_filename)
+        
+        img.save(thumbnail_path, 'PNG')
+        
+        thumbnail_url = f"/static/thumbnails/{thumbnail_filename}"
+        print(f"✓ Thumbnail de imagem gerado com sucesso: {thumbnail_url}")
+        print(f"{'='*80}\n")
+        
+        return thumbnail_url
+        
+    except Exception as e:
+        print(f"Erro ao gerar thumbnail de imagem: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
+
+
 def generate_pdf_thumbnail(pdf_path, spec_id):
     """Generate a thumbnail from the first page of a PDF"""
     try:
