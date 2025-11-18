@@ -157,6 +157,7 @@ class Specification(db.Model):
 
     # 5. Matéria-Prima e Aviamentos
     composition = db.Column(db.Text)
+    pattern = db.Column(db.Text)
     colors = db.Column(db.Text)
     tags_kit = db.Column(db.Text)
 
@@ -324,6 +325,7 @@ class SpecificationForm(FlaskForm):
 
     # 5. Matéria-Prima e Aviamentos
     composition = TextAreaField('Composição')
+    pattern = StringField('Estampa/Padrão')
     colors = TextAreaField('Cores')
     tags_kit = TextAreaField('Kit Etiquetas + Tag + Pendurador Cabide')
 
@@ -1514,6 +1516,17 @@ def process_pdf_specification(spec_id, file_path):
 
                 spec.description = f"{tipo_peca}" if tipo_peca else "Peça de Vestuário (Imagem)"
                 spec.composition = categoria if categoria else None
+                
+                # Extract pattern/print information from texture analysis
+                if textura.get('tipo_trico_malha') and textura['tipo_trico_malha'] != 'nao_visivel':
+                    pattern_parts = [textura['tipo_trico_malha']]
+                    if textura.get('direcao') and textura['direcao'] != 'nao_visivel':
+                        pattern_parts.append(textura['direcao'])
+                    if textura.get('rapport_ou_repeticao'):
+                        pattern_parts.append(textura['rapport_ou_repeticao'])
+                    spec.pattern = ' - '.join(pattern_parts)
+                else:
+                    spec.pattern = None
 
                 # Preencher grupo e subgrupo automaticamente (apenas na criação)
                 spec.main_group = grupo if grupo else None
