@@ -1318,6 +1318,12 @@ def process_pdf_specification(spec_id, file_path):
             print(f"PROCESSAMENTO DE IMAGEM DETECTADO: {filename}")
             print(f"{'='*80}\n")
             
+            # Generate thumbnail for image preview
+            thumbnail_url = generate_image_thumbnail(file_path, spec_id)
+            if thumbnail_url:
+                spec.pdf_thumbnail = thumbnail_url
+                print(f"✓ Thumbnail da imagem gerado: {thumbnail_url}")
+            
             # Save uploaded image as product image
             product_img_url = save_product_image(spec_id, file_path, is_b64=False)
             if product_img_url:
