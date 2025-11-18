@@ -43,8 +43,10 @@ Preferred communication style: Simple, everyday language.
     - **Asynchronous File Upload & Drawing Generation**: Files and technical drawings are processed in background threads while users can navigate freely. Real-time status updates via AJAX polling with toast notifications showing "Processando", "Completo", or "Erro" states. Users never experience blocked UI - all AI operations happen asynchronously.
     - **Data Extraction**: Transforms unstructured PDF content into structured records (product identification, commercial info, deadlines, materials, technical measurements).
     - **AI-Powered Categorization**: Automatic classification of garments into Grupo (TECIDO PLANO, MALHA, TRICOT, JEANS) and Subgrupo (BLAZER, BLUSA, CALÇA, etc.) using GPT-4o Vision and GPT-4 Text analysis. Fields are auto-filled during creation and remain editable by users.
+    - **Manual Price Range Classification (P1-P4)**: Stylist-defined price range field with manual selection during upload and editing. Not AI-generated - allows stylists to classify garments into one of four price tiers (P1, P2, P3, P4) with color-coded badges and filtering capabilities.
     - **Auto-Registration of Suppliers**: When processing PDFs/images, the system automatically extracts supplier names and creates supplier records if they don't exist. Suppliers are matched case-insensitively to avoid duplicates, then linked to specifications.
     - **Technical Drawing Generation**: Produces professional flat sketches focused on visual representation without dimensions.
+    - **Image Thumbnail Generation**: Automatic thumbnail generation for both PDF files (using PyMuPDF) and image files (using Pillow), providing consistent preview cards across all media types in the dashboard.
     - **Collections Management**: End-to-end management of collections with linking specifications, search, filtering, cover image upload, and editing functionality.
     - **Collection Cover Images**: Upload and display custom cover images for collections (stored in static/covers/).
     - **Suppliers Management**: Complete CRUD interface for managing suppliers with name, location, contact info, materials (with color-coded tags), custom avatar colors, and automatic counting of associated specifications.
@@ -52,7 +54,7 @@ Preferred communication style: Simple, everyday language.
     - **User Settings & Profile Management**: Comprehensive user profile and security settings.
     - **Technical Drawings Gallery**: Dedicated page to view all generated drawings with filters, search, pagination, and lightbox functionality.
     - **Workflow Management**: Product status tracking (Draft, In Development, Approved, In Production) and supplier management with dropdown integration in specification forms.
-    - **Advanced Filtering**: Multi-criteria filtering and full-text search capabilities across collections, suppliers, and specifications.
+    - **Advanced Filtering**: Multi-criteria filtering and full-text search capabilities across collections, suppliers, specifications, and price ranges.
 
 # External Dependencies
 
