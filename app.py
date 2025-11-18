@@ -3159,6 +3159,49 @@ def edit_collection(id):
     return redirect(url_for('collections'))
 
 
+@app.route('/collection/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_collection(id):
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+
+    collection = Collection.query.get_or_404(id)
+
+    # Check access permissions
+    if not user.is_admin and collection.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('collections'))
+
+    try:
+        # Delete cover image if exists
+        if collection.cover_image:
+            cover_path = os.path.join('static', collection.cover_image)
+            if os.path.exists(cover_path):
+                try:
+                    os.remove(cover_path)
+                except Exception as e:
+                    print(f"Erro ao remover imagem de capa: {e}")
+
+        # Unlink specifications from this collection (don't delete them)
+        Specification.query.filter_by(collection_id=id).update({
+            'collection_id': None
+        })
+
+        collection_name = collection.name
+        db.session.delete(collection)
+        db.session.commit()
+        flash(f'Coleção "{collection_name}" excluída com sucesso!')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Erro ao excluir coleção: {str(e)}')
+        print(f"Erro ao excluir coleção: {e}")
+
+    return redirect(url_for('collections'))
+
+
 @app.route('/technical-drawings')
 @login_required
 def technical_drawings():
