@@ -244,6 +244,15 @@ class UploadPDFForm(FlaskForm):
                                 validators=[])
     supplier_id = SelectField('Fornecedor', coerce=int, validators=[])
     stylist = StringField('Estilista')
+    price_range = SelectField('Faixa de Preço',
+                             choices=[
+                                 ('', 'Selecione a faixa de preço...'),
+                                 ('P1', 'P1'),
+                                 ('P2', 'P2'),
+                                 ('P3', 'P3'),
+                                 ('P4', 'P4')
+                             ],
+                             validators=[DataRequired()])
     pdf_file = FileField('File',
                          validators=[
                              FileRequired(),
@@ -2263,6 +2272,7 @@ def upload_pdf():
                 spec.supplier = None
 
             spec.stylists = form.stylist.data or user.username
+            spec.price_range = form.price_range.data if form.price_range.data else None
             spec.processing_status = 'processing'
             spec.status = 'draft'
             spec.created_at = datetime.now()
