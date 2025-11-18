@@ -21,10 +21,12 @@ Preferred communication style: Simple, everyday language.
 
 ## Technical Implementations
 - **Web Framework**: Flask with a modular route structure.
-- **Database ORM**: SQLAlchemy for database abstraction.
+- **Database ORM**: SQLAlchemy for database abstraction with thread-safe session management.
 - **Authentication**: Session-based, with Werkzeug for password hashing and role-based access control (admin, stylist).
 - **File Processing**: PyPDF2 for PDF text and image extraction; PyMuPDF for PDF thumbnail generation.
 - **AI Processing**: OpenAI API for data parsing, vision analysis, and image generation.
+- **Asynchronous Processing**: Background threading for PDF/image processing with dedicated database sessions, allowing users to navigate freely while files process.
+- **Real-time Notifications**: Toast notification system (toast.js) with AJAX polling for processing status updates.
 - **Data Storage**: SQL database for primary data. Replit Object Storage for technical drawings, with local filesystem fallback.
 - **Security**: CSRF protection, secure filename handling, file size limits.
 
@@ -38,6 +40,7 @@ Preferred communication style: Simple, everyday language.
     5. Clean flat sketch generation (GPT-Image-1) without measurements.
     6. Object Storage for generated drawings and database record of URLs.
 - **Feature Set**:
+    - **Asynchronous File Upload**: Files are processed in background threads while users can navigate freely. Real-time status updates via AJAX polling with toast notifications showing "Processando", "Completo", or "Erro" states.
     - **Data Extraction**: Transforms unstructured PDF content into structured records (product identification, commercial info, deadlines, materials, technical measurements).
     - **AI-Powered Categorization**: Automatic classification of garments into Grupo (TECIDO PLANO, MALHA, TRICOT, JEANS) and Subgrupo (BLAZER, BLUSA, CALÇA, etc.) using GPT-4o Vision and GPT-4 Text analysis. Fields are auto-filled during creation and remain editable by users.
     - **Auto-Registration of Suppliers**: When processing PDFs/images, the system automatically extracts supplier names and creates supplier records if they don't exist. Suppliers are matched case-insensitively to avoid duplicates, then linked to specifications.
