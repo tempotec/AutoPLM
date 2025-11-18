@@ -2499,7 +2499,7 @@ def view_image(id):
 @app.route('/drawing/<int:id>')
 @login_required
 def view_drawing(id):
-    """Serve the generated technical drawing image"""
+    """Serve technical drawings - handles both legacy Object Storage and new static paths"""
     spec = Specification.query.get_or_404(id)
     user = User.query.get(session['user_id'])
     if not user:
@@ -2517,6 +2517,11 @@ def view_drawing(id):
         return redirect(url_for('view_specification', id=id))
 
     try:
+        # New format: direct static URL (starts with /static/)
+        if spec.technical_drawing_url.startswith('/static/'):
+            # Redirect to static URL for browser caching
+            return redirect(spec.technical_drawing_url)
+        
         # Check if it's a legacy external URL (HTTPS) or new local filename
         if spec.technical_drawing_url.startswith(
                 'http://') or spec.technical_drawing_url.startswith(
@@ -2649,25 +2654,23 @@ def generate_drawing_background(spec_id, file_path):
                 n=1
             )
 
-        # 5) Salvar resultado (mantém sua lógica atual: Object Storage com fallback local)
+        # 5) Salvar resultado em static/drawings/ para carregamento instantâneo
         import uuid
         import base64
         image_data = base64.b64decode(response.data[0].b64_json)
-        drawing_filename = f"technical-drawings/drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
-
-        try:
-            storage_client = Client()
-            storage_client.upload_from_bytes(drawing_filename, image_data)
-            print(f"✅ Desenho técnico salvo no Object Storage: {drawing_filename}")
-            spec.technical_drawing_url = drawing_filename
-        except Exception as storage_error:
-            print(f"❌ Erro ao fazer upload para Object Storage: {storage_error}")
-            local_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
-            local_path = os.path.join(app.config['UPLOAD_FOLDER'], local_filename)
-            with open(local_path, 'wb') as f:
-                f.write(image_data)
-            spec.technical_drawing_url = local_filename
-            print(f"⚠️ Fallback: Desenho salvo localmente como {local_filename}")
+        drawing_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
+        
+        # Save to static/drawings/ directory
+        static_drawings_dir = os.path.join('static', 'drawings')
+        os.makedirs(static_drawings_dir, exist_ok=True)
+        static_drawing_path = os.path.join(static_drawings_dir, drawing_filename)
+        
+        with open(static_drawing_path, 'wb') as f:
+            f.write(image_data)
+        
+        # Save URL as /static/drawings/filename.png for direct browser access
+        spec.technical_drawing_url = f"/static/drawings/{drawing_filename}"
+        print(f"✅ Desenho técnico salvo em: {spec.technical_drawing_url}")
 
         spec.processing_status = 'completed'
         thread_session.commit()
@@ -2773,42 +2776,6 @@ def generate_technical_drawing(id):
         }), 500
 
 
-@app.route('/drawing/<path:filename>')
-def serve_drawing(filename):
-    """Serve technical drawings from Object Storage"""
-    try:
-        storage_client = Client()
-
-        # Try to get from Object Storage first
-        if storage_client.exists(filename):
-            image_data = storage_client.download_as_bytes(filename)
-            return send_file(io.BytesIO(image_data),
-                             mimetype='image/png',
-                             as_attachment=False,
-                             download_name=os.path.basename(filename))
-
-        # Fallback: try local file (for backwards compatibility)
-        local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-        if os.path.exists(local_path):
-            return send_file(local_path, mimetype='image/png')
-
-        # Not found anywhere
-        return "Imagem não encontrada", 404
-
-    except Exception as e:
-        print(f"Error serving drawing {filename}: {e}")
-        import traceback
-        traceback.print_exc()
-
-        # Last resort: try serving from local filesystem
-        try:
-            local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            if os.path.exists(local_path):
-                return send_file(local_path, mimetype='image/png')
-        except:
-            pass
-
-        return "Erro ao carregar imagem", 500
 
 
 @app.route('/specification/<int:id>/edit', methods=['GET', 'POST'])

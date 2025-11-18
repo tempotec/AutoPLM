@@ -641,7 +641,11 @@
                                 <i class="fas fa-pencil-ruler"></i> Desenho Técnico Gerado
                             </h3>
                             <div class="product-image-container">
-                                <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico">
+                                {% if specification.technical_drawing_url.startswith('/static/') %}
+                                    <img src="{{ specification.technical_drawing_url }}" alt="Desenho Técnico">
+                                {% else %}
+                                    <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico">
+                                {% endif %}
                             </div>
                         </div>
                         {% endif %}
@@ -656,9 +660,15 @@
                             </button>
                             
                             {% if specification.technical_drawing_url %}
-                                <a href="{{ url_for('view_drawing', id=specification.id) }}" target="_blank" class="btn-image-action">
-                                    <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
-                                </a>
+                                {% if specification.technical_drawing_url.startswith('/static/') %}
+                                    <a href="{{ specification.technical_drawing_url }}" target="_blank" class="btn-image-action">
+                                        <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
+                                    </a>
+                                {% else %}
+                                    <a href="{{ url_for('view_drawing', id=specification.id) }}" target="_blank" class="btn-image-action">
+                                        <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
+                                    </a>
+                                {% endif %}
                                 <form method="POST" action="{{ url_for('generate_technical_drawing', id=specification.id) }}" class="regenerate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, true);">
                                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                     <button type="submit" class="btn-image-action">
