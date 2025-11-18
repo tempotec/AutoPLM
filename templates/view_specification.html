@@ -325,6 +325,24 @@
             display: block;
         }
         
+        .image-comparison-container {
+            margin-bottom: 1.5rem;
+        }
+        
+        .image-section-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #e8eaf0;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .image-section-title i {
+            color: #3b82f6;
+        }
+        
         .image-actions {
             display: flex;
             flex-direction: column;
@@ -597,18 +615,36 @@
                 <div class="spec-content">
                     <!-- Product Image Section -->
                     <div class="product-image-section">
-                        <div class="product-image-container">
-                            {% if specification.pdf_thumbnail %}
-                                <img src="{{ specification.pdf_thumbnail }}" alt="{{ specification.description or 'Produto' }}">
-                            {% elif specification.technical_drawing_url %}
-                                <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico">
-                            {% else %}
-                                <div style="padding: 4rem; text-align: center; color: #4a5072;">
-                                    <i class="fas fa-image" style="font-size: 4rem; margin-bottom: 1rem;"></i>
-                                    <p>Sem imagem disponível</p>
-                                </div>
-                            {% endif %}
+                        <!-- Imagem Original -->
+                        <div class="image-comparison-container">
+                            <h3 class="image-section-title">
+                                <i class="fas fa-camera"></i> Imagem Original
+                            </h3>
+                            <div class="product-image-container">
+                                {% if specification.pdf_thumbnail %}
+                                    <img src="{{ specification.pdf_thumbnail }}" alt="{{ specification.description or 'Produto' }}">
+                                {% elif specification.technical_drawing_url %}
+                                    <img src="{{ specification.technical_drawing_url }}" alt="Imagem Original">
+                                {% else %}
+                                    <div style="padding: 4rem; text-align: center; color: #4a5072;">
+                                        <i class="fas fa-image" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+                                        <p>Sem imagem disponível</p>
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
+
+                        <!-- Desenho Técnico Gerado -->
+                        {% if specification.technical_drawing_url %}
+                        <div class="image-comparison-container" style="margin-top: 2rem;">
+                            <h3 class="image-section-title">
+                                <i class="fas fa-pencil-ruler"></i> Desenho Técnico Gerado
+                            </h3>
+                            <div class="product-image-container">
+                                <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico">
+                            </div>
+                        </div>
+                        {% endif %}
                         
                         <div class="image-actions">
                             {% set is_image = specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
