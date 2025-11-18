@@ -2272,30 +2272,23 @@ def view_drawing(id):
         return redirect(url_for('view_specification', id=id))
 
 
-@app.route('/specification/<int:id>/generate_drawing', methods=['POST'])
-@login_required
-def generate_technical_drawing(id):
-    """Generate technical drawing using GPT-Image-1"""
-    spec = Specification.query.get_or_404(id)
-    user = User.query.get(session['user_id'])
-    if not user:
-        session.clear()
-        flash('Sessão inválida. Por favor, faça login novamente.')
-        return redirect(url_for('login'))
-
-    # Allow access if user is admin or owns the specification
-    if not user.is_admin and spec.user_id != user.id:
-        flash('Acesso negado.')
-        return redirect(url_for('dashboard'))
-
-    if not openai_client:
-        flash('OpenAI não está configurado. Contate o administrador.')
-        return redirect(url_for('view_specification', id=id))
-
+def generate_drawing_background(spec_id, file_path):
+    """Background task to generate technical drawing"""
+    # Create a new database session for this thread
+    from sqlalchemy.orm import sessionmaker
+    Session = sessionmaker(bind=db.engine)
+    thread_session = Session()
+    
     try:
-        # Get file path
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
-                                 spec.pdf_filename)
+        spec = thread_session.query(Specification).get(spec_id)
+        if not spec:
+            print(f"Specification {spec_id} not found")
+            thread_session.close()
+            return
+        
+        # Mark as processing
+        spec.processing_status = 'processing'
+        thread_session.commit()
         
         # Check if it's an image or PDF
         images = []
@@ -2312,12 +2305,14 @@ def generate_technical_drawing(id):
             # Extract only base64 strings for GPT-4 Vision
             images = [img['base64'] for img in pdf_images_data] if pdf_images_data else []
         else:
-            flash('Formato de arquivo não suportado para geração de desenho.')
-            return redirect(url_for('view_specification', id=id))
+            print(f"Formato de arquivo não suportado: {spec.pdf_filename}")
+            spec.processing_status = 'error'
+            thread_session.commit()
+            thread_session.close()
+            return
 
         # Analyze images with GPT-4 Vision to get visual description
-        visual_desc = analyze_images_with_gpt4_vision(
-            images) if images else None
+        visual_desc = analyze_images_with_gpt4_vision(images) if images else None
 
         # Build prompt with specification data and visual description
         prompt = build_technical_drawing_prompt(spec, visual_desc)
@@ -2326,8 +2321,8 @@ def generate_technical_drawing(id):
         response = openai_client.images.generate(
             model="gpt-image-1",
             prompt=prompt,
-            size="1024x1024",  # GPT-Image-1 supports up to 4096x4096
-            quality="high",  # High quality for better detail and precision
+            size="1024x1024",
+            quality="high",
             n=1)
 
         # GPT-Image-1 returns base64 by default
@@ -2348,7 +2343,6 @@ def generate_technical_drawing(id):
             
             # Save the Object Storage path in the database
             spec.technical_drawing_url = drawing_filename
-            db.session.commit()
         except Exception as storage_error:
             print(f"❌ Erro ao fazer upload para Object Storage: {storage_error}")
             # Fallback: save locally if Object Storage fails
@@ -2357,18 +2351,99 @@ def generate_technical_drawing(id):
             with open(local_path, 'wb') as f:
                 f.write(image_data)
             spec.technical_drawing_url = local_filename
-            db.session.commit()
             print(f"⚠️ Fallback: Desenho salvo localmente como {local_filename}")
 
-        flash('Desenho técnico gerado com sucesso!')
-        return redirect(url_for('view_specification', id=id))
+        # Mark as completed
+        spec.processing_status = 'completed'
+        thread_session.commit()
+        thread_session.close()
+        print(f"✅ Desenho técnico gerado com sucesso para spec {spec_id}")
 
     except Exception as e:
-        print(f"Error generating technical drawing: {e}")
+        print(f"❌ Error generating technical drawing for spec {spec_id}: {e}")
         import traceback
         traceback.print_exc()
-        flash('Erro ao gerar desenho técnico. Tente novamente.')
-        return redirect(url_for('view_specification', id=id))
+        
+        # Mark as error
+        try:
+            if spec:
+                spec.processing_status = 'error'
+                thread_session.commit()
+        except Exception as update_error:
+            print(f"Error updating specification status: {update_error}")
+        finally:
+            thread_session.close()
+
+
+@app.route('/specification/<int:id>/generate_drawing', methods=['POST'])
+@login_required
+def generate_technical_drawing(id):
+    """Generate technical drawing using GPT-Image-1 in background"""
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        return jsonify({'success': False, 'error': 'Sessão inválida'}), 401
+
+    # Allow access if user is admin or owns the specification
+    if not user.is_admin and spec.user_id != user.id:
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    if not openai_client:
+        return jsonify({'success': False, 'error': 'OpenAI não configurado'}), 500
+
+    try:
+        # Get file path
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        
+        # Check file exists
+        if not os.path.exists(file_path):
+            return jsonify({'success': False, 'error': 'Arquivo não encontrado'}), 404
+        
+        # Mark as processing
+        spec.processing_status = 'processing'
+        db.session.commit()
+        
+        spec_id = spec.id
+        
+        # Process drawing in background thread with app context
+        def process_in_background():
+            with app.app_context():
+                try:
+                    generate_drawing_background(spec_id, file_path)
+                except Exception as e:
+                    print(f"❌ Error in background drawing generation thread: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Mark as error in database
+                    try:
+                        from sqlalchemy.orm import sessionmaker
+                        Session = sessionmaker(bind=db.engine)
+                        error_session = Session()
+                        error_spec = error_session.query(Specification).get(spec_id)
+                        if error_spec:
+                            error_spec.processing_status = 'error'
+                            error_session.commit()
+                        error_session.close()
+                    except:
+                        pass
+        
+        thread = threading.Thread(target=process_in_background)
+        thread.daemon = True
+        thread.start()
+        
+        # Return immediately with JSON response
+        return jsonify({
+            'success': True,
+            'message': 'Geração de desenho técnico iniciada! Processamento em segundo plano.',
+            'spec_id': spec_id
+        })
+
+    except Exception as e:
+        print(f"Error in generate_technical_drawing: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({'success': False, 'error': 'Erro ao iniciar geração de desenho'}), 500
 
 
 @app.route('/drawing/<path:filename>')
