@@ -99,7 +99,7 @@ class Supplier(db.Model):
     materials_json = db.Column(db.Text)  # JSON string of materials with colors
     avatar_color = db.Column(db.String(20), default='#667eea')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationship with user
     user = db.relationship('User', backref=db.backref('suppliers', lazy=True))
 
@@ -109,19 +109,26 @@ class Collection(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    status = db.Column(db.String(50), default='em_desenvolvimento')  # em_desenvolvimento, finalizada
+    status = db.Column(
+        db.String(50),
+        default='em_desenvolvimento')  # em_desenvolvimento, finalizada
     cover_image = db.Column(db.String(500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationship with user
-    user = db.relationship('User', backref=db.backref('collections', lazy=True))
+    user = db.relationship('User',
+                           backref=db.backref('collections', lazy=True))
 
 
 class Specification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    collection_id = db.Column(db.Integer, db.ForeignKey('collection.id'), nullable=True)
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'), nullable=True)
+    collection_id = db.Column(db.Integer,
+                              db.ForeignKey('collection.id'),
+                              nullable=True)
+    supplier_id = db.Column(db.Integer,
+                            db.ForeignKey('supplier.id'),
+                            nullable=True)
     pdf_filename = db.Column(db.String(255), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -131,8 +138,9 @@ class Specification(db.Model):
     collection = db.Column(db.String(100))
     supplier = db.Column(db.String(100))
     corner = db.Column(db.String(100))
-    main_group = db.Column(db.String(30))  # TECIDO PLANO / MALHA / TRICOT / JEANS
-    sub_group = db.Column(db.String(30))   # BLUSA / CALÇA / etc.
+    main_group = db.Column(
+        db.String(30))  # TECIDO PLANO / MALHA / TRICOT / JEANS
+    sub_group = db.Column(db.String(30))  # BLUSA / CALÇA / etc.
 
     # 2. Informações Comerciais
     target_price = db.Column(db.String(100))
@@ -172,7 +180,7 @@ class Specification(db.Model):
 
     # Generated technical drawing
     technical_drawing_url = db.Column(db.String(500))
-    
+
     # PDF thumbnail for preview
     pdf_thumbnail = db.Column(db.String(500))
 
@@ -181,15 +189,19 @@ class Specification(db.Model):
     processing_status = db.Column(
         db.String(50),
         default='pending')  # pending, processing, completed, error
-    
+
     # Product status workflow
     status = db.Column(
         db.String(50),
         default='draft')  # draft, in_development, approved, in_production
-    
+
     # Relationship to collection and supplier
-    collection_obj = db.relationship('Collection', backref='specifications', lazy=True)
-    supplier_obj = db.relationship('Supplier', backref='specifications', lazy=True)
+    collection_obj = db.relationship('Collection',
+                                     backref='specifications',
+                                     lazy=True)
+    supplier_obj = db.relationship('Supplier',
+                                   backref='specifications',
+                                   lazy=True)
 
 
 # Forms
@@ -208,26 +220,33 @@ class CreateUserForm(FlaskForm):
                              validators=[DataRequired(),
                                          Length(min=6)])
     role = SelectField('Perfil',
-                       choices=[('stylist', 'Estilista'), ('admin', 'Administrador')],
+                       choices=[('stylist', 'Estilista'),
+                                ('admin', 'Administrador')],
                        default='stylist')
     submit = SubmitField('Create User')
 
 
 class SettingsForm(FlaskForm):
-    username = StringField('Nome Completo', validators=[DataRequired(), Length(min=3, max=80)])
+    username = StringField('Nome Completo',
+                           validators=[DataRequired(),
+                                       Length(min=3, max=80)])
     email = StringField('E-mail', validators=[DataRequired(), Email()])
     submit = SubmitField('Salvar Alterações')
 
 
 class UploadPDFForm(FlaskForm):
     collection = StringField('Coleção', validators=[DataRequired()])
-    collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
+    collection_id = SelectField('Vincular à Coleção',
+                                coerce=int,
+                                validators=[])
     supplier_id = SelectField('Fornecedor', coerce=int, validators=[])
     stylist = StringField('Estilista')
-    pdf_file = FileField(
-        'File',
-        validators=[FileRequired(),
-                    FileAllowed(['pdf', 'jpg', 'jpeg', 'png'], 'Apenas PDF ou imagens (JPG, PNG)!')])
+    pdf_file = FileField('File',
+                         validators=[
+                             FileRequired(),
+                             FileAllowed(['pdf', 'jpg', 'jpeg', 'png'],
+                                         'Apenas PDF ou imagens (JPG, PNG)!')
+                         ])
     submit = SubmitField('Upload and Process')
 
 
@@ -263,7 +282,9 @@ class SpecificationForm(FlaskForm):
     ref_souq = StringField('Referência (REF SOUQ)')
     description = TextAreaField('Descrição')
     collection = StringField('Coleção')
-    collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
+    collection_id = SelectField('Vincular à Coleção',
+                                coerce=int,
+                                validators=[])
     supplier = StringField('Fornecedor')
     corner = StringField('Corner')
     main_group = SelectField('Grupo', choices=GROUP_CHOICES)
@@ -358,7 +379,9 @@ def convert_image_to_base64(image_path):
         with open(image_path, 'rb') as image_file:
             image_data = image_file.read()
             base64_string = base64.b64encode(image_data).decode('utf-8')
-            print(f"✓ Imagem convertida para base64: {len(base64_string)} caracteres")
+            print(
+                f"✓ Imagem convertida para base64: {len(base64_string)} caracteres"
+            )
             return base64_string
     except Exception as e:
         print(f"Erro ao converter imagem para base64: {e}")
@@ -419,114 +442,171 @@ def extract_images_from_pdf(pdf_path):
                                 data = xObject[obj].get_data()
 
                                 # Convert to PIL Image - Support multiple ColorSpace formats
-                                colorspace_raw = xObject[obj].get('/ColorSpace', None)
-                                
+                                colorspace_raw = xObject[obj].get(
+                                    '/ColorSpace', None)
+
                                 # Dereference indirect objects (critical for Indexed color spaces)
                                 if hasattr(colorspace_raw, 'get_object'):
                                     colorspace = colorspace_raw.get_object()
                                 else:
                                     colorspace = colorspace_raw
-                                
+
                                 try:
                                     if colorspace == '/DeviceRGB':
-                                        img = Image.frombytes('RGB', size, data)
+                                        img = Image.frombytes(
+                                            'RGB', size, data)
                                     elif colorspace == '/DeviceGray':
                                         img = Image.frombytes('L', size, data)
                                     elif colorspace == '/DeviceCMYK':
                                         # Convert CMYK to RGB
-                                        img = Image.frombytes('CMYK', size, data)
+                                        img = Image.frombytes(
+                                            'CMYK', size, data)
                                         img = img.convert('RGB')
                                     elif isinstance(colorspace, list):
                                         # Handle Indexed or ICCBased color spaces
-                                        colorspace_name = colorspace[0] if colorspace else None
-                                        
+                                        colorspace_name = colorspace[
+                                            0] if colorspace else None
+
                                         if colorspace_name == '/Indexed':
                                             # Indexed color space: [/Indexed base_colorspace hival lookup]
                                             try:
-                                                base_colorspace = colorspace[1] if len(colorspace) > 1 else '/DeviceRGB'
-                                                hival = int(colorspace[2]) if len(colorspace) > 2 else 255
-                                                lookup_raw = colorspace[3] if len(colorspace) > 3 else None
-                                                
+                                                base_colorspace = colorspace[
+                                                    1] if len(
+                                                        colorspace
+                                                    ) > 1 else '/DeviceRGB'
+                                                hival = int(
+                                                    colorspace[2]) if len(
+                                                        colorspace
+                                                    ) > 2 else 255
+                                                lookup_raw = colorspace[
+                                                    3] if len(colorspace
+                                                              ) > 3 else None
+
                                                 # Dereference lookup if it's an indirect object
-                                                if lookup_raw and hasattr(lookup_raw, 'get_object'):
-                                                    lookup = lookup_raw.get_object()
+                                                if lookup_raw and hasattr(
+                                                        lookup_raw,
+                                                        'get_object'):
+                                                    lookup = lookup_raw.get_object(
+                                                    )
                                                 else:
                                                     lookup = lookup_raw
-                                                
+
                                                 # Get lookup data - handle PyPDF2 ByteStringObject
                                                 if hasattr(lookup, 'get_data'):
                                                     # Stream object
-                                                    lookup_data = lookup.get_data()
+                                                    lookup_data = lookup.get_data(
+                                                    )
                                                 elif isinstance(lookup, bytes):
                                                     # Direct bytes
                                                     lookup_data = lookup
-                                                elif hasattr(lookup, 'original_bytes'):
+                                                elif hasattr(
+                                                        lookup,
+                                                        'original_bytes'):
                                                     # PyPDF2 ByteStringObject
                                                     lookup_data = lookup.original_bytes
                                                 elif isinstance(lookup, str):
                                                     # String - encode as latin-1 (PDF standard encoding)
-                                                    lookup_data = lookup.encode('latin-1')
+                                                    lookup_data = lookup.encode(
+                                                        'latin-1')
                                                 else:
                                                     # Unknown type - try to convert
                                                     try:
-                                                        lookup_data = bytes(lookup)
+                                                        lookup_data = bytes(
+                                                            lookup)
                                                     except:
-                                                        print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Lookup type desconhecido ({type(lookup)})")
+                                                        print(
+                                                            f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Lookup type desconhecido ({type(lookup)})"
+                                                        )
                                                         # Try without palette
-                                                        img = Image.frombytes('P', size, data)
-                                                        img = img.convert('RGB')
-                                                
+                                                        img = Image.frombytes(
+                                                            'P', size, data)
+                                                        img = img.convert(
+                                                            'RGB')
+
                                                 # Create palette image
-                                                img = Image.frombytes('P', size, data)
-                                                
+                                                img = Image.frombytes(
+                                                    'P', size, data)
+
                                                 # Build PIL palette from lookup data
                                                 # Palette format depends on base colorspace
-                                                if base_colorspace == '/DeviceRGB' or (isinstance(base_colorspace, str) and 'RGB' in base_colorspace):
+                                                if base_colorspace == '/DeviceRGB' or (
+                                                        isinstance(
+                                                            base_colorspace,
+                                                            str) and 'RGB'
+                                                        in base_colorspace):
                                                     # RGB palette: 3 bytes per color (R,G,B)
                                                     palette = []
-                                                    for i in range(min(256, hival + 1)):
+                                                    for i in range(
+                                                            min(
+                                                                256,
+                                                                hival + 1)):
                                                         idx = i * 3
-                                                        if idx + 2 < len(lookup_data):
-                                                            palette.extend([lookup_data[idx], lookup_data[idx+1], lookup_data[idx+2]])
+                                                        if idx + 2 < len(
+                                                                lookup_data):
+                                                            palette.extend([
+                                                                lookup_data[
+                                                                    idx],
+                                                                lookup_data[idx
+                                                                            +
+                                                                            1],
+                                                                lookup_data[idx
+                                                                            +
+                                                                            2]
+                                                            ])
                                                         else:
-                                                            palette.extend([0, 0, 0])
+                                                            palette.extend(
+                                                                [0, 0, 0])
                                                     # Pad to 256 colors
                                                     while len(palette) < 768:
-                                                        palette.extend([0, 0, 0])
+                                                        palette.extend(
+                                                            [0, 0, 0])
                                                     img.putpalette(palette)
                                                     img = img.convert('RGB')
                                                 else:
                                                     # For other base colorspaces, try direct conversion
                                                     img = img.convert('RGB')
-                                                    
+
                                             except Exception as indexed_error:
-                                                print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Indexed ColorSpace - erro na paleta ({indexed_error})")
+                                                print(
+                                                    f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Indexed ColorSpace - erro na paleta ({indexed_error})"
+                                                )
                                                 continue
-                                        
+
                                         elif colorspace_name == '/ICCBased':
                                             # ICC-based color space - try RGB as fallback
                                             try:
-                                                img = Image.frombytes('RGB', size, data)
+                                                img = Image.frombytes(
+                                                    'RGB', size, data)
                                             except:
-                                                print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ICCBased ColorSpace não suportado")
+                                                print(
+                                                    f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ICCBased ColorSpace não suportado"
+                                                )
                                                 continue
                                         else:
                                             # Other complex color spaces - try RGB fallback
                                             try:
-                                                img = Image.frombytes('RGB', size, data)
+                                                img = Image.frombytes(
+                                                    'RGB', size, data)
                                             except:
-                                                print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace complexo ({colorspace_name})")
+                                                print(
+                                                    f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace complexo ({colorspace_name})"
+                                                )
                                                 continue
                                     else:
                                         # Unknown color space - try RGB as last resort
                                         try:
-                                            img = Image.frombytes('RGB', size, data)
+                                            img = Image.frombytes(
+                                                'RGB', size, data)
                                         except:
-                                            print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace desconhecido ({colorspace})")
+                                            print(
+                                                f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: ColorSpace desconhecido ({colorspace})"
+                                            )
                                             continue
-                                
+
                                 except Exception as color_error:
-                                    print(f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Erro ao processar ColorSpace - {color_error}")
+                                    print(
+                                        f"  ⚠️ Página {page_num + 1}, Imagem {obj_num + 1}: Erro ao processar ColorSpace - {color_error}"
+                                    )
                                     continue
 
                                 # Convert to base64
@@ -583,27 +663,28 @@ def generate_image_thumbnail(image_path, spec_id):
     try:
         from PIL import Image
         import uuid
-        
+
         print(f"\n{'='*80}")
         print(f"GERANDO THUMBNAIL DA IMAGEM: {image_path}")
         print(f"{'='*80}")
-        
+
         img = Image.open(image_path)
-        
+
         max_size = (800, 800)
         img.thumbnail(max_size, Image.Resampling.LANCZOS)
-        
+
         thumbnail_filename = f"thumbnail_{spec_id}_{uuid.uuid4().hex[:8]}.png"
-        thumbnail_path = os.path.join('static', 'thumbnails', thumbnail_filename)
-        
+        thumbnail_path = os.path.join('static', 'thumbnails',
+                                      thumbnail_filename)
+
         img.save(thumbnail_path, 'PNG')
-        
+
         thumbnail_url = f"/static/thumbnails/{thumbnail_filename}"
         print(f"✓ Thumbnail de imagem gerado com sucesso: {thumbnail_url}")
         print(f"{'='*80}\n")
-        
+
         return thumbnail_url
-        
+
     except Exception as e:
         print(f"Erro ao gerar thumbnail de imagem: {e}")
         import traceback
@@ -616,34 +697,35 @@ def generate_pdf_thumbnail(pdf_path, spec_id):
     try:
         import pymupdf as fitz
         import uuid
-        
+
         print(f"\n{'='*80}")
         print(f"GERANDO THUMBNAIL DO PDF: {pdf_path}")
         print(f"{'='*80}")
-        
+
         doc = fitz.open(pdf_path)
-        
+
         if len(doc) == 0:
             print("PDF não tem páginas")
             return None
-        
+
         page = doc[0]
-        
+
         mat = fitz.Matrix(2.0, 2.0)
         pix = page.get_pixmap(matrix=mat)
-        
+
         thumbnail_filename = f"thumbnail_{spec_id}_{uuid.uuid4().hex[:8]}.png"
-        thumbnail_path = os.path.join('static', 'thumbnails', thumbnail_filename)
-        
+        thumbnail_path = os.path.join('static', 'thumbnails',
+                                      thumbnail_filename)
+
         pix.save(thumbnail_path)
         doc.close()
-        
+
         thumbnail_url = f"/static/thumbnails/{thumbnail_filename}"
         print(f"✓ Thumbnail gerado com sucesso: {thumbnail_url}")
         print(f"{'='*80}\n")
-        
+
         return thumbnail_url
-        
+
     except Exception as e:
         print(f"Erro ao gerar thumbnail: {e}")
         import traceback
@@ -662,12 +744,16 @@ def analyze_images_with_gpt4_vision(images_base64):
         return None
 
     try:
-        print(f"Analyzing {len(images_base64)} images with GPT-4 Vision (structured JSON output)...")
+        print(
+            f"Analyzing {len(images_base64)} images with GPT-4 Vision (structured JSON output)..."
+        )
 
         # Build messages with images - Professional structured prompt
         content = [{
-            "type": "text",
-            "text": """Você é um especialista técnico de vestuário. Analise ATÉ 3 imagens e descreva APENAS UMA peça: a mais PROEMINENTE da primeira imagem (maior área de pixels do corpo da peça). Ignore outras peças, pessoas, rostos e o fundo. Não descreva características pessoais.
+            "type":
+            "text",
+            "text":
+            """Você é um especialista técnico de vestuário. Analise ATÉ 3 imagens e descreva APENAS UMA peça: a mais PROEMINENTE da primeira imagem (maior área de pixels do corpo da peça). Ignore outras peças, pessoas, rostos e o fundo. Não descreva características pessoais.
 
 ⚠️ Precisão:
 - Quando algo não pode ser visto com clareza, escreva exatamente "nao_visivel".
@@ -800,26 +886,43 @@ Retorne SOMENTE o JSON, sem texto adicional."""
         )
 
         json_response = response.choices[0].message.content
-        
+
         # Parse and validate JSON
         try:
             analysis_data = json.loads(json_response)
             print(f"\n{'='*80}")
             print(f"ANÁLISE VISUAL GPT-4o (JSON ESTRUTURADO)")
             print(f"{'='*80}")
-            print(f"Tipo de peça: {analysis_data.get('identificacao', {}).get('tipo_peca', 'N/A')}")
-            print(f"Categoria: {analysis_data.get('identificacao', {}).get('categoria', 'N/A')}")
-            print(f"Grupo: {analysis_data.get('identificacao', {}).get('grupo', 'N/A')}")
-            print(f"Subgrupo: {analysis_data.get('identificacao', {}).get('subgrupo', 'N/A')}")
-            print(f"Confiança: {analysis_data.get('identificacao', {}).get('confianca', 0.0)}")
-            print(f"Gola/Decote: {analysis_data.get('gola_decote', {}).get('tipo', 'N/A')}")
-            print(f"Mangas: {analysis_data.get('mangas', {}).get('comprimento', 'N/A')} - {analysis_data.get('mangas', {}).get('modelo', 'N/A')}")
-            print(f"Fechamentos: {analysis_data.get('fechamentos', {}).get('tipo', 'N/A')}")
+            print(
+                f"Tipo de peça: {analysis_data.get('identificacao', {}).get('tipo_peca', 'N/A')}"
+            )
+            print(
+                f"Categoria: {analysis_data.get('identificacao', {}).get('categoria', 'N/A')}"
+            )
+            print(
+                f"Grupo: {analysis_data.get('identificacao', {}).get('grupo', 'N/A')}"
+            )
+            print(
+                f"Subgrupo: {analysis_data.get('identificacao', {}).get('subgrupo', 'N/A')}"
+            )
+            print(
+                f"Confiança: {analysis_data.get('identificacao', {}).get('confianca', 0.0)}"
+            )
+            print(
+                f"Gola/Decote: {analysis_data.get('gola_decote', {}).get('tipo', 'N/A')}"
+            )
+            print(
+                f"Mangas: {analysis_data.get('mangas', {}).get('comprimento', 'N/A')} - {analysis_data.get('mangas', {}).get('modelo', 'N/A')}"
+            )
+            print(
+                f"Fechamentos: {analysis_data.get('fechamentos', {}).get('tipo', 'N/A')}"
+            )
             print(f"{'='*80}\n")
             return analysis_data
         except json.JSONDecodeError as e:
             # FALLBACK: If JSON parsing fails, return raw text (legacy format)
-            print(f"⚠️ Erro ao parsear JSON - usando fallback para texto bruto")
+            print(
+                f"⚠️ Erro ao parsear JSON - usando fallback para texto bruto")
             print(f"Erro JSON: {e}")
             print(f"Retornando texto livre para compatibilidade...")
             # Return as plain string - build_technical_drawing_prompt() handles both formats
@@ -841,12 +944,12 @@ def has_technical_measurements(spec):
         'body_length', 'bust', 'hem_width', 'shoulder_to_shoulder',
         'neckline_depth', 'sleeve_length', 'waist', 'straight_armhole'
     ]
-    
+
     for field in measurement_fields:
         value = getattr(spec, field, None)
         if value and str(value).strip():
             return True
-    
+
     return False
 
 
@@ -869,7 +972,7 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
     material_details = ""
     if "tricô" in material_info.lower() or "malha" in material_info.lower():
         material_details = "Malha/tricô - representar textura com traço técnico"
-    
+
     print(f"\n{'='*80}")
     print(f"GERANDO DESENHO TÉCNICO: Flat sketch limpo SEM COTAGEM")
     print(f"{'='*80}\n")
@@ -899,40 +1002,44 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
             bolsos = visual_analysis.get('bolsos', {})
             barra = visual_analysis.get('barra_hem', {})
             textura = visual_analysis.get('textura_padronagem', {})
-            
+
             visual_parts = []
-            
+
             # Identificação
             if ident.get('tipo_peca'):
-                visual_parts.append(f"TIPO: {ident['tipo_peca']} ({ident.get('categoria', 'N/A')})")
-            
+                visual_parts.append(
+                    f"TIPO: {ident['tipo_peca']} ({ident.get('categoria', 'N/A')})"
+                )
+
             # Gola/Decote - CRÍTICO
             if gola.get('tipo') and gola['tipo'] != 'nao_visivel':
                 gola_desc = f"GOLA/DECOTE: {gola['tipo']}"
-                if gola.get('altura_visual') and gola['altura_visual'] != 'nao_visivel':
+                if gola.get('altura_visual'
+                            ) and gola['altura_visual'] != 'nao_visivel':
                     gola_desc += f" - altura {gola['altura_visual']}"
                 if gola.get('acabamento'):
                     gola_desc += f" - acabamento: {gola['acabamento']}"
                 if gola.get('detalhes'):
                     gola_desc += f" - {gola['detalhes']}"
                 visual_parts.append(gola_desc)
-            
+
             # Mangas - CRÍTICO
-            if mangas.get('comprimento') and mangas['comprimento'] != 'nao_visivel':
+            if mangas.get(
+                    'comprimento') and mangas['comprimento'] != 'nao_visivel':
                 manga_desc = f"MANGAS: {mangas['comprimento']}"
                 if mangas.get('modelo') and mangas['modelo'] != 'nao_visivel':
                     manga_desc += f" - modelo {mangas['modelo']}"
                 if mangas.get('cava'):
                     manga_desc += f" - cava {mangas['cava']}"
-                
+
                 punho = mangas.get('punho', {})
                 if punho.get('existe') and punho.get('tipo'):
                     manga_desc += f" - punho {punho['tipo']}"
                     if punho.get('largura_visual'):
                         manga_desc += f" ({punho['largura_visual']})"
-                
+
                 visual_parts.append(manga_desc)
-            
+
             # Corpo
             if corpo.get('comprimento_visual'):
                 corpo_desc = f"CORPO: comprimento {corpo['comprimento_visual']}"
@@ -941,23 +1048,26 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
                 if corpo.get('recortes'):
                     corpo_desc += f" - recortes: {corpo['recortes']}"
                 visual_parts.append(corpo_desc)
-            
+
             # Fechamentos - MUITO IMPORTANTE
-            if fechamentos.get('tipo') and fechamentos['tipo'] != 'nao_visivel':
+            if fechamentos.get(
+                    'tipo') and fechamentos['tipo'] != 'nao_visivel':
                 fech_desc = f"FECHAMENTOS: {fechamentos['tipo']}"
                 if fechamentos.get('posicao'):
                     fech_desc += f" na {fechamentos['posicao']}"
-                if fechamentos.get('quantidade_botoes') and fechamentos['quantidade_botoes'] != 'nao_visivel':
+                if fechamentos.get('quantidade_botoes') and fechamentos[
+                        'quantidade_botoes'] != 'nao_visivel':
                     fech_desc += f" - {fechamentos['quantidade_botoes']} botões"
                 if fechamentos.get('botoes_espacamento_relativo'):
                     fech_desc += f" ({fechamentos['botoes_espacamento_relativo']})"
-                
+
                 ziper = fechamentos.get('ziper', {})
-                if ziper.get('visibilidade') and ziper['visibilidade'] != 'nao_visivel':
+                if ziper.get('visibilidade'
+                             ) and ziper['visibilidade'] != 'nao_visivel':
                     fech_desc += f" - zíper {ziper['visibilidade']}"
-                
+
                 visual_parts.append(fech_desc)
-            
+
             # Bolsos
             if bolsos.get('existe') and bolsos.get('lista'):
                 for bolso in bolsos['lista']:
@@ -971,7 +1081,7 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
                         visual_parts.append(bolso_desc)
                     elif isinstance(bolso, str):
                         visual_parts.append(f"BOLSO: {bolso}")
-            
+
             # Barra
             if barra.get('formato'):
                 barra_desc = f"BARRA: {barra['formato']}"
@@ -980,30 +1090,33 @@ def build_technical_drawing_prompt(spec, visual_analysis=None):
                 if barra.get('largura_visual'):
                     barra_desc += f" ({barra['largura_visual']})"
                 visual_parts.append(barra_desc)
-            
+
             # Textura
-            if textura.get('tipo_trico_malha') and textura['tipo_trico_malha'] != 'nao_visivel':
+            if textura.get('tipo_trico_malha'
+                           ) and textura['tipo_trico_malha'] != 'nao_visivel':
                 tex_desc = f"TEXTURA: {textura['tipo_trico_malha']}"
-                if textura.get('direcao') and textura['direcao'] != 'nao_visivel':
+                if textura.get(
+                        'direcao') and textura['direcao'] != 'nao_visivel':
                     tex_desc += f" - direção {textura['direcao']}"
                 visual_parts.append(tex_desc)
-            
+
             # Acabamentos especiais
             acabamentos = visual_analysis.get('acabamentos_especiais', [])
             if acabamentos:
-                visual_parts.append(f"ACABAMENTOS ESPECIAIS: {', '.join(acabamentos)}")
-            
+                visual_parts.append(
+                    f"ACABAMENTOS ESPECIAIS: {', '.join(acabamentos)}")
+
             # Diferenças frente/costas
             diferencas = visual_analysis.get('diferencas_frente_costas', '')
             if diferencas and diferencas.strip():
                 visual_parts.append(f"DIFERENÇAS FRENTE/COSTAS: {diferencas}")
-            
+
             visual_description = "\n".join(visual_parts)
-            
+
         else:
             # Legacy text format
             visual_description = str(visual_analysis)
-        
+
         visual_section = f"""
 **REFERÊNCIA VISUAL DA PEÇA (BASE OBRIGATÓRIA - SEGUIR FIELMENTE):**
 {visual_description}
@@ -1096,39 +1209,43 @@ def get_or_create_supplier(supplier_name, user_id, session=None):
     """
     if not supplier_name or supplier_name.strip() == "":
         return None
-    
+
     # Use provided session or default to db.session
     if session is None:
         session = db.session
-    
+
     # Clean up supplier name
     supplier_name = supplier_name.strip()
-    
+
     try:
         # Check if supplier already exists for this user (case-insensitive)
         existing_supplier = session.query(Supplier).filter(
             db.func.lower(Supplier.name) == supplier_name.lower(),
-            Supplier.user_id == user_id
-        ).first()
-        
+            Supplier.user_id == user_id).first()
+
         if existing_supplier:
-            print(f"✓ Fornecedor encontrado: {existing_supplier.name} (ID: {existing_supplier.id})")
+            print(
+                f"✓ Fornecedor encontrado: {existing_supplier.name} (ID: {existing_supplier.id})"
+            )
             return existing_supplier
-        
+
         # Create new supplier
         import random
-        colors = ['#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140', '#30cfd0', '#a8edea']
-        new_supplier = Supplier(
-            user_id=user_id,
-            name=supplier_name,
-            avatar_color=random.choice(colors)
-        )
+        colors = [
+            '#667eea', '#f093fb', '#4facfe', '#43e97b', '#fa709a', '#fee140',
+            '#30cfd0', '#a8edea'
+        ]
+        new_supplier = Supplier(user_id=user_id,
+                                name=supplier_name,
+                                avatar_color=random.choice(colors))
         session.add(new_supplier)
         session.commit()
-        
-        print(f"✨ Novo fornecedor criado: {new_supplier.name} (ID: {new_supplier.id})")
+
+        print(
+            f"✨ Novo fornecedor criado: {new_supplier.name} (ID: {new_supplier.id})"
+        )
         return new_supplier
-        
+
     except Exception as e:
         print(f"⚠️ Erro ao buscar/criar fornecedor: {e}")
         session.rollback()
@@ -1241,7 +1358,8 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                 # Log what was extracted for debugging
                 campos_importantes = [
                     'ref_souq', 'description', 'collection', 'composition',
-                    'main_group', 'sub_group', 'pilot_size', 'body_length', 'bust', 'sleeve_length'
+                    'main_group', 'sub_group', 'pilot_size', 'body_length',
+                    'bust', 'sleeve_length'
                 ]
 
                 print("\n📋 CAMPOS PRINCIPAIS:")
@@ -1276,19 +1394,22 @@ def save_product_image(spec_id, image_b64_or_path, is_b64=True):
     try:
         import uuid
         product_image_filename = f"product_{spec_id}_{uuid.uuid4().hex[:8]}.png"
-        product_image_path = os.path.join('static', 'product_images', product_image_filename)
-        
+        product_image_path = os.path.join('static', 'product_images',
+                                          product_image_filename)
+
         if is_b64:
             # Decode base64 image
             import base64
-            image_data = base64.b64decode(image_b64_or_path.split(',')[1] if ',' in image_b64_or_path else image_b64_or_path)
+            image_data = base64.b64decode(
+                image_b64_or_path.split(',')[1] if ',' in
+                image_b64_or_path else image_b64_or_path)
             with open(product_image_path, 'wb') as f:
                 f.write(image_data)
         else:
             # Copy image file
             import shutil
             shutil.copy(image_b64_or_path, product_image_path)
-        
+
         # Return URL path (without static/)
         return f"/static/product_images/{product_image_filename}"
     except Exception as e:
@@ -1302,38 +1423,42 @@ def process_pdf_specification(spec_id, file_path):
     from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=db.engine)
     thread_session = Session()
-    
+
     try:
         spec = thread_session.query(Specification).get(spec_id)
         if not spec:
             print(f"Specification {spec_id} not found")
             thread_session.close()
             return
-        
+
         filename = spec.pdf_filename
-        
+
         # Check if it's an image or PDF
         if is_image_file(filename):
             print(f"\n{'='*80}")
             print(f"PROCESSAMENTO DE IMAGEM DETECTADO: {filename}")
             print(f"{'='*80}\n")
-            
+
             # Generate thumbnail for image preview
             thumbnail_url = generate_image_thumbnail(file_path, spec_id)
             if thumbnail_url:
                 spec.pdf_thumbnail = thumbnail_url
                 print(f"✓ Thumbnail da imagem gerado: {thumbnail_url}")
-            
+
             # Save uploaded image as product image
-            product_img_url = save_product_image(spec_id, file_path, is_b64=False)
+            product_img_url = save_product_image(spec_id,
+                                                 file_path,
+                                                 is_b64=False)
             if product_img_url:
                 spec.technical_drawing_url = product_img_url
                 print(f"✓ Imagem do produto salva: {product_img_url}")
-            
+
             # For images, skip text extraction and use ONLY visual analysis
             print("⚠️ Arquivo de imagem: pulando extração de texto.")
-            print("📸 Usando APENAS análise visual GPT-4o para extrair informações.")
-            
+            print(
+                "📸 Usando APENAS análise visual GPT-4o para extrair informações."
+            )
+
             # Convert image to base64 and analyze with GPT-4 Vision
             image_b64 = convert_image_to_base64(file_path)
             if not image_b64:
@@ -1342,17 +1467,17 @@ def process_pdf_specification(spec_id, file_path):
                 thread_session.commit()
                 thread_session.close()
                 return
-            
+
             # Analyze image with GPT-4 Vision
             visual_analysis = analyze_images_with_gpt4_vision([image_b64])
-            
+
             if not visual_analysis:
                 print("❌ Erro na análise visual da imagem")
                 spec.processing_status = 'error'
                 thread_session.commit()
                 thread_session.close()
                 return
-            
+
             # Extract data from visual analysis (JSON format)
             if isinstance(visual_analysis, dict):
                 # Structured JSON response
@@ -1361,33 +1486,36 @@ def process_pdf_specification(spec_id, file_path):
                 mangas = visual_analysis.get('mangas', {})
                 corpo = visual_analysis.get('corpo', {})
                 textura = visual_analysis.get('textura_padronagem', {})
-                
+
                 # Populate spec fields from visual analysis
                 tipo_peca = ident.get('tipo_peca', '')
                 categoria = ident.get('categoria', '')
                 grupo = ident.get('grupo', '')
                 subgrupo = ident.get('subgrupo', '')
-                
+
                 spec.description = f"{tipo_peca}" if tipo_peca else "Peça de Vestuário (Imagem)"
                 spec.composition = categoria if categoria else None
-                
+
                 # Preencher grupo e subgrupo automaticamente (apenas na criação)
                 spec.main_group = grupo if grupo else None
                 spec.sub_group = subgrupo if subgrupo else None
-                
+
                 # Build a descriptive summary for finishes
                 detalhes = []
                 if gola.get('tipo') and gola['tipo'] != 'nao_visivel':
                     detalhes.append(f"Gola: {gola['tipo']}")
-                if mangas.get('comprimento') and mangas['comprimento'] != 'nao_visivel':
+                if mangas.get('comprimento'
+                              ) and mangas['comprimento'] != 'nao_visivel':
                     detalhes.append(f"Mangas: {mangas['comprimento']}")
                 if corpo.get('comprimento_visual'):
-                    detalhes.append(f"Comprimento: {corpo['comprimento_visual']}")
-                
+                    detalhes.append(
+                        f"Comprimento: {corpo['comprimento_visual']}")
+
                 if detalhes:
                     spec.finishes = ' | '.join(detalhes)
-                
-                print(f"✓ Dados extraídos da análise visual (JSON estruturado):")
+
+                print(
+                    f"✓ Dados extraídos da análise visual (JSON estruturado):")
                 print(f"  - Descrição: {spec.description}")
                 print(f"  - Categoria: {spec.composition}")
                 print(f"  - Grupo: {spec.main_group}")
@@ -1396,40 +1524,56 @@ def process_pdf_specification(spec_id, file_path):
             else:
                 # Fallback: text response (when JSON parsing failed)
                 print("⚠️ Análise visual retornou texto (fallback de JSON)")
-                print("📝 Tentando extrair dados estruturados do texto com OpenAI...")
-                
+                print(
+                    "📝 Tentando extrair dados estruturados do texto com OpenAI..."
+                )
+
                 # Store raw visual analysis text
                 visual_text = str(visual_analysis)
-                
+
                 # Process visual text through OpenAI to extract structured data
                 # This mirrors the PDF workflow for consistency
                 extracted_data = process_specification_with_openai(visual_text)
-                
+
                 if extracted_data:
                     # Map extracted data to specification fields (same as PDF)
                     for key, value in extracted_data.items():
                         if hasattr(spec, key) and value is not None:
                             # Skip invalid dates
-                            if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
+                            if key in [
+                                    'tech_sheet_delivery_date',
+                                    'pilot_delivery_date'
+                            ]:
                                 if isinstance(value, str):
                                     import re
-                                    if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
-                                        print(f"  ⚠️ Ignorando data inválida para {key}: {value}")
+                                    if not re.match(r'^\d{4}-\d{2}-\d{2}$',
+                                                    value):
+                                        print(
+                                            f"  ⚠️ Ignorando data inválida para {key}: {value}"
+                                        )
                                         continue
                             # Convert lists/dicts to strings
                             setattr(spec, key, convert_value_to_string(value))
-                    
+
                     # AUTO-CADASTRO DE FORNECEDOR (fallback text analysis)
                     supplier_name = extracted_data.get('supplier')
-                    if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
-                        print(f"\n📦 Fornecedor detectado na análise: {supplier_name}")
-                        supplier = get_or_create_supplier(supplier_name, spec.user_id, thread_session)
+                    if supplier_name and isinstance(
+                            supplier_name, str) and supplier_name.strip():
+                        print(
+                            f"\n📦 Fornecedor detectado na análise: {supplier_name}"
+                        )
+                        supplier = get_or_create_supplier(
+                            supplier_name, spec.user_id, thread_session)
                         if supplier:
                             spec.supplier_id = supplier.id
                             spec.supplier = supplier.name
-                            print(f"✓ Ficha técnica vinculada ao fornecedor ID {supplier.id}\n")
-                    
-                    print(f"✓ Dados extraídos via OpenAI do texto visual (fallback):")
+                            print(
+                                f"✓ Ficha técnica vinculada ao fornecedor ID {supplier.id}\n"
+                            )
+
+                    print(
+                        f"✓ Dados extraídos via OpenAI do texto visual (fallback):"
+                    )
                     print(f"  - Descrição: {spec.description}")
                     print(f"  - Composição: {spec.composition}")
                 else:
@@ -1437,54 +1581,68 @@ def process_pdf_specification(spec_id, file_path):
                     # Last resort: try simple keyword detection
                     description_lower = visual_text.lower()
                     garment_types = {
-                        'blusa': 'Blusa', 'camisa': 'Camisa', 'camiseta': 'Camiseta',
-                        'vestido': 'Vestido', 'calça': 'Calça', 'short': 'Short',
-                        'saia': 'Saia', 'jaqueta': 'Jaqueta', 'casaco': 'Casaco',
-                        'cardigan': 'Cardigan', 'suéter': 'Suéter', 'moletom': 'Moletom'
+                        'blusa': 'Blusa',
+                        'camisa': 'Camisa',
+                        'camiseta': 'Camiseta',
+                        'vestido': 'Vestido',
+                        'calça': 'Calça',
+                        'short': 'Short',
+                        'saia': 'Saia',
+                        'jaqueta': 'Jaqueta',
+                        'casaco': 'Casaco',
+                        'cardigan': 'Cardigan',
+                        'suéter': 'Suéter',
+                        'moletom': 'Moletom'
                     }
-                    
+
                     detected_type = None
                     for key, value in garment_types.items():
                         if key in description_lower:
                             detected_type = value
                             break
-                    
+
                     spec.description = f"{detected_type} (Imagem)" if detected_type else "Peça de Vestuário (Imagem)"
-                    spec.finishes = visual_text[:500] if len(visual_text) > 500 else visual_text
+                    spec.finishes = visual_text[:500] if len(
+                        visual_text) > 500 else visual_text
                     print(f"✓ Descrição básica extraída: {spec.description}")
-            
+
             spec.processing_status = 'completed'
             thread_session.commit()
             thread_session.close()
             print(f"✓ Imagem processada com sucesso via análise visual!")
             return
-            
+
         elif is_pdf_file(filename):
             print(f"\n{'='*80}")
             print(f"PROCESSAMENTO DE PDF DETECTADO: {filename}")
             print(f"{'='*80}\n")
-            
+
             # Generate PDF thumbnail for preview
             thumbnail_url = generate_pdf_thumbnail(file_path, spec_id)
             if thumbnail_url:
                 spec.pdf_thumbnail = thumbnail_url
                 print(f"✓ Thumbnail do PDF gerado: {thumbnail_url}")
-            
+
             # Extract images from PDF and save the first one as product image
             pdf_images = extract_images_from_pdf(file_path)
             if pdf_images and len(pdf_images) > 0:
                 # Get largest image (likely the product photo, not a logo)
                 largest_img = max(pdf_images, key=lambda x: x.get('area', 0))
-                product_img_url = save_product_image(spec_id, largest_img['base64'], is_b64=True)
+                product_img_url = save_product_image(spec_id,
+                                                     largest_img['base64'],
+                                                     is_b64=True)
                 if product_img_url:
                     spec.technical_drawing_url = product_img_url
-                    print(f"✓ Imagem do produto extraída do PDF e salva: {product_img_url}")
-            
+                    print(
+                        f"✓ Imagem do produto extraída do PDF e salva: {product_img_url}"
+                    )
+
             # Extract text from PDF
             text_content = extract_text_from_pdf(file_path)
 
             if not text_content or len(text_content.strip()) < 50:
-                print(f"Insufficient text extracted from PDF for spec {spec_id}")
+                print(
+                    f"Insufficient text extracted from PDF for spec {spec_id}")
                 spec.processing_status = 'error'
                 thread_session.commit()
                 thread_session.close()
@@ -1504,7 +1662,9 @@ def process_pdf_specification(spec_id, file_path):
             for key, value in extracted_data.items():
                 if hasattr(spec, key) and value is not None:
                     # Skip invalid dates - set to None instead of failing
-                    if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
+                    if key in [
+                            'tech_sheet_delivery_date', 'pilot_delivery_date'
+                    ]:
                         # Check if it's a valid date format (YYYY-MM-DD)
                         if isinstance(value, str):
                             # If it doesn't match YYYY-MM-DD pattern, skip it
@@ -1520,17 +1680,21 @@ def process_pdf_specification(spec_id, file_path):
             # AUTO-CADASTRO DE FORNECEDOR
             # Se o PDF contém informação de fornecedor, criar/buscar automaticamente
             supplier_name = extracted_data.get('supplier')
-            if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
+            if supplier_name and isinstance(supplier_name,
+                                            str) and supplier_name.strip():
                 print(f"\n{'='*80}")
                 print(f"AUTO-CADASTRO DE FORNECEDOR")
                 print(f"{'='*80}")
                 print(f"📦 Fornecedor detectado no PDF: {supplier_name}")
-                
-                supplier = get_or_create_supplier(supplier_name, spec.user_id, thread_session)
+
+                supplier = get_or_create_supplier(supplier_name, spec.user_id,
+                                                  thread_session)
                 if supplier:
                     spec.supplier_id = supplier.id
                     spec.supplier = supplier.name
-                    print(f"✓ Ficha técnica vinculada ao fornecedor ID {supplier.id}")
+                    print(
+                        f"✓ Ficha técnica vinculada ao fornecedor ID {supplier.id}"
+                    )
                 else:
                     print(f"⚠️ Não foi possível cadastrar o fornecedor")
                 print(f"{'='*80}\n")
@@ -1598,26 +1762,27 @@ def settings():
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     form = SettingsForm(obj=user)
-    
+
     if form.validate_on_submit():
         # Check if username is already taken by another user
-        existing_user = User.query.filter_by(username=form.username.data).first()
+        existing_user = User.query.filter_by(
+            username=form.username.data).first()
         if existing_user and existing_user.id != user.id:
             flash('Este nome de usuário já está em uso.')
             return render_template('settings.html', form=form, user=user)
-        
+
         # Check if email is already taken by another user
         existing_email = User.query.filter_by(email=form.email.data).first()
         if existing_email and existing_email.id != user.id:
             flash('Este e-mail já está em uso.')
             return render_template('settings.html', form=form, user=user)
-        
+
         # Update user data
         user.username = form.username.data
         user.email = form.email.data
-        
+
         try:
             db.session.commit()
             flash('Suas informações foram atualizadas com sucesso!')
@@ -1626,7 +1791,7 @@ def settings():
             db.session.rollback()
             flash('Erro ao atualizar suas informações. Tente novamente.')
             print(f"Error updating user: {e}")
-    
+
     return render_template('settings.html', form=form, user=user)
 
 
@@ -1649,41 +1814,42 @@ def dashboard():
         # Admin dashboard
         total_users = User.query.count()
         total_specs = Specification.query.count()
-        
+
         # Base query for admin
         query = Specification.query
-        
+
         # Apply filters
         if search_query:
             search_filter = f'%{search_query}%'
             query = query.filter(
-                db.or_(
-                    Specification.description.ilike(search_filter),
-                    Specification.ref_souq.ilike(search_filter),
-                    Specification.collection.ilike(search_filter),
-                    Specification.pdf_filename.ilike(search_filter)
-                )
-            )
-        
+                db.or_(Specification.description.ilike(search_filter),
+                       Specification.ref_souq.ilike(search_filter),
+                       Specification.collection.ilike(search_filter),
+                       Specification.pdf_filename.ilike(search_filter)))
+
         if selected_collection:
             query = query.filter_by(collection=selected_collection)
-        
+
         if selected_supplier:
             query = query.filter_by(supplier=selected_supplier)
-        
+
         if selected_status:
             query = query.filter_by(status=selected_status)
-        
+
         # Get filtered results (limit to prevent overwhelming the page)
-        recent_specs = query.order_by(Specification.created_at.desc()).limit(100).all()
-        
+        recent_specs = query.order_by(
+            Specification.created_at.desc()).limit(100).all()
+
         # Get filter options
-        collections = db.session.query(Specification.collection).distinct().filter(Specification.collection.isnot(None)).all()
+        collections = db.session.query(
+            Specification.collection).distinct().filter(
+                Specification.collection.isnot(None)).all()
         collections = [c[0] for c in collections if c[0]]
-        
-        suppliers = db.session.query(Specification.supplier).distinct().filter(Specification.supplier.isnot(None)).all()
+
+        suppliers = db.session.query(Specification.supplier).distinct().filter(
+            Specification.supplier.isnot(None)).all()
         suppliers = [s[0] for s in suppliers if s[0]]
-        
+
         return render_template('admin_dashboard.html',
                                current_user=user,
                                total_users=total_users,
@@ -1699,38 +1865,41 @@ def dashboard():
         # User dashboard (stylists)
         # Base query for user
         query = Specification.query.filter_by(user_id=user.id)
-        
+
         # Apply filters
         if search_query:
             search_filter = f'%{search_query}%'
             query = query.filter(
-                db.or_(
-                    Specification.description.ilike(search_filter),
-                    Specification.ref_souq.ilike(search_filter),
-                    Specification.collection.ilike(search_filter),
-                    Specification.pdf_filename.ilike(search_filter)
-                )
-            )
-        
+                db.or_(Specification.description.ilike(search_filter),
+                       Specification.ref_souq.ilike(search_filter),
+                       Specification.collection.ilike(search_filter),
+                       Specification.pdf_filename.ilike(search_filter)))
+
         if selected_collection:
             query = query.filter_by(collection=selected_collection)
-        
+
         if selected_supplier:
             query = query.filter_by(supplier=selected_supplier)
-        
+
         if selected_status:
             query = query.filter_by(status=selected_status)
-        
+
         # Get filtered results (limit to prevent overwhelming the page)
-        user_specs = query.order_by(Specification.created_at.desc()).limit(100).all()
-        
+        user_specs = query.order_by(
+            Specification.created_at.desc()).limit(100).all()
+
         # Get filter options
-        collections = db.session.query(Specification.collection).distinct().filter(Specification.collection.isnot(None), Specification.user_id==user.id).all()
+        collections = db.session.query(
+            Specification.collection).distinct().filter(
+                Specification.collection.isnot(None),
+                Specification.user_id == user.id).all()
         collections = [c[0] for c in collections if c[0]]
-        
-        suppliers = db.session.query(Specification.supplier).distinct().filter(Specification.supplier.isnot(None), Specification.user_id==user.id).all()
+
+        suppliers = db.session.query(Specification.supplier).distinct().filter(
+            Specification.supplier.isnot(None),
+            Specification.user_id == user.id).all()
         suppliers = [s[0] for s in suppliers if s[0]]
-        
+
         return render_template('user_dashboard.html',
                                current_user=user,
                                specifications=user_specs,
@@ -1779,33 +1948,42 @@ def create_user():
 @admin_required
 def view_user(id):
     user_to_view = User.query.get_or_404(id)
-    
+
     # Get user's specifications with collection and supplier info
-    specifications = Specification.query.filter_by(user_id=user_to_view.id).order_by(Specification.created_at.desc()).all()
-    
+    specifications = Specification.query.filter_by(
+        user_id=user_to_view.id).order_by(
+            Specification.created_at.desc()).all()
+
     # Get unique collections
     collections = db.session.query(Specification.collection).distinct().filter(
-        Specification.collection.isnot(None), 
-        Specification.user_id==user_to_view.id
-    ).all()
+        Specification.collection.isnot(None),
+        Specification.user_id == user_to_view.id).all()
     collections = [c[0] for c in collections if c[0]]
-    
+
     # Count specifications by status
     status_counts = {
-        'Draft': Specification.query.filter_by(user_id=user_to_view.id, status='Draft').count(),
-        'In Development': Specification.query.filter_by(user_id=user_to_view.id, status='In Development').count(),
-        'Approved': Specification.query.filter_by(user_id=user_to_view.id, status='Approved').count(),
-        'In Production': Specification.query.filter_by(user_id=user_to_view.id, status='In Production').count(),
+        'Draft':
+        Specification.query.filter_by(user_id=user_to_view.id,
+                                      status='Draft').count(),
+        'In Development':
+        Specification.query.filter_by(user_id=user_to_view.id,
+                                      status='In Development').count(),
+        'Approved':
+        Specification.query.filter_by(user_id=user_to_view.id,
+                                      status='Approved').count(),
+        'In Production':
+        Specification.query.filter_by(user_id=user_to_view.id,
+                                      status='In Production').count(),
     }
-    
+
     current_user = User.query.get(session['user_id'])
-    
+
     return render_template('view_user.html',
-                         current_user=current_user,
-                         user_to_view=user_to_view,
-                         specifications=specifications,
-                         collections=collections,
-                         status_counts=status_counts)
+                           current_user=current_user,
+                           user_to_view=user_to_view,
+                           specifications=specifications,
+                           collections=collections,
+                           status_counts=status_counts)
 
 
 @app.route('/user/<int:id>/edit', methods=['GET', 'POST'])
@@ -1813,44 +1991,44 @@ def view_user(id):
 def edit_user(id):
     user_to_edit = User.query.get_or_404(id)
     current_user = User.query.get(session['user_id'])
-    
+
     if request.method == 'POST':
         # Get form data
         username = request.form.get('username')
         email = request.form.get('email')
         role = request.form.get('role')
         new_password = request.form.get('password')
-        
+
         # Validate
         if not username or not email or not role:
             flash('Todos os campos obrigatórios devem ser preenchidos.')
             return redirect(url_for('edit_user', id=id))
-        
+
         # Check if username is unique (if changed)
         if username != user_to_edit.username:
             existing_user = User.query.filter_by(username=username).first()
             if existing_user:
                 flash('Nome de usuário já existe. Escolha outro.')
                 return redirect(url_for('edit_user', id=id))
-        
+
         # Check if email is unique (if changed)
         if email != user_to_edit.email:
             existing_email = User.query.filter_by(email=email).first()
             if existing_email:
                 flash('E-mail já está em uso. Escolha outro.')
                 return redirect(url_for('edit_user', id=id))
-        
+
         try:
             # Update user data
             user_to_edit.username = username
             user_to_edit.email = email
             user_to_edit.role = role
             user_to_edit.is_admin = (role == 'admin')
-            
+
             # Update password only if provided
             if new_password:
                 user_to_edit.set_password(new_password)
-            
+
             db.session.commit()
             flash(f'Usuário {user_to_edit.username} atualizado com sucesso!')
             return redirect(url_for('manage_users'))
@@ -1859,10 +2037,10 @@ def edit_user(id):
             print(f"Error updating user: {e}")
             flash('Erro ao atualizar usuário. Tente novamente.')
             return redirect(url_for('edit_user', id=id))
-    
+
     return render_template('edit_user.html',
-                         current_user=current_user,
-                         user_to_edit=user_to_edit)
+                           current_user=current_user,
+                           user_to_edit=user_to_edit)
 
 
 @app.route('/suppliers')
@@ -1873,36 +2051,36 @@ def suppliers():
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     search_query = request.args.get('search', '')
     page = request.args.get('page', 1, type=int)
     per_page = 5
-    
+
     if user.is_admin:
         query = Supplier.query
     else:
         query = Supplier.query.filter_by(user_id=user.id)
-    
+
     if search_query:
         query = query.filter(Supplier.name.ilike(f'%{search_query}%'))
-    
+
     suppliers_paginated = query.order_by(Supplier.created_at.desc()).paginate(
-        page=page, per_page=per_page, error_out=False
-    )
-    
+        page=page, per_page=per_page, error_out=False)
+
     suppliers_with_counts = []
     for supplier in suppliers_paginated.items:
-        spec_count = Specification.query.filter_by(supplier_id=supplier.id).count()
+        spec_count = Specification.query.filter_by(
+            supplier_id=supplier.id).count()
         suppliers_with_counts.append({
             'supplier': supplier,
             'spec_count': spec_count
         })
-    
+
     return render_template('suppliers.html',
-                         current_user=user,
-                         suppliers=suppliers_with_counts,
-                         pagination=suppliers_paginated,
-                         search_query=search_query)
+                           current_user=user,
+                           suppliers=suppliers_with_counts,
+                           pagination=suppliers_paginated,
+                           search_query=search_query)
 
 
 @app.route('/suppliers/create', methods=['POST'])
@@ -1911,11 +2089,11 @@ def create_supplier():
     user = User.query.get(session['user_id'])
     if not user:
         return jsonify({'success': False, 'message': 'Sessão inválida'}), 401
-    
+
     try:
         import json
         data = request.get_json()
-        
+
         supplier = Supplier()
         supplier.user_id = user.id
         supplier.name = data.get('name')
@@ -1925,11 +2103,15 @@ def create_supplier():
         supplier.contact_phone = data.get('contact_phone')
         supplier.materials_json = json.dumps(data.get('materials', []))
         supplier.avatar_color = data.get('avatar_color', '#667eea')
-        
+
         db.session.add(supplier)
         db.session.commit()
-        
-        return jsonify({'success': True, 'message': 'Fornecedor criado com sucesso!', 'supplier_id': supplier.id})
+
+        return jsonify({
+            'success': True,
+            'message': 'Fornecedor criado com sucesso!',
+            'supplier_id': supplier.id
+        })
     except Exception as e:
         db.session.rollback()
         print(f"Error creating supplier: {e}")
@@ -1941,20 +2123,28 @@ def create_supplier():
 def get_supplier(id):
     supplier = Supplier.query.get_or_404(id)
     user = User.query.get(session['user_id'])
-    
+
     if not user.is_admin and supplier.user_id != user.id:
         return jsonify({'success': False, 'message': 'Acesso negado'}), 403
-    
+
     import json
     return jsonify({
-        'id': supplier.id,
-        'name': supplier.name,
-        'location': supplier.location,
-        'contact_name': supplier.contact_name,
-        'contact_email': supplier.contact_email,
-        'contact_phone': supplier.contact_phone,
-        'materials': json.loads(supplier.materials_json) if supplier.materials_json else [],
-        'avatar_color': supplier.avatar_color
+        'id':
+        supplier.id,
+        'name':
+        supplier.name,
+        'location':
+        supplier.location,
+        'contact_name':
+        supplier.contact_name,
+        'contact_email':
+        supplier.contact_email,
+        'contact_phone':
+        supplier.contact_phone,
+        'materials':
+        json.loads(supplier.materials_json) if supplier.materials_json else [],
+        'avatar_color':
+        supplier.avatar_color
     })
 
 
@@ -1963,25 +2153,30 @@ def get_supplier(id):
 def update_supplier(id):
     supplier = Supplier.query.get_or_404(id)
     user = User.query.get(session['user_id'])
-    
+
     if not user.is_admin and supplier.user_id != user.id:
         return jsonify({'success': False, 'message': 'Acesso negado'}), 403
-    
+
     try:
         import json
         data = request.get_json()
-        
+
         supplier.name = data.get('name', supplier.name)
         supplier.location = data.get('location', supplier.location)
         supplier.contact_name = data.get('contact_name', supplier.contact_name)
-        supplier.contact_email = data.get('contact_email', supplier.contact_email)
-        supplier.contact_phone = data.get('contact_phone', supplier.contact_phone)
+        supplier.contact_email = data.get('contact_email',
+                                          supplier.contact_email)
+        supplier.contact_phone = data.get('contact_phone',
+                                          supplier.contact_phone)
         supplier.materials_json = json.dumps(data.get('materials', []))
         supplier.avatar_color = data.get('avatar_color', supplier.avatar_color)
-        
+
         db.session.commit()
-        
-        return jsonify({'success': True, 'message': 'Fornecedor atualizado com sucesso!'})
+
+        return jsonify({
+            'success': True,
+            'message': 'Fornecedor atualizado com sucesso!'
+        })
     except Exception as e:
         db.session.rollback()
         print(f"Error updating supplier: {e}")
@@ -1993,14 +2188,17 @@ def update_supplier(id):
 def delete_supplier(id):
     supplier = Supplier.query.get_or_404(id)
     user = User.query.get(session['user_id'])
-    
+
     if not user.is_admin and supplier.user_id != user.id:
         return jsonify({'success': False, 'message': 'Acesso negado'}), 403
-    
+
     try:
         db.session.delete(supplier)
         db.session.commit()
-        return jsonify({'success': True, 'message': 'Fornecedor excluído com sucesso!'})
+        return jsonify({
+            'success': True,
+            'message': 'Fornecedor excluído com sucesso!'
+        })
     except Exception as e:
         db.session.rollback()
         print(f"Error deleting supplier: {e}")
@@ -2011,28 +2209,33 @@ def delete_supplier(id):
 @login_required
 def upload_pdf():
     form = UploadPDFForm()
-    
+
     # Get current user to pre-fill stylist field
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Populate collection choices
     if user.is_admin:
         user_collections = Collection.query.order_by(Collection.name).all()
         user_suppliers = Supplier.query.order_by(Supplier.name).all()
     else:
-        user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
-        user_suppliers = Supplier.query.filter_by(user_id=user.id).order_by(Supplier.name).all()
-    
-    form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
-    form.supplier_id.choices = [(0, '-- Sem fornecedor --')] + [(s.id, s.name) for s in user_suppliers]
-    
+        user_collections = Collection.query.filter_by(
+            user_id=user.id).order_by(Collection.name).all()
+        user_suppliers = Supplier.query.filter_by(user_id=user.id).order_by(
+            Supplier.name).all()
+
+    form.collection_id.choices = [(0, '-- Sem coleção --')] + [
+        (c.id, c.name) for c in user_collections
+    ]
+    form.supplier_id.choices = [(0, '-- Sem fornecedor --')
+                                ] + [(s.id, s.name) for s in user_suppliers]
+
     if request.method == 'GET':
         form.stylist.data = user.username
-    
+
     if request.method == 'POST' and form.validate_on_submit():
         try:
             file = form.pdf_file.data
@@ -2046,7 +2249,7 @@ def upload_pdf():
             spec.pdf_filename = filename
             spec.collection = form.collection.data
             spec.collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
-            
+
             # Handle supplier - save both ID and name
             if form.supplier_id.data and form.supplier_id.data != 0:
                 spec.supplier_id = form.supplier_id.data
@@ -2055,7 +2258,7 @@ def upload_pdf():
             else:
                 spec.supplier_id = None
                 spec.supplier = None
-                
+
             spec.stylists = form.stylist.data or user.username
             spec.processing_status = 'processing'
             spec.status = 'draft'
@@ -2063,7 +2266,7 @@ def upload_pdf():
 
             db.session.add(spec)
             db.session.commit()
-            
+
             spec_id = spec.id  # Store ID before thread
 
             # Process PDF in background thread with app context
@@ -2085,7 +2288,7 @@ def upload_pdf():
                                 db.session.commit()
                         except:
                             pass
-            
+
             thread = threading.Thread(target=process_in_background)
             thread.daemon = True  # Thread will not prevent app shutdown
             thread.start()
@@ -2094,10 +2297,11 @@ def upload_pdf():
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({
                     'success': True,
-                    'message': 'Arquivo enviado! Processamento iniciado em segundo plano.',
+                    'message':
+                    'Arquivo enviado! Processamento iniciado em segundo plano.',
                     'spec_id': spec_id
                 })
-            
+
             flash('Arquivo enviado! Processamento iniciado em segundo plano.')
             return redirect(url_for('dashboard'))
 
@@ -2109,7 +2313,9 @@ def upload_pdf():
             flash(
                 'Erro ao processar o arquivo PDF. Por favor, tente novamente ou contate o suporte.'
             )
-            return render_template('upload_pdf.html', form=form, current_user=user)
+            return render_template('upload_pdf.html',
+                                   form=form,
+                                   current_user=user)
 
     return render_template('upload_pdf.html', form=form, current_user=user)
 
@@ -2121,13 +2327,16 @@ def get_spec_status(spec_id):
     try:
         spec = Specification.query.get(spec_id)
         if not spec:
-            return jsonify({'success': False, 'error': 'Ficha não encontrada'}), 404
-        
+            return jsonify({
+                'success': False,
+                'error': 'Ficha não encontrada'
+            }), 404
+
         user = User.query.get(session['user_id'])
         # Check permissions
         if not user.is_admin and spec.user_id != user.id:
             return jsonify({'success': False, 'error': 'Acesso negado'}), 403
-        
+
         return jsonify({
             'success': True,
             'spec_id': spec.id,
@@ -2285,16 +2494,15 @@ def view_drawing(id):
             try:
                 storage_client = Client()
                 if storage_client.exists(spec.technical_drawing_url):
-                    image_data = storage_client.download_as_bytes(spec.technical_drawing_url)
-                    return send_file(
-                        io.BytesIO(image_data),
-                        mimetype='image/png',
-                        as_attachment=False,
-                        download_name=f"desenho_{spec.id}.png"
-                    )
+                    image_data = storage_client.download_as_bytes(
+                        spec.technical_drawing_url)
+                    return send_file(io.BytesIO(image_data),
+                                     mimetype='image/png',
+                                     as_attachment=False,
+                                     download_name=f"desenho_{spec.id}.png")
             except Exception as storage_error:
                 print(f"Object Storage lookup failed: {storage_error}")
-            
+
             # Fallback: Try local file from GPT-Image-1
             drawing_path = os.path.join(app.config['UPLOAD_FOLDER'],
                                         spec.technical_drawing_url)
@@ -2317,18 +2525,18 @@ def generate_drawing_background(spec_id, file_path):
     from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=db.engine)
     thread_session = Session()
-    
+
     try:
         spec = thread_session.query(Specification).get(spec_id)
         if not spec:
             print(f"Specification {spec_id} not found")
             thread_session.close()
             return
-        
+
         # Mark as processing
         spec.processing_status = 'processing'
         thread_session.commit()
-        
+
         # Check if it's an image or PDF
         images = []
         if is_image_file(spec.pdf_filename):
@@ -2342,7 +2550,8 @@ def generate_drawing_background(spec_id, file_path):
             # Extract images from PDF (returns list of dicts with metadata)
             pdf_images_data = extract_images_from_pdf(file_path)
             # Extract only base64 strings for GPT-4 Vision
-            images = [img['base64'] for img in pdf_images_data] if pdf_images_data else []
+            images = [img['base64']
+                      for img in pdf_images_data] if pdf_images_data else []
         else:
             print(f"Formato de arquivo não suportado: {spec.pdf_filename}")
             spec.processing_status = 'error'
@@ -2351,18 +2560,18 @@ def generate_drawing_background(spec_id, file_path):
             return
 
         # Analyze images with GPT-4 Vision to get visual description
-        visual_desc = analyze_images_with_gpt4_vision(images) if images else None
+        visual_desc = analyze_images_with_gpt4_vision(
+            images) if images else None
 
         # Build prompt with specification data and visual description
         prompt = build_technical_drawing_prompt(spec, visual_desc)
 
         # Generate image using GPT-Image-1 with high quality for maximum detail
-        response = openai_client.images.generate(
-            model="gpt-image-1",
-            prompt=prompt,
-            size="1024x1024",
-            quality="high",
-            n=1)
+        response = openai_client.images.generate(model="gpt-image-1",
+                                                 prompt=prompt,
+                                                 size="1024x1024",
+                                                 quality="high",
+                                                 n=1)
 
         # GPT-Image-1 returns base64 by default
         import base64
@@ -2378,19 +2587,24 @@ def generate_drawing_background(spec_id, file_path):
         try:
             storage_client = Client()
             storage_client.upload_from_bytes(drawing_filename, image_data)
-            print(f"✅ Desenho técnico salvo no Object Storage: {drawing_filename}")
-            
+            print(
+                f"✅ Desenho técnico salvo no Object Storage: {drawing_filename}"
+            )
+
             # Save the Object Storage path in the database
             spec.technical_drawing_url = drawing_filename
         except Exception as storage_error:
-            print(f"❌ Erro ao fazer upload para Object Storage: {storage_error}")
+            print(
+                f"❌ Erro ao fazer upload para Object Storage: {storage_error}")
             # Fallback: save locally if Object Storage fails
             local_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
-            local_path = os.path.join(app.config['UPLOAD_FOLDER'], local_filename)
+            local_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                      local_filename)
             with open(local_path, 'wb') as f:
                 f.write(image_data)
             spec.technical_drawing_url = local_filename
-            print(f"⚠️ Fallback: Desenho salvo localmente como {local_filename}")
+            print(
+                f"⚠️ Fallback: Desenho salvo localmente como {local_filename}")
 
         # Mark as completed
         spec.processing_status = 'completed'
@@ -2402,7 +2616,7 @@ def generate_drawing_background(spec_id, file_path):
         print(f"❌ Error generating technical drawing for spec {spec_id}: {e}")
         import traceback
         traceback.print_exc()
-        
+
         # Mark as error
         try:
             if spec:
@@ -2429,29 +2643,38 @@ def generate_technical_drawing(id):
         return jsonify({'success': False, 'error': 'Acesso negado'}), 403
 
     if not openai_client:
-        return jsonify({'success': False, 'error': 'OpenAI não configurado'}), 500
+        return jsonify({
+            'success': False,
+            'error': 'OpenAI não configurado'
+        }), 500
 
     try:
         # Get file path
-        file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
-        
+        file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                 spec.pdf_filename)
+
         # Check file exists
         if not os.path.exists(file_path):
-            return jsonify({'success': False, 'error': 'Arquivo não encontrado'}), 404
-        
+            return jsonify({
+                'success': False,
+                'error': 'Arquivo não encontrado'
+            }), 404
+
         # Mark as processing
         spec.processing_status = 'processing'
         db.session.commit()
-        
+
         spec_id = spec.id
-        
+
         # Process drawing in background thread with app context
         def process_in_background():
             with app.app_context():
                 try:
                     generate_drawing_background(spec_id, file_path)
                 except Exception as e:
-                    print(f"❌ Error in background drawing generation thread: {e}")
+                    print(
+                        f"❌ Error in background drawing generation thread: {e}"
+                    )
                     import traceback
                     traceback.print_exc()
                     # Mark as error in database
@@ -2459,22 +2682,24 @@ def generate_technical_drawing(id):
                         from sqlalchemy.orm import sessionmaker
                         Session = sessionmaker(bind=db.engine)
                         error_session = Session()
-                        error_spec = error_session.query(Specification).get(spec_id)
+                        error_spec = error_session.query(Specification).get(
+                            spec_id)
                         if error_spec:
                             error_spec.processing_status = 'error'
                             error_session.commit()
                         error_session.close()
                     except:
                         pass
-        
+
         thread = threading.Thread(target=process_in_background)
         thread.daemon = True
         thread.start()
-        
+
         # Return immediately with JSON response
         return jsonify({
             'success': True,
-            'message': 'Geração de desenho técnico iniciada! Processamento em segundo plano.',
+            'message':
+            'Geração de desenho técnico iniciada! Processamento em segundo plano.',
             'spec_id': spec_id
         })
 
@@ -2482,7 +2707,10 @@ def generate_technical_drawing(id):
         print(f"Error in generate_technical_drawing: {e}")
         import traceback
         traceback.print_exc()
-        return jsonify({'success': False, 'error': 'Erro ao iniciar geração de desenho'}), 500
+        return jsonify({
+            'success': False,
+            'error': 'Erro ao iniciar geração de desenho'
+        }), 500
 
 
 @app.route('/drawing/<path:filename>')
@@ -2490,30 +2718,28 @@ def serve_drawing(filename):
     """Serve technical drawings from Object Storage"""
     try:
         storage_client = Client()
-        
+
         # Try to get from Object Storage first
         if storage_client.exists(filename):
             image_data = storage_client.download_as_bytes(filename)
-            return send_file(
-                io.BytesIO(image_data),
-                mimetype='image/png',
-                as_attachment=False,
-                download_name=os.path.basename(filename)
-            )
-        
+            return send_file(io.BytesIO(image_data),
+                             mimetype='image/png',
+                             as_attachment=False,
+                             download_name=os.path.basename(filename))
+
         # Fallback: try local file (for backwards compatibility)
         local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         if os.path.exists(local_path):
             return send_file(local_path, mimetype='image/png')
-        
+
         # Not found anywhere
         return "Imagem não encontrada", 404
-        
+
     except Exception as e:
         print(f"Error serving drawing {filename}: {e}")
         import traceback
         traceback.print_exc()
-        
+
         # Last resort: try serving from local filesystem
         try:
             local_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
@@ -2521,7 +2747,7 @@ def serve_drawing(filename):
                 return send_file(local_path, mimetype='image/png')
         except:
             pass
-            
+
         return "Erro ao carregar imagem", 500
 
 
@@ -2541,15 +2767,18 @@ def edit_specification(id):
         return redirect(url_for('dashboard'))
 
     form = SpecificationForm(obj=spec)
-    
+
     # Populate collection choices
     if user.is_admin:
         user_collections = Collection.query.order_by(Collection.name).all()
     else:
-        user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
-    
-    form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
-    
+        user_collections = Collection.query.filter_by(
+            user_id=user.id).order_by(Collection.name).all()
+
+    form.collection_id.choices = [(0, '-- Sem coleção --')] + [
+        (c.id, c.name) for c in user_collections
+    ]
+
     if form.validate_on_submit():
         # Handle collection_id specially to allow null values
         collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
@@ -2639,56 +2868,61 @@ def generate_all_thumbnails():
     try:
         # Find all specifications without thumbnails
         specs = Specification.query.filter(
-            Specification.pdf_thumbnail.is_(None)
-        ).all()
-        
+            Specification.pdf_thumbnail.is_(None)).all()
+
         if not specs:
             flash('Todas as fichas já têm thumbnails!')
             return redirect(url_for('dashboard'))
-        
+
         processed = 0
         errors = 0
-        
+
         for spec in specs:
             try:
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
-                
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'],
+                                         spec.pdf_filename)
+
                 if not os.path.exists(file_path):
                     print(f"Arquivo não encontrado: {file_path}")
                     errors += 1
                     continue
-                
+
                 # Check if it's an image or PDF
                 if is_image_file(spec.pdf_filename):
-                    thumbnail_url = generate_image_thumbnail(file_path, spec.id)
+                    thumbnail_url = generate_image_thumbnail(
+                        file_path, spec.id)
                 else:
                     thumbnail_url = generate_pdf_thumbnail(file_path, spec.id)
-                
+
                 if thumbnail_url:
                     spec.pdf_thumbnail = thumbnail_url
                     db.session.commit()
                     processed += 1
-                    print(f"✓ Thumbnail gerado para spec #{spec.id}: {thumbnail_url}")
+                    print(
+                        f"✓ Thumbnail gerado para spec #{spec.id}: {thumbnail_url}"
+                    )
                 else:
                     errors += 1
                     print(f"✗ Erro ao gerar thumbnail para spec #{spec.id}")
-                    
+
             except Exception as e:
                 errors += 1
                 print(f"✗ Erro ao processar spec #{spec.id}: {e}")
                 continue
-        
+
         if processed > 0:
-            flash(f'✓ {processed} thumbnails gerados com sucesso! ({errors} erros)')
+            flash(
+                f'✓ {processed} thumbnails gerados com sucesso! ({errors} erros)'
+            )
         else:
             flash(f'Nenhum thumbnail foi gerado. ({errors} erros)')
-            
+
     except Exception as e:
         flash(f'Erro ao gerar thumbnails: {str(e)}')
         print(f"Erro ao gerar thumbnails: {e}")
         import traceback
         traceback.print_exc()
-    
+
     return redirect(url_for('dashboard'))
 
 
@@ -2701,13 +2935,15 @@ def collections():
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Get user's collections
     if user.is_admin:
-        user_collections = Collection.query.order_by(Collection.created_at.desc()).all()
+        user_collections = Collection.query.order_by(
+            Collection.created_at.desc()).all()
     else:
-        user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.created_at.desc()).all()
-    
+        user_collections = Collection.query.filter_by(
+            user_id=user.id).order_by(Collection.created_at.desc()).all()
+
     return render_template('collections.html',
                            current_user=user,
                            collections=user_collections)
@@ -2721,49 +2957,48 @@ def create_collection():
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     name = request.form.get('name', '').strip()
     description = request.form.get('description', '').strip()
     status = request.form.get('status', 'em_desenvolvimento')
-    
+
     if not name:
         flash('Nome da coleção é obrigatório!')
         return redirect(url_for('collections'))
-    
+
     cover_image_path = None
-    
+
     if 'cover_image' in request.files:
         cover_image = request.files['cover_image']
         if cover_image and cover_image.filename:
             filename = secure_filename(cover_image.filename)
-            
+
             if filename:
-                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
-                
+                ext = filename.rsplit('.',
+                                      1)[1].lower() if '.' in filename else ''
+
                 if ext in ['jpg', 'jpeg', 'png']:
                     import hashlib
                     import time
-                    
+
                     unique_name = f"collection_{int(time.time())}_{hashlib.md5(filename.encode()).hexdigest()[:8]}.{ext}"
-                    
+
                     covers_dir = os.path.join('static', 'covers')
                     os.makedirs(covers_dir, exist_ok=True)
-                    
+
                     filepath = os.path.join(covers_dir, unique_name)
                     cover_image.save(filepath)
-                    
+
                     cover_image_path = f"covers/{unique_name}"
                 else:
                     flash('Formato de imagem inválido. Use JPG, JPEG ou PNG.')
-    
+
     try:
-        new_collection = Collection(
-            user_id=user.id,
-            name=name,
-            description=description,
-            status=status,
-            cover_image=cover_image_path
-        )
+        new_collection = Collection(user_id=user.id,
+                                    name=name,
+                                    description=description,
+                                    status=status,
+                                    cover_image=cover_image_path)
         db.session.add(new_collection)
         db.session.commit()
         flash(f'Coleção "{name}" criada com sucesso!')
@@ -2771,7 +3006,7 @@ def create_collection():
         db.session.rollback()
         flash(f'Erro ao criar coleção: {str(e)}')
         print(f"Erro ao criar coleção: {e}")
-    
+
     return redirect(url_for('collections'))
 
 
@@ -2783,17 +3018,18 @@ def view_collection(id):
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     collection = Collection.query.get_or_404(id)
-    
+
     # Check access permissions
     if not user.is_admin and collection.user_id != user.id:
         flash('Acesso negado.')
         return redirect(url_for('collections'))
-    
+
     # Get specifications in this collection
-    specs = Specification.query.filter_by(collection_id=id).order_by(Specification.created_at.desc()).all()
-    
+    specs = Specification.query.filter_by(collection_id=id).order_by(
+        Specification.created_at.desc()).all()
+
     return render_template('view_collection.html',
                            current_user=user,
                            collection=collection,
@@ -2808,69 +3044,71 @@ def edit_collection(id):
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     collection = Collection.query.get_or_404(id)
-    
+
     # Check access permissions
     if not user.is_admin and collection.user_id != user.id:
         flash('Acesso negado.')
         return redirect(url_for('collections'))
-    
+
     name = request.form.get('name', '').strip()
     description = request.form.get('description', '').strip()
     status = request.form.get('status', 'em_desenvolvimento')
-    
+
     if not name:
         flash('Nome da coleção é obrigatório!')
         return redirect(url_for('collections'))
-    
+
     # Handle cover image upload
     if 'cover_image' in request.files:
         cover_image = request.files['cover_image']
         if cover_image and cover_image.filename:
             filename = secure_filename(cover_image.filename)
-            
+
             if filename:
-                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
-                
+                ext = filename.rsplit('.',
+                                      1)[1].lower() if '.' in filename else ''
+
                 if ext in ['jpg', 'jpeg', 'png']:
                     import hashlib
                     import time
-                    
+
                     # Delete old cover image if exists
                     if collection.cover_image:
-                        old_image_path = os.path.join('static', collection.cover_image)
+                        old_image_path = os.path.join('static',
+                                                      collection.cover_image)
                         if os.path.exists(old_image_path):
                             try:
                                 os.remove(old_image_path)
                             except Exception as e:
                                 print(f"Erro ao remover imagem antiga: {e}")
-                    
+
                     # Save new image
                     unique_name = f"collection_{int(time.time())}_{hashlib.md5(filename.encode()).hexdigest()[:8]}.{ext}"
-                    
+
                     covers_dir = os.path.join('static', 'covers')
                     os.makedirs(covers_dir, exist_ok=True)
-                    
+
                     filepath = os.path.join(covers_dir, unique_name)
                     cover_image.save(filepath)
-                    
+
                     collection.cover_image = f"covers/{unique_name}"
                 else:
                     flash('Formato de imagem inválido. Use JPG, JPEG ou PNG.')
-    
+
     try:
         collection.name = name
         collection.description = description
         collection.status = status
-        
+
         db.session.commit()
         flash(f'Coleção "{name}" atualizada com sucesso!')
     except Exception as e:
         db.session.rollback()
         flash(f'Erro ao atualizar coleção: {str(e)}')
         print(f"Erro ao atualizar coleção: {e}")
-    
+
     return redirect(url_for('collections'))
 
 
@@ -2882,71 +3120,65 @@ def technical_drawings():
         session.clear()
         flash('Sessão inválida. Por favor, faça login novamente.')
         return redirect(url_for('login'))
-    
+
     # Pagination
     page = request.args.get('page', 1, type=int)
     per_page = 12
-    
+
     # Base query: only specifications with technical drawings
     if user.is_admin:
-        query = Specification.query.filter(Specification.technical_drawing_url.isnot(None))
+        query = Specification.query.filter(
+            Specification.technical_drawing_url.isnot(None))
     else:
         query = Specification.query.filter(
             Specification.user_id == user.id,
-            Specification.technical_drawing_url.isnot(None)
-        )
-    
+            Specification.technical_drawing_url.isnot(None))
+
     # Search filter
     search = request.args.get('search', '').strip()
     if search:
         query = query.filter(
-            db.or_(
-                Specification.description.ilike(f'%{search}%'),
-                Specification.ref_souq.ilike(f'%{search}%'),
-                Specification.collection.ilike(f'%{search}%')
-            )
-        )
-    
+            db.or_(Specification.description.ilike(f'%{search}%'),
+                   Specification.ref_souq.ilike(f'%{search}%'),
+                   Specification.collection.ilike(f'%{search}%')))
+
     # Collection filter
     collection_filter = request.args.get('collection', '').strip()
     if collection_filter:
         query = query.filter(Specification.collection_id == collection_filter)
-    
+
     # Supplier filter
     supplier_filter = request.args.get('supplier', '').strip()
     if supplier_filter:
-        query = query.filter(Specification.supplier.ilike(f'%{supplier_filter}%'))
-    
+        query = query.filter(
+            Specification.supplier.ilike(f'%{supplier_filter}%'))
+
     # Get all collections for filter dropdown
     if user.is_admin:
         all_collections = Collection.query.order_by(Collection.name).all()
     else:
-        all_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
-    
+        all_collections = Collection.query.filter_by(user_id=user.id).order_by(
+            Collection.name).all()
+
     # Get unique suppliers for filter dropdown
     if user.is_admin:
         suppliers_query = db.session.query(Specification.supplier).filter(
-            Specification.supplier.isnot(None),
-            Specification.supplier != '',
-            Specification.technical_drawing_url.isnot(None)
-        ).distinct().order_by(Specification.supplier)
+            Specification.supplier.isnot(None), Specification.supplier != '',
+            Specification.technical_drawing_url.isnot(
+                None)).distinct().order_by(Specification.supplier)
     else:
         suppliers_query = db.session.query(Specification.supplier).filter(
             Specification.user_id == user.id,
-            Specification.supplier.isnot(None),
-            Specification.supplier != '',
-            Specification.technical_drawing_url.isnot(None)
-        ).distinct().order_by(Specification.supplier)
-    
+            Specification.supplier.isnot(None), Specification.supplier != '',
+            Specification.technical_drawing_url.isnot(
+                None)).distinct().order_by(Specification.supplier)
+
     all_suppliers = [s[0] for s in suppliers_query.all()]
-    
+
     # Paginate results
     pagination = query.order_by(Specification.created_at.desc()).paginate(
-        page=page,
-        per_page=per_page,
-        error_out=False
-    )
-    
+        page=page, per_page=per_page, error_out=False)
+
     return render_template('technical_drawings.html',
                            current_user=user,
                            specifications=pagination.items,
