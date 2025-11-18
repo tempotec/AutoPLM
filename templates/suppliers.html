@@ -723,6 +723,9 @@
                         <button class="action-btn" onclick="editSupplier({{ item.supplier.id }})">
                             <i class="fas fa-edit"></i>
                         </button>
+                        <button class="action-btn" onclick="deleteSupplier({{ item.supplier.id }}, '{{ item.supplier.name }}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
                 {% else %}
@@ -962,6 +965,31 @@
             } catch (error) {
                 console.error('Error:', error);
                 alert('Erro ao carregar fornecedor');
+            }
+        }
+
+        async function deleteSupplier(id, name) {
+            if (confirm(`Tem certeza que deseja excluir o fornecedor "${name}"?\n\nEsta ação não pode ser desfeita.`)) {
+                try {
+                    const response = await fetch(`/suppliers/${id}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Erro: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Erro ao excluir fornecedor');
+                }
             }
         }
 

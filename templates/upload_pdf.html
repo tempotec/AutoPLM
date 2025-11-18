@@ -564,20 +564,6 @@
                 <!-- Collection, Supplier and Stylist Fields -->
                 <div class="form-grid">
                     <div class="form-field">
-                        <label for="collection" class="form-label">
-                            <i class="fas fa-folder"></i>Coleção *
-                        </label>
-                        {{ form.collection(class="form-control", placeholder="Ex: Verão '24") }}
-                        {% if form.collection.errors %}
-                            <div class="text-danger">
-                                {% for error in form.collection.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </div>
-                    
-                    <div class="form-field">
                         <label for="collection_id" class="form-label">
                             <i class="fas fa-link"></i>Vincular à Coleção
                         </label>
