@@ -194,6 +194,9 @@ class Specification(db.Model):
     status = db.Column(
         db.String(50),
         default='draft')  # draft, in_development, approved, in_production
+    
+    # Price range classification (P1-P4)
+    price_range = db.Column(db.String(10))  # P1, P2, P3, P4
 
     # Relationship to collection and supplier
     collection_obj = db.relationship('Collection',
