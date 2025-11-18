@@ -2635,16 +2635,15 @@ def delete_user(id):
 @app.route('/admin/generate_thumbnails', methods=['GET'])
 @admin_required
 def generate_all_thumbnails():
-    """Generate thumbnails for all PDFs that don't have them yet"""
+    """Generate thumbnails for all PDFs and images that don't have them yet"""
     try:
-        # Find all specifications with PDFs but no thumbnails
+        # Find all specifications without thumbnails
         specs = Specification.query.filter(
-            Specification.pdf_filename.like('%.pdf'),
             Specification.pdf_thumbnail.is_(None)
         ).all()
         
         if not specs:
-            flash('Todos os PDFs já têm thumbnails!')
+            flash('Todas as fichas já têm thumbnails!')
             return redirect(url_for('dashboard'))
         
         processed = 0
@@ -2652,14 +2651,19 @@ def generate_all_thumbnails():
         
         for spec in specs:
             try:
-                pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+                file_path = os.path.join(app.config['UPLOAD_FOLDER'], spec.pdf_filename)
                 
-                if not os.path.exists(pdf_path):
-                    print(f"PDF não encontrado: {pdf_path}")
+                if not os.path.exists(file_path):
+                    print(f"Arquivo não encontrado: {file_path}")
                     errors += 1
                     continue
                 
-                thumbnail_url = generate_pdf_thumbnail(pdf_path, spec.id)
+                # Check if it's an image or PDF
+                if is_image_file(spec.pdf_filename):
+                    thumbnail_url = generate_image_thumbnail(file_path, spec.id)
+                else:
+                    thumbnail_url = generate_pdf_thumbnail(file_path, spec.id)
+                
                 if thumbnail_url:
                     spec.pdf_thumbnail = thumbnail_url
                     db.session.commit()
