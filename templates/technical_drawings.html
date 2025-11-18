@@ -563,8 +563,13 @@
         <div class="gallery-grid">
             {% for spec in specifications %}
             <div class="drawing-card">
-                <div class="card-image" onclick="openDrawingModal('{{ url_for('view_drawing', id=spec.id) }}', '{{ spec.product_name or spec.description or 'Sem nome' }}', '{{ spec.id }}')" style="cursor: pointer;">
-                    {% if spec.technical_drawing_url %}
+                <div class="card-image" {% if spec.technical_drawing_url %}onclick="openDrawingModal('{{ url_for('view_drawing', id=spec.id) }}', '{{ spec.product_name or spec.description or 'Sem nome' }}', '{{ spec.id }}')" style="cursor: pointer;"{% endif %}>
+                    {% if spec.processing_status == 'processing' %}
+                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                            <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #60a5fa;"></i>
+                            <div style="margin-top: 12px; font-size: 14px; color: #94a3b8;">Processando desenho técnico...</div>
+                        </div>
+                    {% elif spec.technical_drawing_url %}
                         <img src="{{ url_for('view_drawing', id=spec.id) }}" alt="{{ spec.product_name or spec.description }}">
                     {% else %}
                         <i class="fas fa-image" style="font-size: 48px; color: #cbd5e1;"></i>
