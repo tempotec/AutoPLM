@@ -36,7 +36,7 @@ Preferred communication style: Simple, everyday language.
     1. **Upload de Arquivo**: PDF/Image upload retorna imediatamente, processamento em thread separada.
     2. **Extração de Dados**: Análise de texto (GPT-4-Turbo) e extração de imagens (PyPDF2) em background.
     3. **Análise Visual**: GPT-4o Vision analisa imagens para produzir JSON estruturado com detalhes de construção.
-    4. **Geração de Desenho Técnico**: Usuário clica em "Gerar Desenho Técnico", requisição retorna instantaneamente, geração (GPT-Image-1) ocorre em background.
+    4. **Geração de Desenho Técnico (Image-to-Image)**: Usuário clica em "Gerar Desenho Técnico", requisição retorna instantaneamente. GPT-Image-1 usa `images.edit()` recebendo a imagem original como base + prompt técnico, transformando a foto/ilustração real em desenho técnico plano. Isso preserva proporções, detalhes construtivos, e características da peça original (golas, bolsos, recortes, listras), resultando em desenhos muito mais fiéis. Fallback para `images.generate()` (text-to-image) se nenhuma imagem base for encontrada.
     5. **Notificações em Tempo Real**: Sistema de toast mostra "Processando..." com polling automático do status.
     6. **Armazenamento**: Object Storage para desenhos gerados, com fallback para sistema de arquivos local.
 - **Feature Set**:
@@ -45,7 +45,7 @@ Preferred communication style: Simple, everyday language.
     - **AI-Powered Categorization**: Automatic classification of garments into Grupo (TECIDO PLANO, MALHA, TRICOT, JEANS) and Subgrupo (BLAZER, BLUSA, CALÇA, etc.) using GPT-4o Vision and GPT-4 Text analysis. Fields are auto-filled during creation and remain editable by users.
     - **Manual Price Range Classification (P1-P4)**: Stylist-defined price range field with manual selection during upload and editing. Not AI-generated - allows stylists to classify garments into one of four price tiers (P1, P2, P3, P4) with color-coded badges and filtering capabilities.
     - **Auto-Registration of Suppliers**: When processing PDFs/images, the system automatically extracts supplier names and creates supplier records if they don't exist. Suppliers are matched case-insensitively to avoid duplicates, then linked to specifications.
-    - **Technical Drawing Generation**: Produces professional flat sketches focused on visual representation without dimensions.
+    - **Technical Drawing Generation (Image-to-Image)**: Produces professional flat sketches using GPT-Image-1's `images.edit()` method. The system extracts the original garment image (from uploaded image files or largest image in PDFs) and passes it as a visual base alongside the technical prompt. This image-to-image approach preserves the actual proportions, construction details, and design elements of the original piece, resulting in technical drawings that accurately reflect the garment's real appearance. Automatic fallback to text-to-image generation if no base image is available.
     - **Image Thumbnail Generation**: Automatic thumbnail generation for both PDF files (using PyMuPDF) and image files (using Pillow), providing consistent preview cards across all media types in the dashboard.
     - **Collections Management**: End-to-end management of collections with linking specifications, search, filtering, cover image upload, and editing functionality.
     - **Collection Cover Images**: Upload and display custom cover images for collections (stored in static/covers/).
