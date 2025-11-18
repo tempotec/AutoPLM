@@ -14,6 +14,7 @@ from functools import wraps
 import base64
 from PIL import Image
 import io
+import threading
 
 # Import OpenAI functionality
 from openai import OpenAI
@@ -2000,12 +2001,42 @@ def upload_pdf():
 
             db.session.add(spec)
             db.session.commit()
+            
+            spec_id = spec.id  # Store ID before thread
 
-            # Process PDF asynchronously (in a real app, use Celery or similar)
-            process_pdf_specification(spec.id, file_path)
+            # Process PDF in background thread with app context
+            def process_in_background():
+                with app.app_context():
+                    try:
+                        # Query fresh instance from database
+                        from sqlalchemy.orm import scoped_session, sessionmaker
+                        process_pdf_specification(spec_id, file_path)
+                    except Exception as e:
+                        print(f"❌ Error in background processing thread: {e}")
+                        import traceback
+                        traceback.print_exc()
+                        # Mark as error in database
+                        try:
+                            error_spec = Specification.query.get(spec_id)
+                            if error_spec:
+                                error_spec.processing_status = 'error'
+                                db.session.commit()
+                        except:
+                            pass
+            
+            thread = threading.Thread(target=process_in_background)
+            thread.daemon = True  # Thread will not prevent app shutdown
+            thread.start()
 
-            flash(
-                'PDF enviado com sucesso! O processamento está em andamento.')
+            # Return immediately with JSON response for AJAX handling
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({
+                    'success': True,
+                    'message': 'Arquivo enviado! Processamento iniciado em segundo plano.',
+                    'spec_id': spec_id
+                })
+            
+            flash('Arquivo enviado! Processamento iniciado em segundo plano.')
             return redirect(url_for('dashboard'))
 
         except Exception as e:
@@ -2019,6 +2050,32 @@ def upload_pdf():
             return render_template('upload_pdf.html', form=form, current_user=user)
 
     return render_template('upload_pdf.html', form=form, current_user=user)
+
+
+@app.route('/api/spec/status/<int:spec_id>', methods=['GET'])
+@login_required
+def get_spec_status(spec_id):
+    """API endpoint to check processing status of a specification"""
+    try:
+        spec = Specification.query.get(spec_id)
+        if not spec:
+            return jsonify({'success': False, 'error': 'Ficha não encontrada'}), 404
+        
+        user = User.query.get(session['user_id'])
+        # Check permissions
+        if not user.is_admin and spec.user_id != user.id:
+            return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+        
+        return jsonify({
+            'success': True,
+            'spec_id': spec.id,
+            'status': spec.processing_status,
+            'description': spec.description or 'Processando...',
+            'ref_souq': spec.ref_souq or '',
+            'has_drawing': bool(spec.technical_drawing_url)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 @app.route('/specification/<int:id>')

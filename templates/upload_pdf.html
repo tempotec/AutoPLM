@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enviar Ficha Técnica - StyleFlow</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}">
     <style>
         * {
             margin: 0;
@@ -665,15 +666,67 @@
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
     <script>
-        // Show loading indicator on form submit
+        // AJAX form submission with background processing
         document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault(); // Prevent default form submission
+            
             const fileInput = document.getElementById('pdf-input');
-            if (fileInput.files.length > 0) {
-                document.getElementById('loading-overlay').style.display = 'flex';
-                document.getElementById('submit-btn').disabled = true;
-                document.getElementById('submit-btn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processando...';
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (fileInput.files.length === 0) {
+                Toast.warning('Por favor, selecione um arquivo para enviar.');
+                return;
             }
+            
+            // Prepare form data
+            const formData = new FormData(this);
+            
+            // Show uploading toast
+            Toast.info('📤 Enviando arquivo...');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            
+            // Send AJAX request
+            fetch('/upload_pdf', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // File uploaded successfully, start background processing
+                    Toast.success('✓ Arquivo enviado com sucesso!');
+                    
+                    // Clear form
+                    document.getElementById('upload-form').reset();
+                    document.getElementById('file-info').style.display = 'none';
+                    
+                    // Start polling for completion
+                    pollSpecStatus(data.spec_id, function(statusData) {
+                        // Reload dashboard when complete
+                        if (statusData.status === 'completed') {
+                            setTimeout(() => {
+                                window.location.href = '/dashboard';
+                            }, 1500);
+                        }
+                    });
+                } else {
+                    Toast.error('❌ Erro ao enviar arquivo: ' + (data.message || 'Erro desconhecido'));
+                }
+            })
+            .catch(error => {
+                console.error('Upload error:', error);
+                Toast.error('❌ Erro na comunicação com o servidor');
+            })
+            .finally(() => {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-upload"></i> Enviar Arquivo';
+            });
         });
 
         function updateFileDisplay(file) {
