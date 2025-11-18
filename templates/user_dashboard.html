@@ -635,13 +635,21 @@
                     <option value="approved">Aprovado</option>
                     <option value="in_production">Em Produção</option>
                 </select>
+                
+                <select class="filter-select" id="priceRangeFilter" onchange="filterProducts()">
+                    <option value="">Todas as Faixas</option>
+                    <option value="P1">P1</option>
+                    <option value="P2">P2</option>
+                    <option value="P3">P3</option>
+                    <option value="P4">P4</option>
+                </select>
             </div>
 
             <!-- Products Grid -->
             {% if specifications %}
             <div class="products-grid" id="productsGrid">
                 {% for spec in specifications %}
-                <div class="product-card" data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}" data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}">
+                <div class="product-card" data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}" data-price-range="{{ spec.price_range or '' }}" data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}">
                     <a href="{{ url_for('view_specification', id=spec.id) }}" style="text-decoration: none; color: inherit;">
                         <div class="product-image">
                             {% if spec.pdf_thumbnail %}
@@ -725,6 +733,7 @@
             const collectionFilter = document.getElementById('collectionFilter') ? document.getElementById('collectionFilter').value : '';
             const supplierFilter = document.getElementById('supplierFilter') ? document.getElementById('supplierFilter').value : '';
             const statusFilter = document.getElementById('statusFilter').value;
+            const priceRangeFilter = document.getElementById('priceRangeFilter').value;
             
             const cards = document.querySelectorAll('.product-card');
             
@@ -734,13 +743,15 @@
                 const collection = card.dataset.collection;
                 const supplier = card.dataset.supplier;
                 const status = card.dataset.status;
+                const priceRange = card.dataset.priceRange;
                 
                 const matchesSearch = name.includes(searchTerm) || ref.includes(searchTerm) || collection.toLowerCase().includes(searchTerm);
                 const matchesCollection = !collectionFilter || collection === collectionFilter;
                 const matchesSupplier = !supplierFilter || supplier === supplierFilter;
                 const matchesStatus = !statusFilter || status === statusFilter;
+                const matchesPriceRange = !priceRangeFilter || priceRange === priceRangeFilter;
                 
-                if (matchesSearch && matchesCollection && matchesSupplier && matchesStatus) {
+                if (matchesSearch && matchesCollection && matchesSupplier && matchesStatus && matchesPriceRange) {
                     card.style.display = '';
                 } else {
                     card.style.display = 'none';
