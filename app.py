@@ -2541,104 +2541,130 @@ def view_drawing(id):
 
 
 def generate_drawing_background(spec_id, file_path):
-    """Background task to generate technical drawing"""
-    # Create a new database session for this thread
+    """Background task to generate technical drawing using the original image as base (image-to-image)"""
     from sqlalchemy.orm import sessionmaker
     Session = sessionmaker(bind=db.engine)
     thread_session = Session()
-
+    
     try:
         spec = thread_session.query(Specification).get(spec_id)
         if not spec:
             print(f"Specification {spec_id} not found")
             thread_session.close()
             return
-
-        # Mark as processing
+        
+        # Marcar como processando
         spec.processing_status = 'processing'
         thread_session.commit()
+        
+        # 1) Obter imagem base em bytes (foto/ilustração original da peça)
+        base_image_bytes = None
 
-        # Check if it's an image or PDF
-        images = []
         if is_image_file(spec.pdf_filename):
-            print(f"📸 Arquivo de imagem detectado: {spec.pdf_filename}")
-            # Convert image directly to base64
-            image_b64 = convert_image_to_base64(file_path)
-            if image_b64:
-                images = [image_b64]
+            # Caso o usuário tenha subido uma imagem diretamente
+            print(f"📸 Arquivo de imagem detectado para edição: {spec.pdf_filename}")
+            with open(file_path, "rb") as f:
+                base_image_bytes = f.read()
+
         elif is_pdf_file(spec.pdf_filename):
-            print(f"📄 Arquivo PDF detectado: {spec.pdf_filename}")
-            # Extract images from PDF (returns list of dicts with metadata)
+            # Caso seja PDF, extrair imagens e usar a MAIOR (normalmente a foto da peça)
+            print(f"📄 Arquivo PDF detectado para edição: {spec.pdf_filename}")
             pdf_images_data = extract_images_from_pdf(file_path)
-            # Extract only base64 strings for GPT-4 Vision
-            images = [img['base64']
-                      for img in pdf_images_data] if pdf_images_data else []
+            if pdf_images_data:
+                largest_img = max(pdf_images_data, key=lambda x: x.get('area', 0))
+                print(f"✓ Usando imagem da página {largest_img['page']} como base para edição")
+                import base64
+                base_image_bytes = base64.b64decode(largest_img['base64'])
+            else:
+                print("⚠️ Nenhuma imagem encontrada no PDF para servir de base")
         else:
             print(f"Formato de arquivo não suportado: {spec.pdf_filename}")
-            spec.processing_status = 'error'
-            thread_session.commit()
-            thread_session.close()
-            return
 
-        # Analyze images with GPT-4 Vision to get visual description
-        visual_desc = analyze_images_with_gpt4_vision(
-            images) if images else None
+        if not base_image_bytes:
+            # Fallback: se não achar imagem base, mantém o comportamento antigo (gera do zero)
+            print("⚠️ Sem imagem base — voltando para geração pura (sem edição).")
+            
+            # ANALISAR IMAGENS (se houver) SÓ PARA O PROMPT
+            images = []
+            if is_image_file(spec.pdf_filename):
+                image_b64 = convert_image_to_base64(file_path)
+                if image_b64:
+                    images = [image_b64]
+            elif is_pdf_file(spec.pdf_filename):
+                pdf_images_data = extract_images_from_pdf(file_path)
+                images = [img['base64'] for img in pdf_images_data] if pdf_images_data else []
 
-        # Build prompt with specification data and visual description
-        prompt = build_technical_drawing_prompt(spec, visual_desc)
+            visual_desc = analyze_images_with_gpt4_vision(images) if images else None
+            prompt = build_technical_drawing_prompt(spec, visual_desc)
 
-        # Generate image using GPT-Image-1 with high quality for maximum detail
-        response = openai_client.images.generate(model="gpt-image-1",
-                                                 prompt=prompt,
-                                                 size="1024x1024",
-                                                 quality="high",
-                                                 n=1)
+            response = openai_client.images.generate(
+                model="gpt-image-1",
+                prompt=prompt,
+                size="1024x1024",
+                quality="high",
+                n=1
+            )
+        else:
+            # 2) Ainda usamos o GPT-4 Vision para entender melhor a peça e enriquecer o prompt
+            images_b64 = []
+            if is_image_file(spec.pdf_filename):
+                img_b64 = convert_image_to_base64(file_path)
+                if img_b64:
+                    images_b64 = [img_b64]
+            elif is_pdf_file(spec.pdf_filename):
+                pdf_images_data = extract_images_from_pdf(file_path)
+                images_b64 = [img['base64'] for img in pdf_images_data] if pdf_images_data else []
 
-        # GPT-Image-1 returns base64 by default
-        import base64
+            visual_desc = analyze_images_with_gpt4_vision(images_b64) if images_b64 else None
+
+            # 3) Monta o prompt técnico (sem perda de detalhes) – o modelo agora vê o texto + imagem
+            prompt = build_technical_drawing_prompt(spec, visual_desc)
+
+            # 4) Chamada principal: EDITANDO a imagem base com gpt-image-1
+            import io as _io
+
+            base_image_file = _io.BytesIO(base_image_bytes)
+            base_image_file.name = "base.png"
+
+            print("🧠 Chamando gpt-image-1 em modo EDIÇÃO (images.edit) com imagem base...")
+            response = openai_client.images.edit(
+                model="gpt-image-1",
+                image=base_image_file,
+                prompt=prompt,
+                size="1024x1024",
+                quality="high",
+                n=1
+            )
+
+        # 5) Salvar resultado (mantém sua lógica atual: Object Storage com fallback local)
         import uuid
-
-        # Decode the base64 image
+        import base64
         image_data = base64.b64decode(response.data[0].b64_json)
-
-        # Generate unique filename
         drawing_filename = f"technical-drawings/drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
 
-        # Upload to Replit Object Storage
         try:
             storage_client = Client()
             storage_client.upload_from_bytes(drawing_filename, image_data)
-            print(
-                f"✅ Desenho técnico salvo no Object Storage: {drawing_filename}"
-            )
-
-            # Save the Object Storage path in the database
+            print(f"✅ Desenho técnico salvo no Object Storage: {drawing_filename}")
             spec.technical_drawing_url = drawing_filename
         except Exception as storage_error:
-            print(
-                f"❌ Erro ao fazer upload para Object Storage: {storage_error}")
-            # Fallback: save locally if Object Storage fails
+            print(f"❌ Erro ao fazer upload para Object Storage: {storage_error}")
             local_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
-            local_path = os.path.join(app.config['UPLOAD_FOLDER'],
-                                      local_filename)
+            local_path = os.path.join(app.config['UPLOAD_FOLDER'], local_filename)
             with open(local_path, 'wb') as f:
                 f.write(image_data)
             spec.technical_drawing_url = local_filename
-            print(
-                f"⚠️ Fallback: Desenho salvo localmente como {local_filename}")
+            print(f"⚠️ Fallback: Desenho salvo localmente como {local_filename}")
 
-        # Mark as completed
         spec.processing_status = 'completed'
         thread_session.commit()
         thread_session.close()
-        print(f"✅ Desenho técnico gerado com sucesso para spec {spec_id}")
+        print(f"✅ Desenho técnico gerado com sucesso para spec {spec_id} (agora image-to-image)")
 
     except Exception as e:
         print(f"❌ Error generating technical drawing for spec {spec_id}: {e}")
         import traceback
         traceback.print_exc()
-
-        # Mark as error
         try:
             if spec:
                 spec.processing_status = 'error'
