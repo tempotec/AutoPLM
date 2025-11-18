@@ -42,3 +42,6 @@ externalPort = 3000
 [deployment]
 deploymentTarget = "cloudrun"
 run = ["sh", "-c", "python app.py"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-1091eb61-871b-4870-987a-a5e22c119989"
