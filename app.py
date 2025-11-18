@@ -1051,20 +1051,29 @@ def convert_value_to_string(value):
     return value
 
 
-def get_or_create_supplier(supplier_name, user_id):
+def get_or_create_supplier(supplier_name, user_id, session=None):
     """
     Get existing supplier by name or create a new one.
     Returns the supplier object.
+    
+    Args:
+        supplier_name: Name of the supplier
+        user_id: ID of the user creating/owning the supplier
+        session: Optional SQLAlchemy session (defaults to db.session)
     """
     if not supplier_name or supplier_name.strip() == "":
         return None
+    
+    # Use provided session or default to db.session
+    if session is None:
+        session = db.session
     
     # Clean up supplier name
     supplier_name = supplier_name.strip()
     
     try:
         # Check if supplier already exists for this user (case-insensitive)
-        existing_supplier = Supplier.query.filter(
+        existing_supplier = session.query(Supplier).filter(
             db.func.lower(Supplier.name) == supplier_name.lower(),
             Supplier.user_id == user_id
         ).first()
@@ -1081,15 +1090,15 @@ def get_or_create_supplier(supplier_name, user_id):
             name=supplier_name,
             avatar_color=random.choice(colors)
         )
-        db.session.add(new_supplier)
-        db.session.commit()
+        session.add(new_supplier)
+        session.commit()
         
         print(f"✨ Novo fornecedor criado: {new_supplier.name} (ID: {new_supplier.id})")
         return new_supplier
         
     except Exception as e:
         print(f"⚠️ Erro ao buscar/criar fornecedor: {e}")
-        db.session.rollback()
+        session.rollback()
         return None
 
 
@@ -1256,10 +1265,16 @@ def save_product_image(spec_id, image_b64_or_path, is_b64=True):
 
 def process_pdf_specification(spec_id, file_path):
     """Process PDF or image file and extract specification data using OpenAI"""
+    # Create a new database session for this thread
+    from sqlalchemy.orm import sessionmaker
+    Session = sessionmaker(bind=db.engine)
+    thread_session = Session()
+    
     try:
-        spec = Specification.query.get(spec_id)
+        spec = thread_session.query(Specification).get(spec_id)
         if not spec:
             print(f"Specification {spec_id} not found")
+            thread_session.close()
             return
         
         filename = spec.pdf_filename
@@ -1285,7 +1300,8 @@ def process_pdf_specification(spec_id, file_path):
             if not image_b64:
                 print("❌ Erro ao converter imagem para base64")
                 spec.processing_status = 'error'
-                db.session.commit()
+                thread_session.commit()
+                thread_session.close()
                 return
             
             # Analyze image with GPT-4 Vision
@@ -1294,7 +1310,8 @@ def process_pdf_specification(spec_id, file_path):
             if not visual_analysis:
                 print("❌ Erro na análise visual da imagem")
                 spec.processing_status = 'error'
-                db.session.commit()
+                thread_session.commit()
+                thread_session.close()
                 return
             
             # Extract data from visual analysis (JSON format)
@@ -1367,7 +1384,7 @@ def process_pdf_specification(spec_id, file_path):
                     supplier_name = extracted_data.get('supplier')
                     if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
                         print(f"\n📦 Fornecedor detectado na análise: {supplier_name}")
-                        supplier = get_or_create_supplier(supplier_name, spec.user_id)
+                        supplier = get_or_create_supplier(supplier_name, spec.user_id, thread_session)
                         if supplier:
                             spec.supplier_id = supplier.id
                             spec.supplier = supplier.name
@@ -1398,7 +1415,8 @@ def process_pdf_specification(spec_id, file_path):
                     print(f"✓ Descrição básica extraída: {spec.description}")
             
             spec.processing_status = 'completed'
-            db.session.commit()
+            thread_session.commit()
+            thread_session.close()
             print(f"✓ Imagem processada com sucesso via análise visual!")
             return
             
@@ -1429,7 +1447,8 @@ def process_pdf_specification(spec_id, file_path):
             if not text_content or len(text_content.strip()) < 50:
                 print(f"Insufficient text extracted from PDF for spec {spec_id}")
                 spec.processing_status = 'error'
-                db.session.commit()
+                thread_session.commit()
+                thread_session.close()
                 return
 
             # Process with OpenAI
@@ -1438,7 +1457,8 @@ def process_pdf_specification(spec_id, file_path):
             if not extracted_data:
                 print(f"No data extracted from OpenAI for spec {spec_id}")
                 spec.processing_status = 'error'
-                db.session.commit()
+                thread_session.commit()
+                thread_session.close()
                 return
 
             # Map extracted data to specification fields, converting complex values
@@ -1467,7 +1487,7 @@ def process_pdf_specification(spec_id, file_path):
                 print(f"{'='*80}")
                 print(f"📦 Fornecedor detectado no PDF: {supplier_name}")
                 
-                supplier = get_or_create_supplier(supplier_name, spec.user_id)
+                supplier = get_or_create_supplier(supplier_name, spec.user_id, thread_session)
                 if supplier:
                     spec.supplier_id = supplier.id
                     spec.supplier = supplier.name
@@ -1477,26 +1497,29 @@ def process_pdf_specification(spec_id, file_path):
                 print(f"{'='*80}\n")
 
             spec.processing_status = 'completed'
-            db.session.commit()
+            thread_session.commit()
+            thread_session.close()
             print(f"Successfully processed PDF specification {spec_id}")
         else:
             print(f"⚠️ Formato de arquivo não reconhecido: {filename}")
             spec.processing_status = 'error'
-            db.session.commit()
+            thread_session.commit()
+            thread_session.close()
 
     except Exception as e:
         print(f"Error processing specification {spec_id}: {e}")
         import traceback
         traceback.print_exc()
 
-        # Update status to error
+        # Update status to error using thread session
         try:
-            spec = Specification.query.get(spec_id)
             if spec:
                 spec.processing_status = 'error'
-                db.session.commit()
+                thread_session.commit()
         except Exception as update_error:
             print(f"Error updating specification status: {update_error}")
+        finally:
+            thread_session.close()
 
 
 # Routes
