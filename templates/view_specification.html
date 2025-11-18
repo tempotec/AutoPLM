@@ -6,6 +6,8 @@
     <title>{{ specification.description or specification.ref_souq or 'Ficha Técnica' }} - StyleFlow</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}">
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
     <style>
         * {
             margin: 0;
@@ -826,30 +828,6 @@
         </main>
     </div>
 
-    <!-- Processing Overlay Modal -->
-    <div id="processingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9); z-index: 9999; justify-content: center; align-items: center;">
-        <div style="background: linear-gradient(135deg, #1e2538 0%, #2a3348 100%); padding: 40px; border-radius: 16px; text-align: center; max-width: 500px; box-shadow: 0 8px 32px rgba(0,0,0,0.4); border: 1px solid #3a4560;">
-            <div class="spinner-border text-primary mb-4" role="status" style="width: 4rem; height: 4rem;">
-                <span class="visually-hidden">Gerando...</span>
-            </div>
-            <h3 class="mb-3" style="color: #fff;"><i class="fas fa-exclamation-triangle text-warning me-2"></i>Não saia desta página!</h3>
-            <p class="mb-3" style="font-size: 1.1rem; color: #e8eaf0;">
-                <strong>Gerando desenho técnico...</strong>
-            </p>
-            <p class="mb-0" style="color: #8b92b0;">
-                <i class="fas fa-clock me-1"></i>Este processo leva aproximadamente 30 segundos.<br>
-                A página será atualizada automaticamente quando concluir.
-            </p>
-            <div class="mt-4">
-                <div class="progress" style="height: 25px; background: #0f1320;">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%">
-                        Processando...
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- File Viewer Modal -->
     <div class="modal fade" id="pdfViewerModal" tabindex="-1" aria-labelledby="pdfViewerModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
@@ -892,29 +870,87 @@
     }
 
     function handleDrawingSubmit(event, form, isRegenerate) {
+        event.preventDefault();
+        
         if (isRegenerate) {
             if (!confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.')) {
-                event.preventDefault();
                 return false;
             }
-        }
-        
-        const overlay = document.getElementById('processingOverlay');
-        if (overlay) {
-            overlay.style.display = 'flex';
         }
         
         const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Gerando...';
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Iniciando...';
         }
         
-        window.onbeforeunload = function() {
-            return "O desenho técnico está sendo gerado. Se você sair agora, o processo será interrompido.";
-        };
+        // Submit via AJAX
+        const formData = new FormData(form);
         
-        return true;
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show processing toast
+                if (typeof Toast !== 'undefined') {
+                    Toast.success('Geração iniciada! Processamento em segundo plano...');
+                    // Start polling for status
+                    if (typeof pollSpecStatus !== 'undefined') {
+                        pollSpecStatus(data.spec_id, function(statusData) {
+                            // Reload page when complete to show new drawing
+                            if (statusData.status === 'completed') {
+                                setTimeout(() => location.reload(), 1000);
+                            }
+                        });
+                    }
+                } else {
+                    alert('Geração iniciada! A página será recarregada quando concluir.');
+                    // Fallback: poll manually
+                    const checkStatus = setInterval(() => {
+                        fetch(`/api/spec/status/${data.spec_id}`)
+                            .then(r => r.json())
+                            .then(s => {
+                                if (s.status === 'completed' || s.status === 'error') {
+                                    clearInterval(checkStatus);
+                                    location.reload();
+                                }
+                            });
+                    }, 3000);
+                }
+            } else {
+                if (typeof Toast !== 'undefined') {
+                    Toast.error(data.error || 'Erro ao iniciar geração');
+                } else {
+                    alert(data.error || 'Erro ao iniciar geração');
+                }
+                // Re-enable button
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = isRegenerate ? '<i class="fas fa-sync-alt me-2"></i>Gerar Novo Desenho' : '<i class="fas fa-magic me-2"></i>Gerar Desenho Técnico';
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (typeof Toast !== 'undefined') {
+                Toast.error('Erro de conexão. Tente novamente.');
+            } else {
+                alert('Erro de conexão. Tente novamente.');
+            }
+            // Re-enable button
+            if (submitBtn) {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = isRegenerate ? '<i class="fas fa-sync-alt me-2"></i>Gerar Novo Desenho' : '<i class="fas fa-magic me-2"></i>Gerar Desenho Técnico';
+            }
+        });
+        
+        return false;
     }
 
     function togglePdfViewer() {

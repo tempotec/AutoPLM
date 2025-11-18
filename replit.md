@@ -32,15 +32,15 @@ Preferred communication style: Simple, everyday language.
 
 ## System Design Choices
 - **Data Model**: Includes Specifications, Collections, Suppliers, and relationships between them. Suppliers can be linked to specifications for better tracking of manufacturing partners.
-- **AI Integration Workflow**:
-    1. PDF/Image upload and data extraction (GPT-4-Turbo).
-    2. Image extraction from PDF (PyPDF2).
-    3. Visual analysis of garment images (GPT-4o Vision) to produce structured JSON.
-    4. Technical drawing prompt construction using extracted data and visual analysis.
-    5. Clean flat sketch generation (GPT-Image-1) without measurements.
-    6. Object Storage for generated drawings and database record of URLs.
+- **AI Integration Workflow** (totalmente assíncrono em background):
+    1. **Upload de Arquivo**: PDF/Image upload retorna imediatamente, processamento em thread separada.
+    2. **Extração de Dados**: Análise de texto (GPT-4-Turbo) e extração de imagens (PyPDF2) em background.
+    3. **Análise Visual**: GPT-4o Vision analisa imagens para produzir JSON estruturado com detalhes de construção.
+    4. **Geração de Desenho Técnico**: Usuário clica em "Gerar Desenho Técnico", requisição retorna instantaneamente, geração (GPT-Image-1) ocorre em background.
+    5. **Notificações em Tempo Real**: Sistema de toast mostra "Processando..." com polling automático do status.
+    6. **Armazenamento**: Object Storage para desenhos gerados, com fallback para sistema de arquivos local.
 - **Feature Set**:
-    - **Asynchronous File Upload**: Files are processed in background threads while users can navigate freely. Real-time status updates via AJAX polling with toast notifications showing "Processando", "Completo", or "Erro" states.
+    - **Asynchronous File Upload & Drawing Generation**: Files and technical drawings are processed in background threads while users can navigate freely. Real-time status updates via AJAX polling with toast notifications showing "Processando", "Completo", or "Erro" states. Users never experience blocked UI - all AI operations happen asynchronously.
     - **Data Extraction**: Transforms unstructured PDF content into structured records (product identification, commercial info, deadlines, materials, technical measurements).
     - **AI-Powered Categorization**: Automatic classification of garments into Grupo (TECIDO PLANO, MALHA, TRICOT, JEANS) and Subgrupo (BLAZER, BLUSA, CALÇA, etc.) using GPT-4o Vision and GPT-4 Text analysis. Fields are auto-filled during creation and remain editable by users.
     - **Auto-Registration of Suppliers**: When processing PDFs/images, the system automatically extracts supplier names and creates supplier records if they don't exist. Suppliers are matched case-insensitively to avoid duplicates, then linked to specifications.
