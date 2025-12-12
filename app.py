@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm, CSRFProtect
@@ -21,6 +22,15 @@ from openai import OpenAI
 
 # Import Replit Object Storage
 from replit.object_storage import Client
+
+# Import RPA Monitor Client for system monitoring
+try:
+    from rpa_monitor_client import setup_rpa_monitor, rpa_log, rpa
+    RPA_MONITOR_ENABLED = True
+except ImportError:
+    RPA_MONITOR_ENABLED = False
+    rpa_log = None
+    print("WARNING: rpa_monitor_client not installed, monitoring disabled")
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET')
@@ -64,6 +74,63 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY) if OPENAI_API_KEY else None
 
 # Create upload directory if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Initialize RPA Monitor for system monitoring
+if RPA_MONITOR_ENABLED:
+    try:
+        RPA_MONITOR_ID = os.environ.get("RPA_MONITOR_ID")
+        RPA_MONITOR_HOST = os.environ.get("RPA_MONITOR_HOST")
+        RPA_MONITOR_REGION = os.environ.get("RPA_MONITOR_REGION", "default")
+        RPA_MONITOR_TRANSPORT = os.environ.get("RPA_MONITOR_TRANSPORT", "ws")
+        
+        if RPA_MONITOR_ID and RPA_MONITOR_HOST:
+            setup_rpa_monitor(
+                rpa_id=RPA_MONITOR_ID,
+                host=RPA_MONITOR_HOST,
+                port=None,
+                region=RPA_MONITOR_REGION,
+                transport=RPA_MONITOR_TRANSPORT,
+            )
+            print(f"RPA Monitor connected: {RPA_MONITOR_ID} -> {RPA_MONITOR_HOST}")
+        else:
+            print("RPA Monitor: Missing RPA_MONITOR_ID or RPA_MONITOR_HOST env vars")
+            RPA_MONITOR_ENABLED = False
+    except Exception as e:
+        print(f"RPA Monitor initialization failed: {e}")
+        RPA_MONITOR_ENABLED = False
+
+
+def rpa_info(message, regiao="sistema"):
+    """Helper function to log INFO messages to RPA Monitor"""
+    if RPA_MONITOR_ENABLED and rpa_log:
+        try:
+            rpa_log.info(message)
+        except Exception as e:
+            print(f"RPA log error: {e}")
+
+
+def rpa_warn(message, regiao="sistema"):
+    """Helper function to log WARNING messages to RPA Monitor"""
+    if RPA_MONITOR_ENABLED and rpa_log:
+        try:
+            rpa_log.warn(message)
+        except Exception as e:
+            print(f"RPA log error: {e}")
+
+
+def rpa_error(message, exc=None, regiao="sistema", take_screenshot=True):
+    """Helper function to log ERROR messages to RPA Monitor with screenshot"""
+    if RPA_MONITOR_ENABLED and rpa_log:
+        try:
+            rpa_log.error(message, exc=exc, regiao=regiao)
+            if take_screenshot:
+                agora = time.time()
+                rpa_log.screenshot(
+                    filename=f"error_{int(agora)}.png",
+                    regiao=regiao,
+                )
+        except Exception as e:
+            print(f"RPA log error: {e}")
 
 
 # Database Models
@@ -1830,9 +1897,11 @@ def login():
             session['user_id'] = user.id
             session['is_admin'] = user.is_admin
             log_activity('LOGIN', user_id=user.id, username=user.username)
+            rpa_info(f"LOGIN: Usuário '{user.username}' autenticado com sucesso")
             flash('Login successful!')
             return redirect(url_for('dashboard'))
         log_activity('LOGIN_FAILED', metadata={'attempted_username': form.username.data})
+        rpa_warn(f"LOGIN_FAILED: Tentativa de login falhou para usuário '{form.username.data}'")
         flash('Invalid username or password.')
     return render_template('login.html', form=form)
 
@@ -1845,6 +1914,7 @@ def logout():
         user = User.query.get(user_id)
         username = user.username if user else None
         log_activity('LOGOUT', user_id=user_id, username=username)
+        rpa_info(f"LOGOUT: Usuário '{username}' desconectado")
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('login'))
@@ -2204,6 +2274,7 @@ def create_supplier():
         db.session.commit()
         
         log_activity('CREATE_SUPPLIER', 'supplier', supplier.id, target_name=supplier.name)
+        rpa_info(f"CREATE_SUPPLIER: Fornecedor '{supplier.name}' criado (ID: {supplier.id})")
 
         return jsonify({
             'success': True,
@@ -2272,6 +2343,7 @@ def update_supplier(id):
         db.session.commit()
         
         log_activity('EDIT_SUPPLIER', 'supplier', supplier.id, target_name=supplier.name)
+        rpa_info(f"EDIT_SUPPLIER: Fornecedor '{supplier.name}' atualizado (ID: {supplier.id})")
 
         return jsonify({
             'success': True,
@@ -2297,6 +2369,7 @@ def delete_supplier(id):
         db.session.delete(supplier)
         db.session.commit()
         log_activity('DELETE_SUPPLIER', 'supplier', id, target_name=supplier_name)
+        rpa_info(f"DELETE_SUPPLIER: Fornecedor '{supplier_name}' excluído (ID: {id})")
         return jsonify({
             'success': True,
             'message': 'Fornecedor excluído com sucesso!'
@@ -2374,6 +2447,7 @@ def upload_pdf():
             log_activity('UPLOAD_FILE', 'specification', spec_id, 
                         target_name=spec.description or filename,
                         metadata={'filename': filename, 'collection_id': spec.collection_id, 'supplier_id': spec.supplier_id})
+            rpa_info(f"UPLOAD: Arquivo '{filename}' enviado pelo usuário '{user.username}'")
 
             # Process PDF in background thread with app context
             def process_in_background():
@@ -2381,11 +2455,14 @@ def upload_pdf():
                     try:
                         # Query fresh instance from database
                         from sqlalchemy.orm import scoped_session, sessionmaker
+                        rpa_info(f"PROCESSAMENTO: Iniciando processamento do arquivo '{filename}' (ID: {spec_id})")
                         process_pdf_specification(spec_id, file_path)
+                        rpa_info(f"PROCESSAMENTO: Arquivo '{filename}' (ID: {spec_id}) processado com sucesso")
                     except Exception as e:
                         print(f"❌ Error in background processing thread: {e}")
                         import traceback
                         traceback.print_exc()
+                        rpa_error(f"PROCESSAMENTO_ERRO: Falha ao processar '{filename}' (ID: {spec_id})", exc=e, regiao="processamento")
                         # Mark as error in database
                         try:
                             error_spec = Specification.query.get(spec_id)
@@ -2416,6 +2493,7 @@ def upload_pdf():
             print(f"Error in upload_pdf: {e}")
             import traceback
             traceback.print_exc()
+            rpa_error(f"UPLOAD_ERRO: Erro ao fazer upload do arquivo", exc=e, regiao="upload")
             flash(
                 'Erro ao processar o arquivo PDF. Por favor, tente novamente ou contate o suporte.'
             )
@@ -2472,6 +2550,7 @@ def view_specification(id):
 
     log_activity('VIEW_SPECIFICATION', 'specification', spec.id, 
                 target_name=spec.description or spec.ref_souq)
+    rpa_info(f"VIEW_SPEC: Visualização da especificação ID {spec.id}")
     return render_template('view_specification.html', specification=spec)
 
 
@@ -2496,6 +2575,7 @@ def download_pdf(id):
         if os.path.exists(file_path):
             log_activity('DOWNLOAD_FILE', 'specification', spec.id,
                         target_name=spec.pdf_filename)
+            rpa_info(f"DOWNLOAD_FILE: Arquivo '{spec.pdf_filename}' baixado (ID: {spec.id})")
             return send_file(file_path,
                              as_attachment=True,
                              download_name=spec.pdf_filename)
@@ -2660,6 +2740,7 @@ def download_drawing(id):
         
         log_activity('DOWNLOAD_DRAWING', 'specification', spec.id,
                     target_name=spec.description or spec.ref_souq)
+        rpa_info(f"DOWNLOAD_DRAWING: Desenho técnico baixado para spec ID {spec.id}")
         
         # New format: static file path
         if spec.technical_drawing_url.startswith('/static/'):
@@ -2880,18 +2961,21 @@ def generate_technical_drawing(id):
         
         log_activity('GENERATE_DRAWING', 'specification', spec_id,
                     target_name=spec.description or spec.ref_souq)
+        rpa_info(f"DESENHO_TECNICO: Iniciando geração para spec ID {spec_id} por '{user.username}'")
 
         # Process drawing in background thread with app context
         def process_in_background():
             with app.app_context():
                 try:
                     generate_drawing_background(spec_id, file_path)
+                    rpa_info(f"DESENHO_TECNICO: Geração concluída para spec ID {spec_id}")
                 except Exception as e:
                     print(
                         f"❌ Error in background drawing generation thread: {e}"
                     )
                     import traceback
                     traceback.print_exc()
+                    rpa_error(f"DESENHO_TECNICO_ERRO: Falha ao gerar desenho para spec ID {spec_id}", exc=e, regiao="geracao_desenho")
                     # Mark as error in database
                     try:
                         from sqlalchemy.orm import sessionmaker
@@ -2922,6 +3006,7 @@ def generate_technical_drawing(id):
         print(f"Error in generate_technical_drawing: {e}")
         import traceback
         traceback.print_exc()
+        rpa_error(f"DESENHO_TECNICO_ERRO: Erro ao iniciar geração de desenho", exc=e, regiao="geracao_desenho")
         return jsonify({
             'success': False,
             'error': 'Erro ao iniciar geração de desenho'
@@ -2967,6 +3052,7 @@ def edit_specification(id):
             db.session.commit()
             log_activity('EDIT_SPECIFICATION', 'specification', spec.id,
                         target_name=spec.description or spec.ref_souq)
+            rpa_info(f"EDIT_SPEC: Especificação ID {spec.id} atualizada")
             flash('Especificação atualizada com sucesso!')
             return redirect(url_for('view_specification', id=spec.id))
         except Exception as e:
@@ -3004,10 +3090,12 @@ def delete_specification(id):
         db.session.delete(spec)
         db.session.commit()
         log_activity('DELETE_SPECIFICATION', 'specification', id, target_name=spec_name)
+        rpa_info(f"DELETE_SPEC: Especificação '{spec_name}' (ID: {id}) excluída")
         flash('Especificação excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
         print(f"Erro ao excluir especificação {id}: {e}")
+        rpa_error(f"DELETE_SPEC_ERRO: Erro ao excluir especificação ID {id}", exc=e, regiao="delete_spec")
         flash('Erro ao excluir especificação. Tente novamente.')
 
     return redirect(url_for('dashboard'))
@@ -3185,6 +3273,7 @@ def create_collection():
         db.session.add(new_collection)
         db.session.commit()
         log_activity('CREATE_COLLECTION', 'collection', new_collection.id, target_name=name)
+        rpa_info(f"CREATE_COLLECTION: Coleção '{name}' criada (ID: {new_collection.id})")
         flash(f'Coleção "{name}" criada com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -3288,6 +3377,7 @@ def edit_collection(id):
 
         db.session.commit()
         log_activity('EDIT_COLLECTION', 'collection', collection.id, target_name=name)
+        rpa_info(f"EDIT_COLLECTION: Coleção '{name}' atualizada (ID: {collection.id})")
         flash(f'Coleção "{name}" atualizada com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -3332,6 +3422,7 @@ def delete_collection(id):
         db.session.delete(collection)
         db.session.commit()
         log_activity('DELETE_COLLECTION', 'collection', id, target_name=collection_name)
+        rpa_info(f"DELETE_COLLECTION: Coleção '{collection_name}' excluída (ID: {id})")
         flash(f'Coleção "{collection_name}" excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -3510,5 +3601,8 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
             print("Admin user created: username='admin', password='admin123'")
+        
+        # Log system startup to RPA Monitor
+        rpa_info("SISTEMA: StyleSheet PLM iniciado com sucesso")
 
     app.run(host='0.0.0.0', port=5000, debug=True)

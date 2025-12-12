@@ -5,7 +5,7 @@ integrations = ["python_openai:1.0.0"]
 
 [nix]
 channel = "stable-25_05"
-packages = ["freetype", "gumbo", "harfbuzz", "jbig2dec", "lcms2", "libimagequant", "libjpeg", "libjpeg_turbo", "libtiff", "libwebp", "libxcrypt", "mupdf", "openjpeg", "swig", "tcl", "tk", "xcbuild", "zlib"]
+packages = ["freetype", "gumbo", "harfbuzz", "jbig2dec", "lcms2", "libimagequant", "libjpeg", "libjpeg_turbo", "libtiff", "libwebp", "libxcrypt", "mupdf", "openjpeg", "swig", "tcl", "tk", "xcbuild", "zlib", "unzip"]
 
 [workflows]
 runButton = "Project"
@@ -41,3 +41,11 @@ run = ["sh", "-c", "python app.py"]
 
 [objectStorage]
 defaultBucketID = "replit-objstore-1091eb61-871b-4870-987a-a5e22c119989"
+
+[userenv]
+
+[userenv.shared]
+RPA_MONITOR_ID = "APP-GESTAO-INOVAILAB"
+RPA_MONITOR_HOST = "wss://app-in-sight.replit.app/ws"
+RPA_MONITOR_REGION = "Sudeste"
+RPA_MONITOR_TRANSPORT = "ws"
