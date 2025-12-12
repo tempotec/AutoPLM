@@ -208,6 +208,60 @@ class Specification(db.Model):
                                    lazy=True)
 
 
+class ActivityLog(db.Model):
+    """Model for tracking all user activities in the system"""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    username = db.Column(db.String(100))
+    action = db.Column(db.String(100), nullable=False)
+    target_type = db.Column(db.String(50))
+    target_id = db.Column(db.Integer)
+    target_name = db.Column(db.String(255))
+    ip_address = db.Column(db.String(50))
+    user_agent = db.Column(db.String(500))
+    metadata_json = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
+    
+    user = db.relationship('User', backref=db.backref('activity_logs', lazy='dynamic'))
+    
+    __table_args__ = (
+        db.Index('idx_activity_user_created', 'user_id', 'created_at'),
+        db.Index('idx_activity_action_created', 'action', 'created_at'),
+    )
+
+
+def log_activity(action, target_type=None, target_id=None, target_name=None, metadata=None, user_id=None, username=None):
+    """Helper function to log user activities"""
+    import json
+    from flask import request
+    
+    try:
+        if user_id is None and 'user_id' in session:
+            user_id = session.get('user_id')
+            user = User.query.get(user_id)
+            username = user.username if user else None
+        
+        ip_address = request.remote_addr if request else None
+        user_agent = request.headers.get('User-Agent', '')[:500] if request else None
+        
+        activity = ActivityLog(
+            user_id=user_id,
+            username=username,
+            action=action,
+            target_type=target_type,
+            target_id=target_id,
+            target_name=target_name,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            metadata_json=json.dumps(metadata) if metadata else None
+        )
+        db.session.add(activity)
+        db.session.commit()
+    except Exception as e:
+        print(f"Error logging activity: {e}")
+        db.session.rollback()
+
+
 # Forms
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -1775,14 +1829,22 @@ def login():
         if user and user.check_password(form.password.data):
             session['user_id'] = user.id
             session['is_admin'] = user.is_admin
+            log_activity('LOGIN', user_id=user.id, username=user.username)
             flash('Login successful!')
             return redirect(url_for('dashboard'))
+        log_activity('LOGIN_FAILED', metadata={'attempted_username': form.username.data})
         flash('Invalid username or password.')
     return render_template('login.html', form=form)
 
 
 @app.route('/logout')
 def logout():
+    user_id = session.get('user_id')
+    username = None
+    if user_id:
+        user = User.query.get(user_id)
+        username = user.username if user else None
+        log_activity('LOGOUT', user_id=user_id, username=username)
     session.clear()
     flash('You have been logged out.')
     return redirect(url_for('login'))
@@ -2140,6 +2202,8 @@ def create_supplier():
 
         db.session.add(supplier)
         db.session.commit()
+        
+        log_activity('CREATE_SUPPLIER', 'supplier', supplier.id, target_name=supplier.name)
 
         return jsonify({
             'success': True,
@@ -2206,6 +2270,8 @@ def update_supplier(id):
         supplier.avatar_color = data.get('avatar_color', supplier.avatar_color)
 
         db.session.commit()
+        
+        log_activity('EDIT_SUPPLIER', 'supplier', supplier.id, target_name=supplier.name)
 
         return jsonify({
             'success': True,
@@ -2227,8 +2293,10 @@ def delete_supplier(id):
         return jsonify({'success': False, 'message': 'Acesso negado'}), 403
 
     try:
+        supplier_name = supplier.name
         db.session.delete(supplier)
         db.session.commit()
+        log_activity('DELETE_SUPPLIER', 'supplier', id, target_name=supplier_name)
         return jsonify({
             'success': True,
             'message': 'Fornecedor excluído com sucesso!'
@@ -2302,6 +2370,10 @@ def upload_pdf():
             db.session.commit()
 
             spec_id = spec.id  # Store ID before thread
+            
+            log_activity('UPLOAD_FILE', 'specification', spec_id, 
+                        target_name=spec.description or filename,
+                        metadata={'filename': filename, 'collection_id': spec.collection_id, 'supplier_id': spec.supplier_id})
 
             # Process PDF in background thread with app context
             def process_in_background():
@@ -2398,6 +2470,8 @@ def view_specification(id):
         flash('Acesso negado.')
         return redirect(url_for('dashboard'))
 
+    log_activity('VIEW_SPECIFICATION', 'specification', spec.id, 
+                target_name=spec.description or spec.ref_souq)
     return render_template('view_specification.html', specification=spec)
 
 
@@ -2420,6 +2494,8 @@ def download_pdf(id):
         file_path = os.path.join(app.config['UPLOAD_FOLDER'],
                                  spec.pdf_filename)
         if os.path.exists(file_path):
+            log_activity('DOWNLOAD_FILE', 'specification', spec.id,
+                        target_name=spec.pdf_filename)
             return send_file(file_path,
                              as_attachment=True,
                              download_name=spec.pdf_filename)
@@ -2581,6 +2657,9 @@ def download_drawing(id):
     try:
         # Generate download filename
         download_filename = f"desenho_tecnico_{spec.ref_souq or spec.id}.png"
+        
+        log_activity('DOWNLOAD_DRAWING', 'specification', spec.id,
+                    target_name=spec.description or spec.ref_souq)
         
         # New format: static file path
         if spec.technical_drawing_url.startswith('/static/'):
@@ -2798,6 +2877,9 @@ def generate_technical_drawing(id):
         db.session.commit()
 
         spec_id = spec.id
+        
+        log_activity('GENERATE_DRAWING', 'specification', spec_id,
+                    target_name=spec.description or spec.ref_souq)
 
         # Process drawing in background thread with app context
         def process_in_background():
@@ -2883,6 +2965,8 @@ def edit_specification(id):
         spec.collection_id = collection_id
         try:
             db.session.commit()
+            log_activity('EDIT_SPECIFICATION', 'specification', spec.id,
+                        target_name=spec.description or spec.ref_souq)
             flash('Especificação atualizada com sucesso!')
             return redirect(url_for('view_specification', id=spec.id))
         except Exception as e:
@@ -2916,8 +3000,10 @@ def delete_specification(id):
         if os.path.exists(file_path):
             os.remove(file_path)
 
+        spec_name = spec.description or spec.ref_souq
         db.session.delete(spec)
         db.session.commit()
+        log_activity('DELETE_SPECIFICATION', 'specification', id, target_name=spec_name)
         flash('Especificação excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -3098,6 +3184,7 @@ def create_collection():
                                     cover_image=cover_image_path)
         db.session.add(new_collection)
         db.session.commit()
+        log_activity('CREATE_COLLECTION', 'collection', new_collection.id, target_name=name)
         flash(f'Coleção "{name}" criada com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -3200,6 +3287,7 @@ def edit_collection(id):
         collection.status = status
 
         db.session.commit()
+        log_activity('EDIT_COLLECTION', 'collection', collection.id, target_name=name)
         flash(f'Coleção "{name}" atualizada com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -3243,6 +3331,7 @@ def delete_collection(id):
         collection_name = collection.name
         db.session.delete(collection)
         db.session.commit()
+        log_activity('DELETE_COLLECTION', 'collection', id, target_name=collection_name)
         flash(f'Coleção "{collection_name}" excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -3328,6 +3417,86 @@ def technical_drawings():
                            search=search,
                            selected_collection=collection_filter,
                            selected_supplier=supplier_filter)
+
+
+@app.route('/admin/activity-logs')
+@admin_required
+def activity_logs():
+    """View activity logs - Admin only"""
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('login'))
+    
+    # Pagination
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    
+    # Filters
+    search_query = request.args.get('search', '').strip()
+    action_filter = request.args.get('action', '').strip()
+    user_filter = request.args.get('user', '').strip()
+    date_from = request.args.get('date_from', '').strip()
+    date_to = request.args.get('date_to', '').strip()
+    
+    # Base query
+    query = ActivityLog.query
+    
+    # Apply filters
+    if search_query:
+        query = query.filter(
+            db.or_(
+                ActivityLog.username.ilike(f'%{search_query}%'),
+                ActivityLog.target_name.ilike(f'%{search_query}%'),
+                ActivityLog.action.ilike(f'%{search_query}%')
+            )
+        )
+    
+    if action_filter:
+        query = query.filter(ActivityLog.action == action_filter)
+    
+    if user_filter:
+        query = query.filter(ActivityLog.username.ilike(f'%{user_filter}%'))
+    
+    if date_from:
+        try:
+            from_date = datetime.strptime(date_from, '%Y-%m-%d')
+            query = query.filter(ActivityLog.created_at >= from_date)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            to_date = datetime.strptime(date_to, '%Y-%m-%d')
+            to_date = to_date.replace(hour=23, minute=59, second=59)
+            query = query.filter(ActivityLog.created_at <= to_date)
+        except ValueError:
+            pass
+    
+    # Get unique actions for filter dropdown
+    all_actions = db.session.query(ActivityLog.action).distinct().order_by(ActivityLog.action).all()
+    actions_list = [a[0] for a in all_actions]
+    
+    # Get unique users for filter dropdown
+    all_users = db.session.query(ActivityLog.username).distinct().order_by(ActivityLog.username).all()
+    users_list = [u[0] for u in all_users if u[0]]
+    
+    # Paginate results
+    pagination = query.order_by(ActivityLog.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False)
+    
+    return render_template('activity_logs.html',
+                          current_user=user,
+                          logs=pagination.items,
+                          pagination=pagination,
+                          actions_list=actions_list,
+                          users_list=users_list,
+                          search_query=search_query,
+                          action_filter=action_filter,
+                          user_filter=user_filter,
+                          date_from=date_from,
+                          date_to=date_to)
 
 
 if __name__ == '__main__':
