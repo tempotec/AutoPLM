@@ -63,6 +63,13 @@ Preferred communication style: Simple, everyday language.
     - **GPT-4-Turbo**: Text analysis and structured data extraction from PDFs.
     - **GPT-4o Vision**: Analyzing garment images from PDFs to describe construction details.
     - **GPT-Image-1**: Generating professional technical drawings (flat sketches).
+- **RPA Monitor Client**: Monitoramento em tempo real do sistema via WebSocket. Instalado via `pip install -e .` do pacote em `attached_assets/rpa_monitor_client/`. Envia logs INFO, WARNING e ERROR para servidor central, com screenshots automáticos em erros.
 - **Replit Object Storage**: For persistent storage of technical drawings.
 - **SQL Database**: Configured via `SQLALCHEMY_DATABASE_URI`.
-- **Environment Variables**: `SESSION_SECRET` for session security, `OPENAI_API_KEY` for AI processing.
+- **Environment Variables**: 
+    - `SESSION_SECRET` for session security
+    - `OPENAI_API_KEY` for AI processing
+    - `RPA_MONITOR_ID` - ID do sistema no RPA Monitor (APP-GESTAO-INOVAILAB)
+    - `RPA_MONITOR_HOST` - Endpoint WebSocket do servidor RPA
+    - `RPA_MONITOR_REGION` - Região do sistema (Sudeste)
+    - `RPA_MONITOR_TRANSPORT` - Tipo de transporte (ws)
