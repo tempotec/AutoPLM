@@ -2283,6 +2283,7 @@ def create_supplier():
         })
     except Exception as e:
         db.session.rollback()
+        rpa_error(f"CREATE_SUPPLIER_ERRO: Erro ao criar fornecedor", exc=e, regiao="fornecedores")
         print(f"Error creating supplier: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -2351,6 +2352,7 @@ def update_supplier(id):
         })
     except Exception as e:
         db.session.rollback()
+        rpa_error(f"EDIT_SUPPLIER_ERRO: Erro ao atualizar fornecedor", exc=e, regiao="fornecedores")
         print(f"Error updating supplier: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -2376,6 +2378,7 @@ def delete_supplier(id):
         })
     except Exception as e:
         db.session.rollback()
+        rpa_error(f"DELETE_SUPPLIER_ERRO: Erro ao excluir fornecedor ID {id}", exc=e, regiao="fornecedores")
         print(f"Error deleting supplier: {e}")
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -3277,6 +3280,7 @@ def create_collection():
         flash(f'Coleção "{name}" criada com sucesso!')
     except Exception as e:
         db.session.rollback()
+        rpa_error(f"CREATE_COLLECTION_ERRO: Erro ao criar coleção '{name}'", exc=e, regiao="colecoes")
         flash(f'Erro ao criar coleção: {str(e)}')
         print(f"Erro ao criar coleção: {e}")
 
@@ -3381,6 +3385,7 @@ def edit_collection(id):
         flash(f'Coleção "{name}" atualizada com sucesso!')
     except Exception as e:
         db.session.rollback()
+        rpa_error(f"EDIT_COLLECTION_ERRO: Erro ao atualizar coleção ID {collection.id}", exc=e, regiao="colecoes")
         flash(f'Erro ao atualizar coleção: {str(e)}')
         print(f"Erro ao atualizar coleção: {e}")
 
@@ -3426,6 +3431,7 @@ def delete_collection(id):
         flash(f'Coleção "{collection_name}" excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
+        rpa_error(f"DELETE_COLLECTION_ERRO: Erro ao excluir coleção ID {id}", exc=e, regiao="colecoes")
         flash(f'Erro ao excluir coleção: {str(e)}')
         print(f"Erro ao excluir coleção: {e}")
 
