@@ -373,8 +373,7 @@ class UploadPDFForm(FlaskForm):
                                  ('P2', 'P2'),
                                  ('P3', 'P3'),
                                  ('P4', 'P4')
-                             ],
-                             validators=[DataRequired()])
+                             ])
     pdf_file = FileField('File',
                          validators=[
                              FileRequired(),
