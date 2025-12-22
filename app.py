@@ -421,7 +421,7 @@ class SpecificationForm(FlaskForm):
                                 validators=[])
     supplier = StringField('Fornecedor')
     corner = StringField('Corner')
-    main_fabric = StringField('Tecido Principal')
+    main_fabric = StringField('Matéria-Prima')
     main_group = SelectField('Grupo', choices=GROUP_CHOICES)
     sub_group = SelectField('Subgrupo', choices=SUBGROUP_CHOICES)
     price_range = SelectField('Faixa de Preço',
@@ -1420,7 +1420,7 @@ CAMPOS OBRIGATÓRIOS A EXTRAIR:
    - collection: Coleção (ex: "Inverno 2025", "W26")
    - supplier: NOME DA EMPRESA fornecedora/fabricante (ex: "LUMINOUS", "MENEGOTTI", "RENASC"). ATENÇÃO: NÃO é matéria-prima, composição ou tecido! É o nome da empresa que fabrica a peça. Geralmente aparece no cabeçalho ou rodapé do documento.
    - corner: Corner/departamento/marca (ex: "SOUQ", "ANIMALE")
-   - main_fabric: Tecido principal utilizado na peça (ex: "CREPE", "MUSSELINE", "SEDA", "VISCOSE", "LINHO"). Este é o NOME DO TECIDO, não a composição química.
+   - main_fabric: Matéria-prima/tecido principal utilizado na peça (ex: "CREPE", "MUSSELINE", "SEDA", "VISCOSE", "LINHO"). Este é o NOME DO TECIDO/MATÉRIA-PRIMA, não a composição química.
    - main_group: Grupo do produto - DEVE SER EXATAMENTE um destes valores: TECIDO PLANO, MALHA, TRICOT, JEANS (em MAIÚSCULAS)
    - sub_group: Subgrupo do produto - DEVE SER EXATAMENTE um destes valores: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA, TÚNICA (em MAIÚSCULAS)
 
