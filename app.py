@@ -1403,11 +1403,24 @@ def process_specification_with_openai(text_content):
         return None
 
     try:
-        prompt = f"""Você é um especialista em análise de fichas técnicas de vestuário. Extraia TODAS as informações disponíveis do texto abaixo e retorne em formato JSON estruturado.
+        prompt = f"""Você é um especialista em análise de fichas técnicas de vestuário da marca SOUQ. Extraia TODAS as informações disponíveis do texto abaixo e retorne em formato JSON estruturado.
+
+ESTRUTURA TÍPICA DA FICHA TÉCNICA SOUQ:
+- Cabeçalho contém: REF SOUQ, COLEÇÃO, FORNECEDOR, CORNER, DESCRIÇÃO, ESTILISTA
+- Corpo contém: OBSERVAÇÕES/AVIAMENTOS, MATÉRIA-PRIMA E COMPOSIÇÃO, CORES
+- Abaixo: DESENHO TÉCNICO e fotos
+
+REGRAS CRÍTICAS DE EXTRAÇÃO:
+1. **FORNECEDOR** = campo rotulado "FORNECEDOR:" no cabeçalho. É o nome da EMPRESA que fabrica (ex: "FOR ADY", "RENASC", "TÊXTIL ABC"). NÃO confundir com matéria-prima!
+2. **MATÉRIA-PRIMA** = campo rotulado "MATÉRIA-PRIMA E COMPOSIÇÃO:". Extraia APENAS o nome do TECIDO/MATERIAL, IGNORANDO informações de estoque ou logística entre parênteses.
+   - Exemplo: "LUMINOUS - MENEGOTTI (ESTOQUE FOR ADY)" → extrair apenas "LUMINOUS - MENEGOTTI"
+   - Exemplo: "CREPE DE SEDA (LOTE 123)" → extrair apenas "CREPE DE SEDA"
+3. **ESTILISTA** = campo rotulado "ESTILISTA:" no cabeçalho. Nome do(a) estilista responsável.
+4. **CORNER** = campo rotulado "CORNER:" no cabeçalho. Departamento/marca.
+5. **COMPOSIÇÃO QUÍMICA** = Se houver porcentagem de materiais (ex: "100% algodão", "60% poliéster") extraia para o campo composition. Se não houver, use null.
 
 IMPORTANTE:
-- Extraia TODOS os dados que encontrar no texto, mesmo que em formatos variados
-- Se um campo não estiver explicitamente rotulado, procure a informação no contexto
+- Extraia EXATAMENTE o que está em cada campo rotulado
 - Para medidas, extraia o VALOR NUMÉRICO (ex: "64 cm" → "64 cm")
 - Para datas, use formato YYYY-MM-DD quando possível
 - Se uma informação NÃO estiver disponível, use null (não invente dados)
@@ -1415,51 +1428,51 @@ IMPORTANTE:
 CAMPOS OBRIGATÓRIOS A EXTRAIR:
 
 1. **Identificação da Peça:**
-   - ref_souq: Código/referência da peça (pode estar como "REF", "CÓDIGO", "REFERÊNCIA")
-   - description: Nome/descrição da peça (ex: "BLUSA GOLA ROLE", "VESTIDO MIDI")
-   - collection: Coleção (ex: "Inverno 2025", "W26")
-   - supplier: NOME DA EMPRESA fornecedora/fabricante (ex: "LUMINOUS", "MENEGOTTI", "RENASC"). ATENÇÃO: NÃO é matéria-prima, composição ou tecido! É o nome da empresa que fabrica a peça. Geralmente aparece no cabeçalho ou rodapé do documento.
-   - corner: Corner/departamento/marca (ex: "SOUQ", "ANIMALE")
-   - main_fabric: Matéria-prima/tecido principal utilizado na peça (ex: "CREPE", "MUSSELINE", "SEDA", "VISCOSE", "LINHO"). Este é o NOME DO TECIDO/MATÉRIA-PRIMA, não a composição química.
-   - main_group: Grupo do produto - DEVE SER EXATAMENTE um destes valores: TECIDO PLANO, MALHA, TRICOT, JEANS (em MAIÚSCULAS)
-   - sub_group: Subgrupo do produto - DEVE SER EXATAMENTE um destes valores: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA, TÚNICA (em MAIÚSCULAS)
+   - ref_souq: Código/referência (campo "REF SOUQ:")
+   - description: Nome/descrição da peça (campo "DESCRIÇÃO:")
+   - collection: Coleção (campo "COLEÇÃO:")
+   - supplier: Nome da EMPRESA fornecedora (campo "FORNECEDOR:") - NÃO é tecido/matéria-prima!
+   - corner: Corner/departamento (campo "CORNER:")
+   - main_fabric: Matéria-prima/tecido (campo "MATÉRIA-PRIMA E COMPOSIÇÃO:") - NÃO é o fornecedor!
+   - main_group: Grupo - DEVE SER: TECIDO PLANO, MALHA, TRICOT ou JEANS (MAIÚSCULAS)
+   - sub_group: Subgrupo - DEVE SER: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA ou TÚNICA (MAIÚSCULAS)
 
 2. **Informações Comerciais:**
-   - target_price: Preço alvo/target
-   - store_month: Mês de loja
-   - delivery_cd_month: Mês de entrega CD
+   - target_price: Preço alvo (campo "Target Price:")
+   - store_month: Mês de loja (campo "MÊS LOJA:")
+   - delivery_cd_month: Mês de entrega CD (campo "MÊS ENTREGA CD:")
 
 3. **Prazos e Entregas:**
-   - tech_sheet_delivery_date: Data de entrega da ficha técnica
-   - pilot_delivery_date: Data de entrega do piloto/protótipo
+   - tech_sheet_delivery_date: Data entrega ficha técnica
+   - pilot_delivery_date: Data entrega piloto
    - showcase_for: Mostruário para
 
 4. **Equipe Envolvida:**
-   - stylists: Estilistas responsáveis
+   - stylists: Estilista(s) responsável(is) (campo "ESTILISTA:")
 
-5. **Matéria-Prima e Composição:**
-   - composition: Composição do tecido (ex: "100% algodão", "60% poliéster 40% viscose")
-   - pattern: Estampa/padrão do tecido (ex: "Listrado", "Floral", "Xadrez", "Liso", "Poá")
-   - colors: Cores disponíveis
-   - tags_kit: Kit de etiquetas/aviamentos
+5. **Materiais e Detalhes:**
+   - composition: Composição química do tecido (ex: "100% algodão")
+   - pattern: Estampa/padrão (Listrado, Floral, Xadrez, Liso, Poá)
+   - colors: Cores disponíveis (campo "CORES:")
+   - tags_kit: Observações e aviamentos (campo "OBSERVAÇÕES/AVIAMENTOS:")
 
-6. **Especificações Técnicas (CRÍTICO - EXTRAIA TODOS OS VALORES):**
-   - pilot_size: Tamanho piloto (ex: "P", "M", "38", "40")
-   - body_length: Comprimento do corpo/total (em cm)
-   - sleeve_length: Comprimento da manga (em cm)
-   - hem_width: Largura da barra (em cm)
-   - shoulder_to_shoulder: Largura ombro a ombro (em cm)
-   - bust: Largura do busto/peito (em cm)
-   - waist: Largura da cintura (em cm)
-   - straight_armhole: Altura da cava (em cm)
-   - neckline_depth: Profundidade do decote (em cm)
-   - openings_details: Detalhes de aberturas, fechamentos, zíperes, botões
-   - finishes: Acabamentos (bainhas, costuras, overlock, etc.)
+6. **Especificações Técnicas:**
+   - pilot_size: Tamanho piloto (campo "TAM. DA PILOTO:")
+   - body_length: Comprimento corpo (cm)
+   - sleeve_length: Comprimento manga (cm)
+   - hem_width: Largura barra (cm)
+   - shoulder_to_shoulder: Ombro a ombro (cm)
+   - bust: Busto (cm)
+   - waist: Cintura (cm)
+   - straight_armhole: Cava reta (cm)
+   - neckline_depth: Profundidade decote (cm)
+   - openings_details: Aberturas e fechamentos
+   - finishes: Acabamentos
 
 7. **Design e Estilo:**
-   - technical_drawing: Referência a desenho técnico se mencionado
-   - reference_photos: Referências de fotos/imagens
-   - specific_details: Detalhes específicos adicionais
+   - technical_drawing: Referência desenho técnico
+   - reference_photos: Referências de fotos
+   - specific_details: Detalhes específicos
 
 **TEXTO DA FICHA TÉCNICA:**
 {text_content}
