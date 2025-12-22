@@ -205,6 +205,7 @@ class Specification(db.Model):
     collection = db.Column(db.String(100))
     supplier = db.Column(db.String(100))
     corner = db.Column(db.String(100))
+    main_fabric = db.Column(db.String(100))  # Tecido principal (CREPE, SEDA, etc.)
     main_group = db.Column(
         db.String(30))  # TECIDO PLANO / MALHA / TRICOT / JEANS
     sub_group = db.Column(db.String(30))  # BLUSA / CALÇA / etc.
@@ -420,6 +421,7 @@ class SpecificationForm(FlaskForm):
                                 validators=[])
     supplier = StringField('Fornecedor')
     corner = StringField('Corner')
+    main_fabric = StringField('Tecido Principal')
     main_group = SelectField('Grupo', choices=GROUP_CHOICES)
     sub_group = SelectField('Subgrupo', choices=SUBGROUP_CHOICES)
     price_range = SelectField('Faixa de Preço',
@@ -448,7 +450,7 @@ class SpecificationForm(FlaskForm):
     composition = TextAreaField('Composição')
     pattern = StringField('Estampa/Padrão')
     colors = TextAreaField('Cores')
-    tags_kit = TextAreaField('Kit Etiquetas + Tag + Pendurador Cabide')
+    tags_kit = TextAreaField('Observações e Aviamentos')
 
     # 6. Especificações Técnicas da Modelagem
     pilot_size = StringField('Tamanho da Piloto')
@@ -1416,8 +1418,9 @@ CAMPOS OBRIGATÓRIOS A EXTRAIR:
    - ref_souq: Código/referência da peça (pode estar como "REF", "CÓDIGO", "REFERÊNCIA")
    - description: Nome/descrição da peça (ex: "BLUSA GOLA ROLE", "VESTIDO MIDI")
    - collection: Coleção (ex: "Inverno 2025", "W26")
-   - supplier: Fornecedor/fabricante
-   - corner: Corner/departamento
+   - supplier: NOME DA EMPRESA fornecedora/fabricante (ex: "LUMINOUS", "MENEGOTTI", "RENASC"). ATENÇÃO: NÃO é matéria-prima, composição ou tecido! É o nome da empresa que fabrica a peça. Geralmente aparece no cabeçalho ou rodapé do documento.
+   - corner: Corner/departamento/marca (ex: "SOUQ", "ANIMALE")
+   - main_fabric: Tecido principal utilizado na peça (ex: "CREPE", "MUSSELINE", "SEDA", "VISCOSE", "LINHO"). Este é o NOME DO TECIDO, não a composição química.
    - main_group: Grupo do produto - DEVE SER EXATAMENTE um destes valores: TECIDO PLANO, MALHA, TRICOT, JEANS (em MAIÚSCULAS)
    - sub_group: Subgrupo do produto - DEVE SER EXATAMENTE um destes valores: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA, TÚNICA (em MAIÚSCULAS)
 
@@ -1500,7 +1503,8 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
 
                 # Log what was extracted for debugging
                 campos_importantes = [
-                    'ref_souq', 'description', 'collection', 'composition',
+                    'ref_souq', 'description', 'collection', 'supplier',
+                    'corner', 'main_fabric', 'stylists', 'composition',
                     'main_group', 'sub_group', 'pilot_size', 'body_length',
                     'bust', 'sleeve_length'
                 ]
