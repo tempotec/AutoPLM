@@ -419,28 +419,28 @@
             </div>
 
             <nav class="nav-menu">
-                <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item">
                     <i class="fas fa-home"></i>
                     <span>Dashboard</span>
                 </a>
-                <a href="{{ url_for('collections') }}" class="nav-item">
+                <a href="{{ url_for('collections.index') }}" class="nav-item">
                     <i class="fas fa-folder"></i>
                     <span>Coleções</span>
                 </a>
-                <a href="{{ url_for('suppliers') }}" class="nav-item">
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
-                <a href="{{ url_for('technical_drawings') }}" class="nav-item">
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
                     <i class="fas fa-pencil-ruler"></i>
                     <span>Desenhos Técnicos</span>
                 </a>
                 {% if current_user.is_admin %}
-                <a href="{{ url_for('manage_users') }}" class="nav-item">
+                <a href="{{ url_for('admin.manage_users') }}" class="nav-item">
                     <i class="fas fa-users-cog"></i>
                     <span>Usuários</span>
                 </a>
-                <a href="{{ url_for('activity_logs') }}" class="nav-item active">
+                <a href="{{ url_for('drawings.activity_logs') }}" class="nav-item active">
                     <i class="fas fa-history"></i>
                     <span>Logs de Atividade</span>
                 </a>
@@ -454,7 +454,7 @@
                     <div class="user-role">{{ 'Administrador' if current_user.is_admin else 'Estilista' }}</div>
                 </div>
             </div>
-            <a href="{{ url_for('logout') }}" class="logout-btn">
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">
                 <i class="fas fa-sign-out-alt"></i>
                 Sair
             </a>
@@ -484,7 +484,7 @@
             </div>
 
             <div class="filters-container">
-                <form method="GET" action="{{ url_for('activity_logs') }}">
+                <form method="GET" action="{{ url_for('drawings.activity_logs') }}">
                     <div class="filters-row">
                         <div class="filter-group">
                             <label class="filter-label">Buscar</label>
@@ -519,7 +519,7 @@
                         <button type="submit" class="filter-btn">
                             <i class="fas fa-filter"></i> Filtrar
                         </button>
-                        <a href="{{ url_for('activity_logs') }}" class="clear-btn">Limpar</a>
+                        <a href="{{ url_for('drawings.activity_logs') }}" class="clear-btn">Limpar</a>
                     </div>
                 </form>
             </div>
@@ -603,7 +603,7 @@
             {% if pagination.pages > 1 %}
             <div class="pagination">
                 {% if pagination.has_prev %}
-                <a href="{{ url_for('activity_logs', page=pagination.prev_num, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">
+                <a href="{{ url_for('drawings.activity_logs', page=pagination.prev_num, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">
                     <i class="fas fa-chevron-left"></i>
                 </a>
                 {% else %}
@@ -615,7 +615,7 @@
                         {% if page == pagination.page %}
                         <span class="active">{{ page }}</span>
                         {% else %}
-                        <a href="{{ url_for('activity_logs', page=page, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">{{ page }}</a>
+                        <a href="{{ url_for('drawings.activity_logs', page=page, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">{{ page }}</a>
                         {% endif %}
                     {% else %}
                     <span>...</span>
@@ -623,7 +623,7 @@
                 {% endfor %}
 
                 {% if pagination.has_next %}
-                <a href="{{ url_for('activity_logs', page=pagination.next_num, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">
+                <a href="{{ url_for('drawings.activity_logs', page=pagination.next_num, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">
                     <i class="fas fa-chevron-right"></i>
                 </a>
                 {% else %}

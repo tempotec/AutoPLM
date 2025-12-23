@@ -6,6 +6,61 @@ This Flask-based platform manages technical specifications for the fashion/texti
 
 Preferred communication style: Simple, everyday language.
 
+# Recent Changes (2025-12-23)
+
+## Refatoração Arquitetural - Modularização do Código
+O arquivo monolítico `app.py` (3600+ linhas) foi refatorado para uma estrutura modular seguindo padrões Flask best practices:
+
+### Nova Estrutura de Diretórios
+```
+app/
+├── __init__.py          # Factory pattern (create_app, init_db)
+├── config.py            # Configurações por ambiente
+├── extensions.py        # Inicialização de SQLAlchemy, CSRF, OpenAI
+├── models/              # Modelos SQLAlchemy separados
+│   ├── __init__.py
+│   ├── user.py
+│   ├── supplier.py
+│   ├── collection.py
+│   ├── specification.py
+│   └── activity_log.py
+├── forms/               # Formulários Flask-WTF
+│   ├── __init__.py
+│   ├── auth.py
+│   ├── admin.py
+│   └── specifications.py
+├── routes/              # Blueprints Flask por funcionalidade
+│   ├── __init__.py      # register_blueprints()
+│   ├── auth.py          # Login/logout
+│   ├── dashboard.py     # Dashboard admin/user
+│   ├── admin.py         # Gerenciamento de usuários
+│   ├── settings.py      # Configurações do usuário
+│   ├── suppliers.py     # CRUD de fornecedores
+│   ├── collections.py   # CRUD de coleções
+│   ├── specifications.py # Upload/view/edit fichas técnicas
+│   ├── drawings.py      # Geração/download desenhos técnicos
+│   └── api.py           # Endpoints de status AJAX
+└── utils/               # Utilitários compartilhados
+    ├── __init__.py
+    ├── auth.py          # Decoradores login_required, admin_required
+    ├── files.py         # Manipulação de arquivos
+    ├── pdf.py           # Extração de texto/imagens de PDF
+    ├── ai.py            # Integração OpenAI (vision, prompts)
+    ├── logging.py       # Activity log + RPA Monitor
+    └── helpers.py       # Funções auxiliares
+```
+
+### Ponto de Entrada
+- **run.py**: Novo ponto de entrada que usa o factory pattern
+- **app.py**: Mantido como backup/referência (será removido após validação completa)
+
+### Benefícios da Refatoração
+- Código organizado em ~20 arquivos ao invés de 1 monolítico
+- Separação clara de responsabilidades (MVC pattern)
+- Blueprints Flask para rotas por funcionalidade
+- Factory pattern para inicialização flexível
+- Facilita testes e manutenção futura
+
 # System Architecture
 
 ## UI/UX Decisions
@@ -20,7 +75,8 @@ Preferred communication style: Simple, everyday language.
 - **Navigation**: Professional sidebar with key sections and user profile display.
 
 ## Technical Implementations
-- **Web Framework**: Flask with a modular route structure.
+- **Web Framework**: Flask with modular blueprint architecture.
+- **Application Factory**: `create_app()` pattern for flexible initialization.
 - **Database ORM**: SQLAlchemy for database abstraction with thread-safe session management.
 - **Authentication**: Session-based, with Werkzeug for password hashing and role-based access control (admin, stylist).
 - **File Processing**: PyPDF2 for PDF text and image extraction; PyMuPDF for PDF thumbnail generation.
@@ -29,6 +85,17 @@ Preferred communication style: Simple, everyday language.
 - **Real-time Notifications**: Toast notification system (toast.js) with AJAX polling for processing status updates.
 - **Data Storage**: SQL database for primary data. Technical drawings saved to `static/drawings/` for instant loading with browser caching. Legacy support for Replit Object Storage drawings.
 - **Security**: CSRF protection, secure filename handling, file size limits.
+
+## Blueprint URL Endpoints
+- `auth.*`: login, logout
+- `dashboard.index`: Dashboard principal
+- `specifications.*`: upload, view, edit, delete, download_pdf, view_pdf, view_image
+- `drawings.*`: generate, download, gallery, activity_logs, generate_all_thumbnails
+- `collections.*`: index, create, view, edit, delete
+- `suppliers.*`: index, create, get, update, delete
+- `admin.*`: manage_users, create_user, view_user, edit_user, delete_user
+- `settings.index`: Configurações do usuário
+- `api.get_spec_status`: Status de processamento AJAX
 
 ## System Design Choices
 - **Data Model**: Includes Specifications, Collections, Suppliers, and relationships between them. Suppliers can be linked to specifications for better tracking of manufacturing partners.
@@ -70,6 +137,6 @@ Preferred communication style: Simple, everyday language.
     - `SESSION_SECRET` for session security
     - `OPENAI_API_KEY` for AI processing
     - `RPA_MONITOR_ID` - ID do sistema no RPA Monitor (APP-GESTAO-INOVAILAB)
-    - `RPA_MONITOR_HOST` - Endpoint WebSocket do servidor RPA
+    - `RPA_MONITOR_HOST` - Endpoint WebSocket do servidor RPA (deve incluir wss:// prefix)
     - `RPA_MONITOR_REGION` - Região do sistema (Sudeste)
     - `RPA_MONITOR_TRANSPORT` - Tipo de transporte (ws)

@@ -484,19 +484,19 @@
             </div>
 
             <nav class="nav-menu">
-                <a href="{{ url_for('dashboard') }}" class="nav-item active">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item active">
                     <i class="fas fa-home"></i>
                     <span>Painel</span>
                 </a>
-                <a href="{{ url_for('collections') }}" class="nav-item">
+                <a href="{{ url_for('collections.index') }}" class="nav-item">
                     <i class="fas fa-folder"></i>
                     <span>Minhas Coleções</span>
                 </a>
-                <a href="{{ url_for('technical_drawings') }}" class="nav-item">
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
                     <i class="fas fa-drafting-compass"></i>
                     <span>Desenhos Técnicos</span>
                 </a>
-                <a href="{{ url_for('suppliers') }}" class="nav-item">
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
@@ -507,11 +507,11 @@
             </nav>
 
             <div style="margin-top: auto;">
-                <a href="{{ url_for('settings') }}" class="nav-item">
+                <a href="{{ url_for('settings.index') }}" class="nav-item">
                     <i class="fas fa-cog"></i>
                     <span>Configurações</span>
                 </a>
-                <a href="{{ url_for('logout') }}" class="nav-item" style="color: #f87171;">
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
@@ -534,7 +534,7 @@
             <header class="page-header">
                 <div class="header-top">
                     <h1 class="page-title">Painel Administrativo</h1>
-                    <a href="{{ url_for('manage_users') }}" class="btn-primary">
+                    <a href="{{ url_for('admin.manage_users') }}" class="btn-primary">
                         <i class="fas fa-users"></i>
                         Gerenciar Usuários
                     </a>
@@ -607,7 +607,7 @@
             <div class="products-grid" id="productsGrid">
                 {% for spec in recent_specs %}
                 <div class="product-card" data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}" data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}" data-user="{{ spec.user.username }}">
-                    <a href="{{ url_for('view_specification', id=spec.id) }}" style="text-decoration: none; color: inherit;">
+                    <a href="{{ url_for('specifications.view', id=spec.id) }}" style="text-decoration: none; color: inherit;">
                         <div class="product-image">
                             {% if spec.pdf_thumbnail %}
                                 <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
@@ -654,7 +654,7 @@
                         </div>
                     </a>
                     <div class="product-actions">
-                        <a href="{{ url_for('view_specification', id=spec.id) }}" class="btn-action">
+                        <a href="{{ url_for('specifications.view', id=spec.id) }}" class="btn-action">
                             <i class="fas fa-eye"></i> Visualizar
                         </a>
                     </div>

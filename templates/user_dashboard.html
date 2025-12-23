@@ -533,19 +533,19 @@
             </div>
 
             <nav class="nav-menu">
-                <a href="{{ url_for('dashboard') }}" class="nav-item active">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item active">
                     <i class="fas fa-home"></i>
                     <span>Painel</span>
                 </a>
-                <a href="{{ url_for('collections') }}" class="nav-item">
+                <a href="{{ url_for('collections.index') }}" class="nav-item">
                     <i class="fas fa-folder"></i>
                     <span>Minhas Coleções</span>
                 </a>
-                <a href="{{ url_for('technical_drawings') }}" class="nav-item">
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
                     <i class="fas fa-drafting-compass"></i>
                     <span>Desenhos Técnicos</span>
                 </a>
-                <a href="{{ url_for('suppliers') }}" class="nav-item">
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
@@ -556,11 +556,11 @@
             </nav>
 
             <div style="margin-top: auto;">
-                <a href="{{ url_for('settings') }}" class="nav-item">
+                <a href="{{ url_for('settings.index') }}" class="nav-item">
                     <i class="fas fa-cog"></i>
                     <span>Configurações</span>
                 </a>
-                <a href="{{ url_for('logout') }}" class="nav-item" style="color: #f87171;">
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
@@ -583,7 +583,7 @@
             <header class="page-header">
                 <div class="header-top">
                     <h1 class="page-title">Minhas Fichas Técnicas</h1>
-                    <a href="{{ url_for('upload_pdf') }}" class="btn-primary">
+                    <a href="{{ url_for('specifications.upload') }}" class="btn-primary">
                         <i class="fas fa-plus"></i>
                         Nova Ficha Técnica
                     </a>
@@ -650,7 +650,7 @@
             <div class="products-grid" id="productsGrid">
                 {% for spec in specifications %}
                 <div class="product-card" data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}" data-price-range="{{ spec.price_range or '' }}" data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}">
-                    <a href="{{ url_for('view_specification', id=spec.id) }}" style="text-decoration: none; color: inherit;">
+                    <a href="{{ url_for('specifications.view', id=spec.id) }}" style="text-decoration: none; color: inherit;">
                         <div class="product-image">
                             {% if spec.pdf_thumbnail %}
                                 <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
@@ -700,14 +700,14 @@
                         </div>
                     </a>
                     <div class="product-actions">
-                        <a href="{{ url_for('edit_specification', id=spec.id) }}" class="btn-action">
+                        <a href="{{ url_for('specifications.edit', id=spec.id) }}" class="btn-action">
                             <i class="fas fa-edit"></i> Editar
                         </a>
                         <button class="btn-action btn-danger" onclick="if(confirm('Tem certeza que deseja excluir esta ficha?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
                             <i class="fas fa-trash"></i> Excluir
                         </button>
                     </div>
-                    <form id="delete-form-{{ spec.id }}" method="POST" action="{{ url_for('delete_specification', id=spec.id) }}" style="display: none;">
+                    <form id="delete-form-{{ spec.id }}" method="POST" action="{{ url_for('specifications.delete', id=spec.id) }}" style="display: none;">
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     </form>
                 </div>
@@ -718,7 +718,7 @@
                 <i class="fas fa-file-upload"></i>
                 <h3>Nenhuma ficha técnica ainda</h3>
                 <p>Comece enviando seu primeiro arquivo PDF ou imagem para análise</p>
-                <a href="{{ url_for('upload_pdf') }}" class="btn-primary">
+                <a href="{{ url_for('specifications.upload') }}" class="btn-primary">
                     <i class="fas fa-upload"></i>
                     Enviar Ficha Técnica
                 </a>

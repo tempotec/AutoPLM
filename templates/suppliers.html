@@ -594,19 +594,19 @@
             </div>
 
             <nav class="nav-menu">
-                <a href="{{ url_for('dashboard') }}" class="nav-item">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item">
                     <i class="fas fa-home"></i>
                     <span>Painel</span>
                 </a>
-                <a href="{{ url_for('collections') }}" class="nav-item">
+                <a href="{{ url_for('collections.index') }}" class="nav-item">
                     <i class="fas fa-folder"></i>
                     <span>Minhas Coleções</span>
                 </a>
-                <a href="{{ url_for('technical_drawings') }}" class="nav-item">
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
                     <i class="fas fa-drafting-compass"></i>
                     <span>Desenhos Técnicos</span>
                 </a>
-                <a href="{{ url_for('suppliers') }}" class="nav-item active">
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item active">
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
@@ -617,11 +617,11 @@
             </nav>
 
             <div style="margin-top: auto;">
-                <a href="{{ url_for('settings') }}" class="nav-item">
+                <a href="{{ url_for('settings.index') }}" class="nav-item">
                     <i class="fas fa-cog"></i>
                     <span>Configurações</span>
                 </a>
-                <a href="{{ url_for('logout') }}" class="nav-item" style="color: #f87171;">
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
