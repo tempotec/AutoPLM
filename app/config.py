@@ -11,7 +11,7 @@ class Config:
         'pool_timeout': 30,
     }
     UPLOAD_FOLDER = 'uploads'
-    MAX_CONTENT_LENGTH = 50 * 1024 * 1024  # 50MB max file size
+    MAX_CONTENT_LENGTH = 1024 * 1024 * 1024  # 1GB max file size
     
     OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY")
     
