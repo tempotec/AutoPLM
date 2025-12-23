@@ -1028,10 +1028,10 @@
         
         if (isImage) {
             const imageDisplay = document.getElementById('imageDisplay');
-            imageDisplay.src = '{{ url_for("view_image", id=specification.id) }}';
+            imageDisplay.src = '{{ url_for("specifications.view_image", id=specification.id) }}';
         } else {
             const iframe = document.getElementById('pdfFrame');
-            iframe.src = '{{ url_for("view_pdf", id=specification.id) }}';
+            iframe.src = '{{ url_for("specifications.view_pdf", id=specification.id) }}';
         }
         modal.show();
     }
