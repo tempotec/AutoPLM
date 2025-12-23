@@ -481,6 +481,173 @@
             background-color: #7f1d1d;
             color: #f87171;
         }
+
+        /* Processing Progress Area */
+        .processing-area {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .processing-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .processing-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        .processing-title .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .processing-stats {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .overall-progress {
+            background-color: #0f1420;
+            border-radius: 8px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .overall-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .processing-files-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .processing-file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background-color: #0f1420;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .processing-file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .processing-file-icon.pdf {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .processing-file-icon.image {
+            background-color: #1e3a5f;
+            color: #93c5fd;
+        }
+
+        .processing-file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .processing-file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .processing-file-status {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .processing-file-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .processing-file-badge.uploading {
+            background-color: #1e3a5f;
+            color: #60a5fa;
+        }
+
+        .processing-file-badge.processing {
+            background-color: #854d0e;
+            color: #fbbf24;
+        }
+
+        .processing-file-badge.completed {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .processing-file-badge.error {
+            background-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        .processing-file-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-dashboard {
+            background-color: #065f46;
+            color: #34d399;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-dashboard:hover {
+            background-color: #047857;
+        }
     </style>
 </head>
 <body>
@@ -663,6 +830,33 @@
                     {{ form.submit(class="btn-primary", id="submit-btn") }}
                 </div>
             </form>
+
+            <!-- Processing Progress Area -->
+            <div id="processing-area" class="processing-area">
+                <div class="processing-header">
+                    <div class="processing-title">
+                        <div class="spinner" id="processing-spinner"></div>
+                        <span id="processing-title-text">Processando arquivos...</span>
+                    </div>
+                    <div class="processing-stats">
+                        <span id="processing-stats-text">0 de 0 completos</span>
+                    </div>
+                </div>
+                
+                <div class="overall-progress">
+                    <div class="overall-progress-bar" id="overall-progress-bar"></div>
+                </div>
+                
+                <div class="processing-files-list" id="processing-files-list">
+                </div>
+                
+                <div style="margin-top: 16px; text-align: center;">
+                    <a href="{{ url_for('dashboard.index') }}" class="btn-dashboard" id="btn-go-dashboard">
+                        <i class="fas fa-check-circle"></i>
+                        Ver no Painel
+                    </a>
+                </div>
+            </div>
         </main>
     </div>
 
