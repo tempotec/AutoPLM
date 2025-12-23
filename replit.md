@@ -8,6 +8,24 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes (2025-12-23)
 
+## Feedback Visual de Processamento no Upload
+Adicionada área de acompanhamento em tempo real durante o upload e processamento de arquivos:
+
+### Novos Recursos
+- **Área de Processamento Visual**: Após enviar arquivos, aparece uma área mostrando o progresso
+- **Barra de Progresso Geral**: Mostra porcentagem de arquivos processados
+- **Status Individual por Arquivo**: Cada arquivo mostra seu estágio atual:
+  - Aguardando, Gerando miniatura, Extraindo imagens, Extraindo texto, Analisando com IA, Vinculando fornecedor, Concluído, Erro
+- **Badges Coloridos**: Indicadores visuais (azul=enviando, amarelo=processando, verde=pronto, vermelho=erro)
+- **Botão "Ver no Painel"**: Aparece quando processamento é concluído
+
+### Limite de Upload
+- Aumentado de 50MB para **1GB** por arquivo (app/config.py)
+
+### Endpoints Atualizados
+- `/api/spec_status/<id>`: Retorna `processing_stage` em formato string
+- `/batch_status/<batch_id>`: Retorna `specs` com `processing_stage` e mapeamento por filename
+
 ## Refatoração Arquitetural - Modularização do Código
 O arquivo monolítico `app.py` (3600+ linhas) foi refatorado para uma estrutura modular seguindo padrões Flask best practices:
 
