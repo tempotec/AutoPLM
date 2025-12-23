@@ -537,3 +537,219 @@ def view_image(id):
     except Exception as e:
         flash('Erro ao visualizar o arquivo de imagem.')
         return redirect(url_for('specifications.view', id=id))
+
+
+@specifications_bp.route('/upload_batch', methods=['GET', 'POST'])
+@login_required
+def upload_batch():
+    from app.forms import BatchUploadForm
+    from app.utils.batch_processor import start_batch_processing
+    import uuid
+    
+    form = BatchUploadForm()
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('Sessão inválida. Por favor, faça login novamente.')
+        return redirect(url_for('auth.login'))
+    
+    if user.is_admin:
+        user_collections = Collection.query.order_by(Collection.name).all()
+        user_suppliers = Supplier.query.order_by(Supplier.name).all()
+    else:
+        user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
+        user_suppliers = Supplier.query.filter_by(user_id=user.id).order_by(Supplier.name).all()
+    
+    form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
+    form.supplier_id.choices = [(0, '-- Sem fornecedor --')] + [(s.id, s.name) for s in user_suppliers]
+    
+    if request.method == 'GET':
+        form.stylist.data = user.username
+    
+    return render_template('upload_batch.html', form=form, current_user=user)
+
+
+@specifications_bp.route('/upload_batch_files', methods=['POST'])
+@login_required
+def upload_batch_files():
+    from app.utils.batch_processor import start_batch_processing
+    import uuid
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessão inválida'}), 401
+    
+    files = request.files.getlist('files')
+    if not files or len(files) == 0:
+        return jsonify({'success': False, 'error': 'Nenhum arquivo enviado'}), 400
+    
+    collection_id = request.form.get('collection_id', type=int)
+    supplier_id = request.form.get('supplier_id', type=int)
+    stylist = request.form.get('stylist', user.username)
+    price_range = request.form.get('price_range', '')
+    
+    batch_id = f"batch_{uuid.uuid4().hex[:12]}"
+    
+    allowed_extensions = {'pdf', 'jpg', 'jpeg', 'png'}
+    created_specs = []
+    errors = []
+    
+    for file in files:
+        if not file or not file.filename:
+            continue
+        
+        ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+        if ext not in allowed_extensions:
+            errors.append(f"{file.filename}: formato não suportado")
+            continue
+        
+        try:
+            filename = secure_filename(file.filename)
+            
+            base_name = filename.rsplit('.', 1)[0] if '.' in filename else filename
+            unique_filename = f"{base_name}_{uuid.uuid4().hex[:6]}.{ext}"
+            
+            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], unique_filename)
+            file.save(file_path)
+            
+            spec = Specification()
+            spec.user_id = user.id
+            spec.pdf_filename = unique_filename
+            spec.collection_id = collection_id if collection_id and collection_id != 0 else None
+            spec.batch_id = batch_id
+            spec.processing_status = 'pending'
+            spec.processing_stage = 0
+            spec.status = 'draft'
+            spec.stylists = stylist
+            spec.price_range = price_range if price_range else None
+            spec.created_at = datetime.now()
+            
+            if supplier_id and supplier_id != 0:
+                spec.supplier_id = supplier_id
+                selected_supplier = Supplier.query.get(supplier_id)
+                spec.supplier = selected_supplier.name if selected_supplier else None
+            
+            db.session.add(spec)
+            db.session.commit()
+            
+            created_specs.append({
+                'id': spec.id,
+                'filename': unique_filename,
+                'original_filename': file.filename
+            })
+            
+            log_activity('BATCH_UPLOAD', 'specification', spec.id,
+                        target_name=unique_filename,
+                        metadata={'batch_id': batch_id, 'original_filename': file.filename})
+            
+        except Exception as e:
+            errors.append(f"{file.filename}: {str(e)}")
+            db.session.rollback()
+    
+    if created_specs:
+        app = current_app._get_current_object()
+        start_batch_processing(batch_id, current_app.config['UPLOAD_FOLDER'], app, batch_size=5)
+        rpa_info(f"BATCH_UPLOAD: Lote {batch_id} iniciado com {len(created_specs)} arquivos")
+    
+    return jsonify({
+        'success': True,
+        'batch_id': batch_id,
+        'total_files': len(created_specs),
+        'created_specs': created_specs,
+        'errors': errors
+    })
+
+
+@specifications_bp.route('/batch_status/<batch_id>')
+@login_required
+def batch_status(batch_id):
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessão inválida'}), 401
+    
+    if user.is_admin:
+        specs = Specification.query.filter_by(batch_id=batch_id).all()
+    else:
+        specs = Specification.query.filter_by(batch_id=batch_id, user_id=user.id).all()
+    
+    if not specs:
+        return jsonify({'success': False, 'error': 'Lote não encontrado'}), 404
+    
+    total = len(specs)
+    completed = sum(1 for s in specs if s.processing_status == 'completed')
+    processing = sum(1 for s in specs if s.processing_status == 'processing')
+    pending = sum(1 for s in specs if s.processing_status == 'pending')
+    errors = sum(1 for s in specs if s.processing_status == 'error')
+    
+    specs_info = []
+    for s in specs:
+        specs_info.append({
+            'id': s.id,
+            'filename': s.pdf_filename,
+            'status': s.processing_status,
+            'stage': s.processing_stage or 0,
+            'stage_name': {
+                0: 'Aguardando',
+                1: 'Thumbnail',
+                2: 'Extraindo Imagem',
+                3: 'Extraindo Texto',
+                4: 'Processando IA',
+                5: 'Vinculando Fornecedor',
+                6: 'Concluído'
+            }.get(s.processing_stage or 0, 'Desconhecido'),
+            'error': s.last_error,
+            'description': s.description
+        })
+    
+    return jsonify({
+        'success': True,
+        'batch_id': batch_id,
+        'total': total,
+        'completed': completed,
+        'processing': processing,
+        'pending': pending,
+        'errors': errors,
+        'progress_percent': round((completed / total) * 100) if total > 0 else 0,
+        'is_complete': completed + errors == total,
+        'specs': specs_info
+    })
+
+
+@specifications_bp.route('/retry_spec/<int:spec_id>', methods=['POST'])
+@login_required
+def retry_spec(spec_id):
+    from app.utils.batch_processor import advance_spec_processing
+    import threading
+    
+    user = User.query.get(session['user_id'])
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessão inválida'}), 401
+    
+    spec = Specification.query.get_or_404(spec_id)
+    
+    if not user.is_admin and spec.user_id != user.id:
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+    
+    if spec.processing_status != 'error':
+        return jsonify({'success': False, 'error': 'Apenas arquivos com erro podem ser reprocessados'}), 400
+    
+    spec.processing_status = 'pending'
+    spec.last_error = None
+    db.session.commit()
+    
+    app = current_app._get_current_object()
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    
+    def retry_in_background():
+        with app.app_context():
+            advance_spec_processing(spec_id, upload_folder, app)
+    
+    thread = threading.Thread(target=retry_in_background, daemon=True)
+    thread.start()
+    
+    return jsonify({
+        'success': True,
+        'message': 'Reprocessamento iniciado',
+        'spec_id': spec_id
+    })

@@ -56,6 +56,15 @@ class Specification(db.Model):
     raw_extracted_text = db.Column(db.Text)
     processing_status = db.Column(db.String(50), default='pending')
 
+    # Campos de checkpoint para processamento em etapas
+    # Etapas: 0=pending, 1=thumbnail, 2=extract_image, 3=extract_text, 4=openai_parse, 5=supplier_link, 6=completed
+    processing_stage = db.Column(db.Integer, default=0)
+    last_error = db.Column(db.Text)
+    error_stage = db.Column(db.Integer)
+    retry_count = db.Column(db.Integer, default=0)
+    batch_id = db.Column(db.String(50))  # Para agrupar uploads em lote
+    extracted_images_json = db.Column(db.Text)  # Cache de imagens extraídas do PDF
+
     status = db.Column(db.String(50), default='draft')
     price_range = db.Column(db.String(10))
 

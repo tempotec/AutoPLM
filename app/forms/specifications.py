@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileRequired, FileAllowed
+from flask_wtf.file import FileField, FileRequired, FileAllowed, MultipleFileField
 from wtforms import StringField, TextAreaField, SelectField, SubmitField, DateField
 
 
@@ -48,6 +48,21 @@ class UploadPDFForm(FlaskForm):
                                          'Apenas PDF ou imagens (JPG, PNG)!')
                          ])
     submit = SubmitField('Upload and Process')
+
+
+class BatchUploadForm(FlaskForm):
+    collection_id = SelectField('Vincular à Coleção', coerce=int, validators=[])
+    supplier_id = SelectField('Fornecedor', coerce=int, validators=[])
+    stylist = StringField('Estilista')
+    price_range = SelectField('Faixa de Preço',
+                             choices=[
+                                 ('', 'Selecione a faixa de preço...'),
+                                 ('P1', 'P1'),
+                                 ('P2', 'P2'),
+                                 ('P3', 'P3'),
+                                 ('P4', 'P4')
+                             ])
+    submit = SubmitField('Iniciar Upload em Lote')
 
 
 class SpecificationForm(FlaskForm):
