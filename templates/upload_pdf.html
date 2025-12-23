@@ -871,7 +871,92 @@
 
     <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
     <script>
-        // AJAX form submission with background processing
+        let uploadedFiles = [];
+        let processingState = {};
+        
+        const stageLabels = {
+            'pending': 'Aguardando...',
+            'uploading': 'Enviando...',
+            'thumbnail': 'Gerando miniatura...',
+            'extract_image': 'Extraindo imagens...',
+            'extract_text': 'Extraindo texto...',
+            'openai_parse': 'Analisando com IA...',
+            'supplier_link': 'Vinculando fornecedor...',
+            'completed': 'Concluído!',
+            'error': 'Erro no processamento'
+        };
+
+        function showProcessingArea(files) {
+            const area = document.getElementById('processing-area');
+            const list = document.getElementById('processing-files-list');
+            area.style.display = 'block';
+            list.innerHTML = '';
+            
+            uploadedFiles = [];
+            processingState = {};
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isPdf = file.type === 'application/pdf';
+                uploadedFiles.push({
+                    name: file.name,
+                    type: isPdf ? 'pdf' : 'image'
+                });
+                processingState[file.name] = { status: 'uploading', stage: 'pending' };
+                
+                const item = document.createElement('div');
+                item.className = 'processing-file-item';
+                item.id = 'proc-file-' + i;
+                item.innerHTML = `
+                    <div class="processing-file-icon ${isPdf ? 'pdf' : 'image'}">
+                        <i class="fas ${isPdf ? 'fa-file-pdf' : 'fa-file-image'}"></i>
+                    </div>
+                    <div class="processing-file-info">
+                        <div class="processing-file-name">${file.name}</div>
+                        <div class="processing-file-status" id="status-${i}">Enviando para o servidor...</div>
+                    </div>
+                    <div id="badge-${i}">
+                        <div class="processing-file-spinner"></div>
+                    </div>
+                `;
+                list.appendChild(item);
+            }
+            
+            updateOverallProgress(0, files.length);
+        }
+
+        function updateFileStatus(index, status, stage, specId) {
+            const statusEl = document.getElementById('status-' + index);
+            const badgeEl = document.getElementById('badge-' + index);
+            
+            if (!statusEl || !badgeEl) return;
+            
+            const stageText = stageLabels[stage] || stageLabels[status] || stage;
+            statusEl.textContent = stageText;
+            
+            if (status === 'completed') {
+                badgeEl.innerHTML = '<span class="processing-file-badge completed"><i class="fas fa-check"></i> Pronto</span>';
+            } else if (status === 'error') {
+                badgeEl.innerHTML = '<span class="processing-file-badge error"><i class="fas fa-times"></i> Erro</span>';
+            } else if (status === 'processing') {
+                badgeEl.innerHTML = '<span class="processing-file-badge processing"><i class="fas fa-cog fa-spin"></i> Processando</span>';
+            } else {
+                badgeEl.innerHTML = '<div class="processing-file-spinner"></div>';
+            }
+        }
+
+        function updateOverallProgress(completed, total) {
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('overall-progress-bar').style.width = percent + '%';
+            document.getElementById('processing-stats-text').textContent = completed + ' de ' + total + ' completos';
+            
+            if (completed >= total && total > 0) {
+                document.getElementById('processing-spinner').style.display = 'none';
+                document.getElementById('processing-title-text').textContent = 'Processamento concluído!';
+                document.getElementById('btn-go-dashboard').style.display = 'inline-flex';
+            }
+        }
+
         document.getElementById('upload-form').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -884,13 +969,13 @@
             }
             
             const formData = new FormData(this);
-            const fileCount = fileInput.files.length;
+            const files = fileInput.files;
+            const fileCount = files.length;
             
-            if (fileCount === 1) {
-                Toast.info('📤 Enviando arquivo...');
-            } else {
-                Toast.info('📤 Enviando ' + fileCount + ' arquivos...');
-            }
+            showProcessingArea(files);
+            
+            document.getElementById('file-info').style.display = 'none';
+            document.getElementById('files-list').style.display = 'none';
             
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
@@ -906,39 +991,90 @@
             .then(data => {
                 if (data.success) {
                     document.getElementById('upload-form').reset();
-                    document.getElementById('file-info').style.display = 'none';
-                    document.getElementById('files-list').style.display = 'none';
                     
-                    if (data.batch_id) {
-                        Toast.success('✓ ' + data.count + ' arquivos enviados! Processando em segundo plano...');
-                        pollBatchStatus(data.batch_id);
+                    if (data.batch_id && data.specs) {
+                        Toast.success('Arquivos enviados! Iniciando processamento...');
+                        pollBatchStatusVisual(data.batch_id, data.specs);
                     } else if (data.spec_id) {
-                        Toast.success('✓ Arquivo enviado com sucesso!');
-                        pollSpecStatus(data.spec_id, function(statusData) {
-                            if (statusData.status === 'completed') {
-                                setTimeout(() => {
-                                    window.location.href = '/dashboard';
-                                }, 1500);
-                            }
-                        });
+                        Toast.success('Arquivo enviado! Iniciando processamento...');
+                        pollSingleSpecVisual(data.spec_id, data.filename || uploadedFiles[0]?.name);
                     }
                 } else {
-                    Toast.error('❌ Erro ao enviar: ' + (data.message || 'Erro desconhecido'));
+                    Toast.error('Erro ao enviar: ' + (data.message || 'Erro desconhecido'));
+                    for (let i = 0; i < uploadedFiles.length; i++) {
+                        updateFileStatus(i, 'error', 'error');
+                    }
                 }
             })
             .catch(error => {
                 console.error('Upload error:', error);
-                Toast.error('❌ Erro na comunicação com o servidor');
+                Toast.error('Erro na comunicação com o servidor');
+                for (let i = 0; i < uploadedFiles.length; i++) {
+                    updateFileStatus(i, 'error', 'error');
+                }
             })
             .finally(() => {
                 submitBtn.disabled = false;
                 submitBtn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
             });
         });
-        
-        function pollBatchStatus(batchId) {
+
+        function pollSingleSpecVisual(specId, filename) {
             let pollCount = 0;
             const maxPolls = 300;
+            
+            function checkStatus() {
+                fetch('/api/spec_status/' + specId)
+                    .then(response => response.json())
+                    .then(data => {
+                        pollCount++;
+                        const status = data.status || 'processing';
+                        const stage = data.processing_stage || 'processing';
+                        
+                        updateFileStatus(0, status, stage, specId);
+                        
+                        if (status === 'completed') {
+                            updateOverallProgress(1, 1);
+                            Toast.success('Arquivo processado com sucesso!');
+                        } else if (status === 'error') {
+                            updateOverallProgress(1, 1);
+                            Toast.error('Erro ao processar: ' + (data.error || 'Erro desconhecido'));
+                        } else if (pollCount < maxPolls) {
+                            setTimeout(checkStatus, 2000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Polling error:', error);
+                        if (pollCount < maxPolls) {
+                            setTimeout(checkStatus, 3000);
+                        }
+                    });
+            }
+            
+            setTimeout(checkStatus, 1500);
+        }
+
+        function pollBatchStatusVisual(batchId, specs) {
+            let pollCount = 0;
+            const maxPolls = 300;
+            const specIdToIndex = {};
+            const filenameToIndex = {};
+            
+            if (specs && Array.isArray(specs)) {
+                specs.forEach((spec) => {
+                    const idx = spec.index !== undefined ? spec.index : specs.indexOf(spec);
+                    specIdToIndex[spec.id] = idx;
+                    if (spec.filename) {
+                        filenameToIndex[spec.filename] = idx;
+                    }
+                });
+            }
+            
+            uploadedFiles.forEach((file, idx) => {
+                if (!Object.values(filenameToIndex).includes(idx)) {
+                    filenameToIndex[file.name] = idx;
+                }
+            });
             
             function checkStatus() {
                 fetch('/batch_status/' + batchId)
@@ -946,32 +1082,42 @@
                     .then(data => {
                         pollCount++;
                         const completed = data.completed || 0;
-                        const total = data.total || 0;
+                        const total = data.total || uploadedFiles.length;
                         const errors = data.errors || 0;
+                        
+                        if (data.specs && Array.isArray(data.specs)) {
+                            data.specs.forEach(spec => {
+                                let idx = specIdToIndex[spec.id];
+                                if (idx === undefined && spec.filename) {
+                                    idx = filenameToIndex[spec.filename];
+                                }
+                                if (idx !== undefined) {
+                                    updateFileStatus(idx, spec.status, spec.processing_stage || spec.status, spec.id);
+                                }
+                            });
+                        }
+                        
+                        updateOverallProgress(completed + errors, total);
                         
                         if (completed + errors >= total) {
                             if (errors > 0) {
-                                Toast.warning('✓ Lote concluído: ' + completed + ' processados, ' + errors + ' com erro');
+                                Toast.warning('Lote concluído: ' + completed + ' processados, ' + errors + ' com erro');
                             } else {
-                                Toast.success('✓ Todos os ' + total + ' arquivos foram processados!');
+                                Toast.success('Todos os ' + total + ' arquivos foram processados!');
                             }
-                            setTimeout(() => {
-                                window.location.href = '/dashboard';
-                            }, 2000);
                         } else if (pollCount < maxPolls) {
-                            Toast.info('⏳ Processando: ' + completed + '/' + total + ' arquivos...', 3000);
-                            setTimeout(checkStatus, 3000);
+                            setTimeout(checkStatus, 2000);
                         }
                     })
                     .catch(error => {
                         console.error('Polling error:', error);
                         if (pollCount < maxPolls) {
-                            setTimeout(checkStatus, 5000);
+                            setTimeout(checkStatus, 3000);
                         }
                     });
             }
             
-            setTimeout(checkStatus, 2000);
+            setTimeout(checkStatus, 1500);
         }
 
         function updateFileDisplay(files) {
@@ -979,6 +1125,8 @@
             const filesList = document.getElementById('files-list');
             const filesItems = document.getElementById('files-items');
             const filesCount = document.getElementById('files-count');
+            
+            document.getElementById('processing-area').style.display = 'none';
             
             if (files.length === 0) {
                 fileInfo.style.display = 'none';
@@ -1024,13 +1172,13 @@
             document.getElementById('pdf-input').value = '';
             document.getElementById('file-info').style.display = 'none';
             document.getElementById('files-list').style.display = 'none';
+            document.getElementById('processing-area').style.display = 'none';
         }
 
         document.getElementById('pdf-input').addEventListener('change', function(e) {
             updateFileDisplay(e.target.files);
         });
 
-        // Drag and drop functionality
         const uploadArea = document.getElementById('upload-area');
         const fileInput = document.getElementById('pdf-input');
 

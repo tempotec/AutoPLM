@@ -348,7 +348,8 @@ def upload():
                     return jsonify({
                         'success': True,
                         'message': 'Arquivo enviado! Processamento iniciado em segundo plano.',
-                        'spec_id': spec_id
+                        'spec_id': spec_id,
+                        'filename': filename
                     })
 
                 flash('Arquivo enviado! Processamento iniciado em segundo plano.')
@@ -405,11 +406,22 @@ def upload():
                 start_batch_processing(batch_id, current_app.config['UPLOAD_FOLDER'], app)
                 
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    specs_created = Specification.query.filter(Specification.id.in_(spec_ids)).all()
+                    specs_data = []
+                    for idx, sid in enumerate(spec_ids):
+                        spec_obj = next((s for s in specs_created if s.id == sid), None)
+                        specs_data.append({
+                            'id': sid,
+                            'index': idx,
+                            'filename': spec_obj.pdf_filename if spec_obj else '',
+                            'status': 'pending'
+                        })
                     return jsonify({
                         'success': True,
                         'message': f'{len(spec_ids)} arquivos enviados! Processamento iniciado.',
                         'batch_id': batch_id,
-                        'count': len(spec_ids)
+                        'count': len(spec_ids),
+                        'specs': specs_data
                     })
                 
                 flash(f'{len(spec_ids)} arquivos enviados! Processamento iniciado em segundo plano.')
@@ -754,13 +766,31 @@ def batch_status(batch_id):
     pending = sum(1 for s in specs if s.processing_status == 'pending')
     errors = sum(1 for s in specs if s.processing_status == 'error')
     
+    stage_map = {
+        0: 'pending',
+        1: 'thumbnail',
+        2: 'extract_image',
+        3: 'extract_text',
+        4: 'openai_parse',
+        5: 'supplier_link',
+        6: 'completed'
+    }
+    
     specs_info = []
     for s in specs:
+        stage_num = s.processing_stage or 0
+        processing_stage = stage_map.get(stage_num, 'processing')
+        if s.processing_status == 'error':
+            processing_stage = 'error'
+        elif s.processing_status == 'completed':
+            processing_stage = 'completed'
+        
         specs_info.append({
             'id': s.id,
             'filename': s.pdf_filename,
             'status': s.processing_status,
-            'stage': s.processing_stage or 0,
+            'stage': stage_num,
+            'processing_stage': processing_stage,
             'stage_name': {
                 0: 'Aguardando',
                 1: 'Thumbnail',
@@ -769,7 +799,7 @@ def batch_status(batch_id):
                 4: 'Processando IA',
                 5: 'Vinculando Fornecedor',
                 6: 'Concluído'
-            }.get(s.processing_stage or 0, 'Desconhecido'),
+            }.get(stage_num, 'Desconhecido'),
             'error': s.last_error,
             'description': s.description
         })
