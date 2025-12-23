@@ -274,76 +274,146 @@ def upload():
     if request.method == 'GET':
         form.stylist.data = user.username
 
-    if request.method == 'POST' and form.validate_on_submit():
+    if request.method == 'POST':
         try:
-            file = form.pdf_file.data
-            filename = secure_filename(file.filename)
-            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-            file.save(file_path)
-
-            spec = Specification()
-            spec.user_id = session['user_id']
-            spec.pdf_filename = filename
-            spec.collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
-
-            if form.supplier_id.data and form.supplier_id.data != 0:
-                spec.supplier_id = form.supplier_id.data
-                selected_supplier = Supplier.query.get(form.supplier_id.data)
-                spec.supplier = selected_supplier.name if selected_supplier else None
-            else:
-                spec.supplier_id = None
-                spec.supplier = None
-
-            spec.stylists = form.stylist.data or user.username
-            spec.price_range = form.price_range.data if form.price_range.data else None
-            spec.processing_status = 'processing'
-            spec.status = 'draft'
-            spec.created_at = datetime.now()
-
-            db.session.add(spec)
-            db.session.commit()
-
-            spec_id = spec.id
+            files = request.files.getlist('pdf_file')
             
-            log_activity('UPLOAD_FILE', 'specification', spec_id, 
-                        target_name=spec.description or filename,
-                        metadata={'filename': filename, 'collection_id': spec.collection_id, 'supplier_id': spec.supplier_id})
-            rpa_info(f"UPLOAD: Arquivo '{filename}' enviado pelo usuário '{user.username}'")
+            if not files or len(files) == 0 or (len(files) == 1 and files[0].filename == ''):
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({'success': False, 'message': 'Nenhum arquivo selecionado'})
+                flash('Por favor, selecione um arquivo.')
+                return render_template('upload_pdf.html', form=form, current_user=user)
+            
+            if len(files) == 1:
+                file = files[0]
+                filename = secure_filename(file.filename)
+                file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                file.save(file_path)
 
-            app = current_app._get_current_object()
+                spec = Specification()
+                spec.user_id = session['user_id']
+                spec.pdf_filename = filename
+                spec.collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
 
-            def process_in_background():
-                with app.app_context():
-                    try:
-                        rpa_info(f"PROCESSAMENTO: Iniciando processamento do arquivo '{filename}' (ID: {spec_id})")
-                        process_pdf_specification(spec_id, file_path, app)
-                        rpa_info(f"PROCESSAMENTO: Arquivo '{filename}' (ID: {spec_id}) processado com sucesso")
-                    except Exception as e:
-                        print(f"❌ Error in background processing thread: {e}")
-                        import traceback
-                        traceback.print_exc()
-                        rpa_error(f"PROCESSAMENTO_ERRO: Falha ao processar '{filename}' (ID: {spec_id})", exc=e, regiao="processamento")
+                if form.supplier_id.data and form.supplier_id.data != 0:
+                    spec.supplier_id = form.supplier_id.data
+                    selected_supplier = Supplier.query.get(form.supplier_id.data)
+                    spec.supplier = selected_supplier.name if selected_supplier else None
+                else:
+                    spec.supplier_id = None
+                    spec.supplier = None
+
+                spec.stylists = form.stylist.data or user.username
+                spec.price_range = form.price_range.data if form.price_range.data else None
+                spec.processing_status = 'processing'
+                spec.status = 'draft'
+                spec.created_at = datetime.now()
+
+                db.session.add(spec)
+                db.session.commit()
+
+                spec_id = spec.id
+                
+                log_activity('UPLOAD_FILE', 'specification', spec_id, 
+                            target_name=spec.description or filename,
+                            metadata={'filename': filename, 'collection_id': spec.collection_id, 'supplier_id': spec.supplier_id})
+                rpa_info(f"UPLOAD: Arquivo '{filename}' enviado pelo usuário '{user.username}'")
+
+                app = current_app._get_current_object()
+
+                def process_in_background():
+                    with app.app_context():
                         try:
-                            error_spec = Specification.query.get(spec_id)
-                            if error_spec:
-                                error_spec.processing_status = 'error'
-                                db.session.commit()
-                        except:
-                            pass
+                            rpa_info(f"PROCESSAMENTO: Iniciando processamento do arquivo '{filename}' (ID: {spec_id})")
+                            process_pdf_specification(spec_id, file_path, app)
+                            rpa_info(f"PROCESSAMENTO: Arquivo '{filename}' (ID: {spec_id}) processado com sucesso")
+                        except Exception as e:
+                            print(f"❌ Error in background processing thread: {e}")
+                            import traceback
+                            traceback.print_exc()
+                            rpa_error(f"PROCESSAMENTO_ERRO: Falha ao processar '{filename}' (ID: {spec_id})", exc=e, regiao="processamento")
+                            try:
+                                error_spec = Specification.query.get(spec_id)
+                                if error_spec:
+                                    error_spec.processing_status = 'error'
+                                    db.session.commit()
+                            except:
+                                pass
 
-            thread = threading.Thread(target=process_in_background)
-            thread.daemon = True
-            thread.start()
+                thread = threading.Thread(target=process_in_background)
+                thread.daemon = True
+                thread.start()
 
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({
-                    'success': True,
-                    'message': 'Arquivo enviado! Processamento iniciado em segundo plano.',
-                    'spec_id': spec_id
-                })
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True,
+                        'message': 'Arquivo enviado! Processamento iniciado em segundo plano.',
+                        'spec_id': spec_id
+                    })
 
-            flash('Arquivo enviado! Processamento iniciado em segundo plano.')
-            return redirect(url_for('dashboard.index'))
+                flash('Arquivo enviado! Processamento iniciado em segundo plano.')
+                return redirect(url_for('dashboard.index'))
+            
+            else:
+                import uuid
+                from app.utils.batch_processor import start_batch_processing
+                
+                batch_id = str(uuid.uuid4())[:8]
+                collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
+                supplier_id = form.supplier_id.data if form.supplier_id.data and form.supplier_id.data != 0 else None
+                stylist = form.stylist.data or user.username
+                price_range = form.price_range.data if form.price_range.data else None
+                
+                supplier_name = None
+                if supplier_id:
+                    selected_supplier = Supplier.query.get(supplier_id)
+                    supplier_name = selected_supplier.name if selected_supplier else None
+                
+                spec_ids = []
+                for file in files:
+                    if file.filename:
+                        filename = secure_filename(file.filename)
+                        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+                        file.save(file_path)
+                        
+                        spec = Specification()
+                        spec.user_id = session['user_id']
+                        spec.pdf_filename = filename
+                        spec.collection_id = collection_id
+                        spec.supplier_id = supplier_id
+                        spec.supplier = supplier_name
+                        spec.stylists = stylist
+                        spec.price_range = price_range
+                        spec.processing_status = 'pending'
+                        spec.processing_stage = 0
+                        spec.batch_id = batch_id
+                        spec.status = 'draft'
+                        spec.created_at = datetime.now()
+                        
+                        db.session.add(spec)
+                        db.session.flush()
+                        spec_ids.append(spec.id)
+                
+                db.session.commit()
+                
+                log_activity('BATCH_UPLOAD', 'specification', None,
+                            target_name=f'Lote {batch_id}',
+                            metadata={'batch_id': batch_id, 'file_count': len(spec_ids), 'collection_id': collection_id})
+                rpa_info(f"BATCH_UPLOAD: {len(spec_ids)} arquivos enviados pelo usuário '{user.username}' (lote {batch_id})")
+                
+                app = current_app._get_current_object()
+                start_batch_processing(batch_id, current_app.config['UPLOAD_FOLDER'], app)
+                
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True,
+                        'message': f'{len(spec_ids)} arquivos enviados! Processamento iniciado.',
+                        'batch_id': batch_id,
+                        'count': len(spec_ids)
+                    })
+                
+                flash(f'{len(spec_ids)} arquivos enviados! Processamento iniciado em segundo plano.')
+                return redirect(url_for('dashboard.index'))
 
         except Exception as e:
             db.session.rollback()
@@ -351,7 +421,9 @@ def upload():
             import traceback
             traceback.print_exc()
             rpa_error(f"UPLOAD_ERRO: Erro ao fazer upload do arquivo", exc=e, regiao="upload")
-            flash('Erro ao processar o arquivo PDF. Por favor, tente novamente ou contate o suporte.')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'message': str(e)})
+            flash('Erro ao processar o arquivo. Por favor, tente novamente.')
             return render_template('upload_pdf.html', form=form, current_user=user)
 
     return render_template('upload_pdf.html', form=form, current_user=user)

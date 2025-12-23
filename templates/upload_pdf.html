@@ -599,12 +599,12 @@
                 <!-- Upload Area -->
                 <div class="upload-section" id="upload-area" onclick="document.getElementById('pdf-input').click()">
                     <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                    <h3>Arraste e solte seu arquivo aqui</h3>
+                    <h3>Arraste e solte seus arquivos aqui</h3>
                     <p>ou clique para navegar</p>
-                    <p style="font-size: 12px; color: #64748b; margin-top: -12px;">Formatos suportados: PDF, JPG, PNG</p>
-                    {{ form.pdf_file(id="pdf-input", accept=".pdf,.jpg,.jpeg,.png", style="display: none;") }}
+                    <p style="font-size: 12px; color: #64748b; margin-top: -12px;">Formatos suportados: PDF, JPG, PNG (um ou vários arquivos)</p>
+                    {{ form.pdf_file(id="pdf-input", accept=".pdf,.jpg,.jpeg,.png", style="display: none;", multiple=True) }}
                     <button type="button" class="btn-upload" onclick="event.stopPropagation(); document.getElementById('pdf-input').click()">
-                        <i class="fas fa-folder-open"></i> Selecionar Arquivo
+                        <i class="fas fa-folder-open"></i> Selecionar Arquivos
                     </button>
                     
                     {% if form.pdf_file.errors %}
@@ -616,10 +616,25 @@
                     {% endif %}
                 </div>
                 
-                <!-- File Info -->
-                <div id="file-info" class="file-info">
+                <!-- File Info (single file) -->
+                <div id="file-info" class="file-info" style="display: none;">
                     <i id="file-icon" class="fas fa-file"></i>
                     <span id="file-name"></span>
+                </div>
+                
+                <!-- Files List (multiple files) -->
+                <div id="files-list" style="display: none; margin-top: 16px;">
+                    <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-weight: 600; color: #e5e7eb;">
+                                <i class="fas fa-files"></i> Arquivos selecionados: <span id="files-count">0</span>
+                            </span>
+                            <button type="button" onclick="clearFiles()" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">
+                                <i class="fas fa-times"></i> Limpar
+                            </button>
+                        </div>
+                        <div id="files-items" style="max-height: 200px; overflow-y: auto;"></div>
+                    </div>
                 </div>
                 
                 <!-- Info Box -->
@@ -664,25 +679,28 @@
     <script>
         // AJAX form submission with background processing
         document.getElementById('upload-form').addEventListener('submit', function(e) {
-            e.preventDefault(); // Prevent default form submission
+            e.preventDefault();
             
             const fileInput = document.getElementById('pdf-input');
             const submitBtn = document.getElementById('submit-btn');
             
             if (fileInput.files.length === 0) {
-                Toast.warning('Por favor, selecione um arquivo para enviar.');
+                Toast.warning('Por favor, selecione um ou mais arquivos para enviar.');
                 return;
             }
             
-            // Prepare form data
             const formData = new FormData(this);
+            const fileCount = fileInput.files.length;
             
-            // Show uploading toast
-            Toast.info('📤 Enviando arquivo...');
+            if (fileCount === 1) {
+                Toast.info('📤 Enviando arquivo...');
+            } else {
+                Toast.info('📤 Enviando ' + fileCount + ' arquivos...');
+            }
+            
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
             
-            // Send AJAX request
             fetch('/upload_pdf', {
                 method: 'POST',
                 body: formData,
@@ -693,24 +711,25 @@
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // File uploaded successfully, start background processing
-                    Toast.success('✓ Arquivo enviado com sucesso!');
-                    
-                    // Clear form
                     document.getElementById('upload-form').reset();
                     document.getElementById('file-info').style.display = 'none';
+                    document.getElementById('files-list').style.display = 'none';
                     
-                    // Start polling for completion
-                    pollSpecStatus(data.spec_id, function(statusData) {
-                        // Reload dashboard when complete
-                        if (statusData.status === 'completed') {
-                            setTimeout(() => {
-                                window.location.href = '/dashboard';
-                            }, 1500);
-                        }
-                    });
+                    if (data.batch_id) {
+                        Toast.success('✓ ' + data.count + ' arquivos enviados! Processando em segundo plano...');
+                        pollBatchStatus(data.batch_id);
+                    } else if (data.spec_id) {
+                        Toast.success('✓ Arquivo enviado com sucesso!');
+                        pollSpecStatus(data.spec_id, function(statusData) {
+                            if (statusData.status === 'completed') {
+                                setTimeout(() => {
+                                    window.location.href = '/dashboard';
+                                }, 1500);
+                            }
+                        });
+                    }
                 } else {
-                    Toast.error('❌ Erro ao enviar arquivo: ' + (data.message || 'Erro desconhecido'));
+                    Toast.error('❌ Erro ao enviar: ' + (data.message || 'Erro desconhecido'));
                 }
             })
             .catch(error => {
@@ -719,35 +738,102 @@
             })
             .finally(() => {
                 submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-upload"></i> Enviar Arquivo';
+                submitBtn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
             });
         });
-
-        function updateFileDisplay(file) {
-            const fileInfo = document.getElementById('file-info');
-            const fileName = document.getElementById('file-name');
-            const fileIcon = document.getElementById('file-icon');
+        
+        function pollBatchStatus(batchId) {
+            let pollCount = 0;
+            const maxPolls = 300;
             
-            fileName.textContent = file.name;
-            
-            // Update icon based on file type
-            if (file.type === 'application/pdf') {
-                fileIcon.className = 'fas fa-file-pdf';
-            } else if (file.type.startsWith('image/')) {
-                fileIcon.className = 'fas fa-file-image';
-            } else {
-                fileIcon.className = 'fas fa-file';
+            function checkStatus() {
+                fetch('/batch_status/' + batchId)
+                    .then(response => response.json())
+                    .then(data => {
+                        pollCount++;
+                        const completed = data.completed || 0;
+                        const total = data.total || 0;
+                        const errors = data.errors || 0;
+                        
+                        if (completed + errors >= total) {
+                            if (errors > 0) {
+                                Toast.warning('✓ Lote concluído: ' + completed + ' processados, ' + errors + ' com erro');
+                            } else {
+                                Toast.success('✓ Todos os ' + total + ' arquivos foram processados!');
+                            }
+                            setTimeout(() => {
+                                window.location.href = '/dashboard';
+                            }, 2000);
+                        } else if (pollCount < maxPolls) {
+                            Toast.info('⏳ Processando: ' + completed + '/' + total + ' arquivos...', 3000);
+                            setTimeout(checkStatus, 3000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Polling error:', error);
+                        if (pollCount < maxPolls) {
+                            setTimeout(checkStatus, 5000);
+                        }
+                    });
             }
             
-            fileInfo.style.display = 'flex';
+            setTimeout(checkStatus, 2000);
+        }
+
+        function updateFileDisplay(files) {
+            const fileInfo = document.getElementById('file-info');
+            const filesList = document.getElementById('files-list');
+            const filesItems = document.getElementById('files-items');
+            const filesCount = document.getElementById('files-count');
+            
+            if (files.length === 0) {
+                fileInfo.style.display = 'none';
+                filesList.style.display = 'none';
+                return;
+            }
+            
+            if (files.length === 1) {
+                const file = files[0];
+                const fileName = document.getElementById('file-name');
+                const fileIcon = document.getElementById('file-icon');
+                
+                fileName.textContent = file.name;
+                
+                if (file.type === 'application/pdf') {
+                    fileIcon.className = 'fas fa-file-pdf';
+                } else if (file.type.startsWith('image/')) {
+                    fileIcon.className = 'fas fa-file-image';
+                } else {
+                    fileIcon.className = 'fas fa-file';
+                }
+                
+                fileInfo.style.display = 'flex';
+                filesList.style.display = 'none';
+            } else {
+                fileInfo.style.display = 'none';
+                filesList.style.display = 'block';
+                filesCount.textContent = files.length;
+                
+                filesItems.innerHTML = '';
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    const icon = file.type === 'application/pdf' ? 'fa-file-pdf' : 'fa-file-image';
+                    const item = document.createElement('div');
+                    item.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #0f1420; border-radius: 4px; margin-bottom: 4px; font-size: 13px;';
+                    item.innerHTML = '<i class="fas ' + icon + '" style="color: #3b82f6;"></i><span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + file.name + '</span>';
+                    filesItems.appendChild(item);
+                }
+            }
+        }
+        
+        function clearFiles() {
+            document.getElementById('pdf-input').value = '';
+            document.getElementById('file-info').style.display = 'none';
+            document.getElementById('files-list').style.display = 'none';
         }
 
         document.getElementById('pdf-input').addEventListener('change', function(e) {
-            if (e.target.files.length > 0) {
-                updateFileDisplay(e.target.files[0]);
-            } else {
-                document.getElementById('file-info').style.display = 'none';
-            }
+            updateFileDisplay(e.target.files);
         });
 
         // Drag and drop functionality
@@ -771,9 +857,12 @@
             const files = e.dataTransfer.files;
             const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
             
-            if (files.length > 0 && allowedTypes.includes(files[0].type)) {
-                fileInput.files = files;
-                updateFileDisplay(files[0]);
+            const validFiles = Array.from(files).filter(f => allowedTypes.includes(f.type));
+            if (validFiles.length > 0) {
+                const dt = new DataTransfer();
+                validFiles.forEach(f => dt.items.add(f));
+                fileInput.files = dt.files;
+                updateFileDisplay(fileInput.files);
             }
         });
     </script>
