@@ -399,30 +399,54 @@ ESTRUTURA TÍPICA DA FICHA TÉCNICA SOUQ:
 - Corpo contém: OBSERVAÇÕES/AVIAMENTOS, MATÉRIA-PRIMA E COMPOSIÇÃO, CORES
 - Abaixo: DESENHO TÉCNICO e fotos
 
-REGRAS CRÍTICAS DE EXTRAÇÃO:
-1. **FORNECEDOR** = campo rotulado "FORNECEDOR:" no cabeçalho. É o nome da EMPRESA que fabrica (ex: "FOR ADY", "RENASC", "TÊXTIL ABC"). NÃO confundir com matéria-prima!
-2. **MATÉRIA-PRIMA** = campo rotulado "MATÉRIA-PRIMA E COMPOSIÇÃO:". Extraia APENAS o nome do TECIDO/MATERIAL, IGNORANDO informações de estoque ou logística entre parênteses.
-   - Exemplo: "LUMINOUS - MENEGOTTI (ESTOQUE FOR ADY)" → extrair apenas "LUMINOUS - MENEGOTTI"
-   - Exemplo: "CREPE DE SEDA (LOTE 123)" → extrair apenas "CREPE DE SEDA"
-3. **ESTILISTA** = campo rotulado "ESTILISTA:" no cabeçalho. Nome do(a) estilista responsável.
-4. **CORNER** = campo rotulado "CORNER:" no cabeçalho. Departamento/marca.
-5. **COMPOSIÇÃO QUÍMICA** = Se houver porcentagem de materiais (ex: "100% algodão", "60% poliéster") extraia para o campo composition. Se não houver, use null.
+REGRAS CRÍTICAS DE EXTRAÇÃO (PRIORIDADE MÁXIMA):
+
+1. **FORNECEDOR** (supplier):
+   - Rótulos possíveis: "FORNECEDOR:", "FORN:", "FABRICANTE:", "FOR:"
+   - É o nome da EMPRESA que fabrica (ex: "FOR ADY", "RENASC", "TÊXTIL ABC", "MENEGOTTI")
+   - NÃO confundir com matéria-prima ou tecido!
+
+2. **CORNER** (corner):
+   - Rótulos possíveis: "CORNER:", "DEPT:", "DEPARTAMENTO:", "MARCA:", "LINHA:"
+   - É o departamento/seção/marca (ex: "SOUQ", "CASUAL", "PREMIUM", "FEMININO", "MASCULINO")
+   - Geralmente está próximo ao cabeçalho junto com REF SOUQ
+
+3. **MATÉRIA-PRIMA / TECIDO PRINCIPAL** (main_fabric):
+   - Rótulos possíveis: "MATÉRIA-PRIMA:", "MATÉRIA-PRIMA E COMPOSIÇÃO:", "TECIDO:", "TECIDO PRINCIPAL:", "MATERIAL:", "MP:"
+   - Extraia APENAS o nome do TECIDO/MATERIAL base
+   - IGNORAR informações de estoque/logística entre parênteses
+   - Exemplos:
+     * "LUMINOUS - MENEGOTTI (ESTOQUE FOR ADY)" → extrair "LUMINOUS - MENEGOTTI"
+     * "CREPE DE SEDA (LOTE 123)" → extrair "CREPE DE SEDA"
+     * "MALHA CANELADA" → extrair "MALHA CANELADA"
+     * "VISCOSE PESADA" → extrair "VISCOSE PESADA"
+   - NÃO é o fornecedor!
+
+4. **ESTILISTA** (stylists):
+   - Rótulos possíveis: "ESTILISTA:", "DESIGNER:", "RESPONSÁVEL:"
+   - Nome do(a) estilista responsável
+
+5. **COMPOSIÇÃO QUÍMICA** (composition):
+   - Rótulos possíveis: "COMPOSIÇÃO:", "COMP.:", "%"
+   - Se houver porcentagem de materiais (ex: "100% algodão", "60% poliéster 40% viscose")
+   - Se não houver, use null
 
 IMPORTANTE:
 - Extraia EXATAMENTE o que está em cada campo rotulado
 - Para medidas, extraia o VALOR NUMÉRICO (ex: "64 cm" → "64 cm")
 - Para datas, use formato YYYY-MM-DD quando possível
 - Se uma informação NÃO estiver disponível, use null (não invente dados)
+- Procure variações de rótulos se o padrão não for encontrado
 
 CAMPOS OBRIGATÓRIOS A EXTRAIR:
 
 1. **Identificação da Peça:**
-   - ref_souq: Código/referência (campo "REF SOUQ:")
-   - description: Nome/descrição da peça (campo "DESCRIÇÃO:")
-   - collection: Coleção (campo "COLEÇÃO:")
-   - supplier: Nome da EMPRESA fornecedora (campo "FORNECEDOR:") - NÃO é tecido/matéria-prima!
-   - corner: Corner/departamento (campo "CORNER:")
-   - main_fabric: Matéria-prima/tecido (campo "MATÉRIA-PRIMA E COMPOSIÇÃO:") - NÃO é o fornecedor!
+   - ref_souq: Código/referência (campo "REF SOUQ:" ou "REF:")
+   - description: Nome/descrição da peça (campo "DESCRIÇÃO:" ou "DESC:")
+   - collection: Coleção (campo "COLEÇÃO:" ou "COL:")
+   - supplier: Nome da EMPRESA fornecedora - NÃO é tecido/matéria-prima!
+   - corner: Corner/departamento/marca - procure rótulos como CORNER, DEPT, LINHA
+   - main_fabric: Matéria-prima/tecido principal - procure rótulos como MATÉRIA-PRIMA, TECIDO, MP
    - main_group: Grupo - DEVE SER: TECIDO PLANO, MALHA, TRICOT ou JEANS (MAIÚSCULAS)
    - sub_group: Subgrupo - DEVE SER: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA ou TÚNICA (MAIÚSCULAS)
 
