@@ -5,7 +5,10 @@ import uuid
 import threading
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify, send_file, current_app
-from replit.object_storage import Client
+try:
+    from replit.object_storage import Client
+except ImportError:
+    Client = None
 from app.extensions import db, get_openai_client
 from app.models import User, Specification, Collection
 from app.utils.auth import login_required, admin_required
@@ -263,16 +266,17 @@ def download(id):
         if spec.technical_drawing_url.startswith('http://') or spec.technical_drawing_url.startswith('https://'):
             return redirect(spec.technical_drawing_url)
         
-        try:
-            storage_client = Client()
-            if storage_client.exists(spec.technical_drawing_url):
-                image_data = storage_client.download_as_bytes(spec.technical_drawing_url)
-                return send_file(io.BytesIO(image_data),
-                               mimetype='image/png',
-                               as_attachment=True,
-                               download_name=download_filename)
-        except Exception as storage_error:
-            print(f"Object Storage lookup failed: {storage_error}")
+        if Client:
+            try:
+                storage_client = Client()
+                if storage_client.exists(spec.technical_drawing_url):
+                    image_data = storage_client.download_as_bytes(spec.technical_drawing_url)
+                    return send_file(io.BytesIO(image_data),
+                                   mimetype='image/png',
+                                   as_attachment=True,
+                                   download_name=download_filename)
+            except Exception as storage_error:
+                print(f"Object Storage lookup failed: {storage_error}")
 
         drawing_path = os.path.join(current_app.config['UPLOAD_FOLDER'], spec.technical_drawing_url)
         if os.path.exists(drawing_path):

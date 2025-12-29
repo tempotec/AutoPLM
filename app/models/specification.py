@@ -56,6 +56,9 @@ class Specification(db.Model):
     raw_extracted_text = db.Column(db.Text)
     processing_status = db.Column(db.String(50), default='pending')
 
+    is_imported = db.Column(db.Boolean, default=False)
+    import_category = db.Column(db.String(50))
+
     # Campos de checkpoint para processamento em etapas
     # Etapas: 0=pending, 1=thumbnail, 2=extract_image, 3=extract_text, 4=openai_parse, 5=supplier_link, 6=completed
     processing_stage = db.Column(db.Integer, default=0)
@@ -65,8 +68,59 @@ class Specification(db.Model):
     batch_id = db.Column(db.String(50))  # Para agrupar uploads em lote
     extracted_images_json = db.Column(db.Text)  # Cache de imagens extraídas do PDF
 
-    status = db.Column(db.String(50), default='draft')
+    status = db.Column(db.String(50), default='in_development')
+    status_changed_at = db.Column(db.DateTime)
+    status_completed_at = db.Column(db.DateTime)
     price_range = db.Column(db.String(10))
 
     collection_obj = db.relationship('Collection', backref='specifications', lazy=True)
     supplier_obj = db.relationship('Supplier', backref='specifications', lazy=True)
+
+    def set_status(self, new_status):
+        """
+        Define um novo status e atualiza automaticamente as datas de rastreamento.
+        
+        - status_changed_at: atualizado sempre que o status muda
+        - status_completed_at: preenchido APENAS quando status = 'completed'
+        
+        Args:
+            new_status (str): O novo status a ser definido
+        """
+        if self.status != new_status:
+            now = datetime.utcnow()
+            self.status = new_status
+            self.status_changed_at = now
+            if new_status == 'completed':
+                self.status_completed_at = now
+            else:
+                self.status_completed_at = None
+    
+    def get_status_duration(self):
+        """
+        Retorna a duração do processamento em formato legível.
+        
+        Returns:
+            str: String formatada com a duração (ex: "2 horas, 30 minutos")
+        """
+        if not self.status_changed_at:
+            return "Não iniciado"
+        
+        if not self.status_completed_at:
+            end_time = datetime.utcnow()
+        else:
+            end_time = self.status_completed_at
+        
+        duration = end_time - self.status_changed_at
+        
+        hours = duration.seconds // 3600
+        minutes = (duration.seconds % 3600) // 60
+        seconds = duration.seconds % 60
+        
+        if duration.days > 0:
+            return f"{duration.days} dias, {hours} horas"
+        elif hours > 0:
+            return f"{hours} horas, {minutes} minutos"
+        elif minutes > 0:
+            return f"{minutes} minutos, {seconds} segundos"
+        else:
+            return f"{seconds} segundos"

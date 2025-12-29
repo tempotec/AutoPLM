@@ -221,6 +221,10 @@
             flex-direction: column;
         }
 
+        .form-field.import-field {
+            grid-column: span 2;
+        }
+
         .form-label {
             font-size: 14px;
             font-weight: 500;
@@ -767,6 +771,25 @@
                         </label>
                         {{ form.price_range(class="form-control") }}
                         <small class="form-hint">Classifique a peça em uma das faixas de preço (opcional)</small>
+                    </div>
+
+                    <div class="form-field import-field">
+                        <label for="is_imported" class="form-label">
+                            <i class="fas fa-globe"></i>Documento importado
+                        </label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            {{ form.is_imported() }}
+                            <span style="color: #94a3b8; font-size: 12px;">Marque se esta ficha é importada</span>
+                        </div>
+                        <small class="form-hint">A ficha receberá um badge de importado</small>
+                    </div>
+
+                    <div class="form-field import-field">
+                        <label for="import_category" class="form-label">
+                            <i class="fas fa-layer-group"></i>Categoria do importado
+                        </label>
+                        {{ form.import_category(class="form-control") }}
+                        <small class="form-hint">Use quando marcar como importado</small>
                     </div>
                 </div>
 

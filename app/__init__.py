@@ -1,4 +1,6 @@
 import os
+import json
+from dotenv import load_dotenv, dotenv_values
 from flask import Flask
 from app.config import config
 from app.extensions import db, csrf, init_openai
@@ -7,6 +9,23 @@ from app.utils.logging import init_rpa_monitor
 
 
 def create_app(config_name=None):
+    env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
+    load_dotenv(env_path, override=True)
+    if not os.environ.get('DATABASE_URL') and os.path.exists(env_path):
+        for key, value in dotenv_values(env_path).items():
+            if value is not None and not os.environ.get(key):
+                os.environ[key] = value
+        if not os.environ.get('DATABASE_URL'):
+            with open(env_path, 'r', encoding='utf-8') as env_file:
+                for raw_line in env_file:
+                    line = raw_line.strip()
+                    if not line or line.startswith('#') or '=' not in line:
+                        continue
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip().strip('"').strip("'")
+                    if key and not os.environ.get(key):
+                        os.environ[key] = value
     if config_name is None:
         config_name = os.environ.get('FLASK_ENV', 'default')
     
@@ -15,6 +34,13 @@ def create_app(config_name=None):
                 static_folder='../static')
     
     app.config.from_object(config[config_name])
+    app.config['SECRET_KEY'] = os.environ.get('SESSION_SECRET')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+    app.config['OPENAI_API_KEY'] = os.environ.get('OPENAI_API_KEY')
+    app.config['RPA_MONITOR_ID'] = os.environ.get('RPA_MONITOR_ID')
+    app.config['RPA_MONITOR_HOST'] = os.environ.get('RPA_MONITOR_HOST')
+    app.config['RPA_MONITOR_REGION'] = os.environ.get('RPA_MONITOR_REGION', 'default')
+    app.config['RPA_MONITOR_TRANSPORT'] = os.environ.get('RPA_MONITOR_TRANSPORT', 'ws')
     
     os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
     os.makedirs('static/thumbnails', exist_ok=True)
@@ -46,6 +72,16 @@ def create_app(config_name=None):
     #         print(f"RPA Monitor initialization skipped: {e}")
     
     register_blueprints(app)
+    
+    def _from_json(value):
+        if not value:
+            return []
+        try:
+            return json.loads(value)
+        except (TypeError, json.JSONDecodeError):
+            return []
+
+    app.jinja_env.filters['from_json'] = _from_json
     
     @app.after_request
     def add_cache_control(response):

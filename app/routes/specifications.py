@@ -269,6 +269,8 @@ def upload():
         user_suppliers = Supplier.query.filter_by(user_id=user.id).order_by(Supplier.name).all()
 
     form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
+
+
     form.supplier_id.choices = [(0, '-- Sem fornecedor --')] + [(s.id, s.name) for s in user_suppliers]
 
     if request.method == 'GET':
@@ -305,9 +307,11 @@ def upload():
 
                 spec.stylists = form.stylist.data or user.username
                 spec.price_range = form.price_range.data if form.price_range.data else None
+                spec.is_imported = bool(form.is_imported.data)
+                spec.import_category = form.import_category.data if spec.is_imported else None
                 spec.processing_status = 'processing'
-                spec.status = 'draft'
                 spec.created_at = datetime.now()
+                spec.set_status('in_development')
 
                 db.session.add(spec)
                 db.session.commit()
@@ -385,11 +389,13 @@ def upload():
                         spec.supplier = supplier_name
                         spec.stylists = stylist
                         spec.price_range = price_range
+                        spec.is_imported = bool(form.is_imported.data)
+                        spec.import_category = form.import_category.data if spec.is_imported else None
                         spec.processing_status = 'pending'
                         spec.processing_stage = 0
                         spec.batch_id = batch_id
-                        spec.status = 'draft'
                         spec.created_at = datetime.now()
+                        spec.set_status('in_development')
                         
                         db.session.add(spec)
                         db.session.flush()
@@ -483,11 +489,15 @@ def edit(id):
         user_collections = Collection.query.filter_by(user_id=user.id).order_by(Collection.name).all()
 
     form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
+    if request.method == 'GET':
+        form.status.data = spec.status
 
     if form.validate_on_submit():
         collection_id = form.collection_id.data if form.collection_id.data and form.collection_id.data != 0 else None
         form.populate_obj(spec)
         spec.collection_id = collection_id
+        if form.status.data:
+            spec.set_status(form.status.data)
         try:
             db.session.commit()
             log_activity('EDIT_SPECIFICATION', 'specification', spec.id,
@@ -499,6 +509,9 @@ def edit(id):
             db.session.rollback()
             flash('Erro ao atualizar especificação.')
 
+    
+    elif request.method == 'POST' and form.errors:
+        flash(f"Erro de validacao: {form.errors}")
     return render_template('edit_specification.html', form=form, specification=spec)
 
 
@@ -571,7 +584,7 @@ def view_pdf(id):
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
-        flash('Sessão inválida. Por favor, faça login novamente.')
+        flash('Sess??o inv??lida. Por favor, fa??a login novamente.')
         return redirect(url_for('auth.login'))
 
     if not user.is_admin and spec.user_id != user.id:
@@ -579,15 +592,19 @@ def view_pdf(id):
         return redirect(url_for('dashboard.index'))
 
     try:
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        file_path = os.path.abspath(os.path.join(current_app.config['UPLOAD_FOLDER'], spec.pdf_filename))
         if os.path.exists(file_path):
-            return send_file(file_path, mimetype='application/pdf')
-        else:
-            flash('Arquivo PDF não encontrado.')
-            return redirect(url_for('specifications.view', id=id))
+            return send_file(
+                file_path,
+                mimetype='application/pdf',
+                as_attachment=False,
+                download_name=spec.pdf_filename,
+            )
+        print(f"View PDF not found: {file_path}")
+        return 'Arquivo PDF nao encontrado.', 404
     except Exception as e:
-        flash('Erro ao visualizar o arquivo PDF.')
-        return redirect(url_for('specifications.view', id=id))
+        print(f"View PDF error: {e}")
+        return 'Erro ao visualizar o arquivo PDF.', 500
 
 
 @specifications_bp.route('/view_image/<int:id>')
@@ -597,7 +614,7 @@ def view_image(id):
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
-        flash('Sessão inválida. Por favor, faça login novamente.')
+        flash('Sess??o inv??lida. Por favor, fa??a login novamente.')
         return redirect(url_for('auth.login'))
 
     if not user.is_admin and spec.user_id != user.id:
@@ -605,7 +622,7 @@ def view_image(id):
         return redirect(url_for('dashboard.index'))
 
     try:
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], spec.pdf_filename)
+        file_path = os.path.abspath(os.path.join(current_app.config['UPLOAD_FOLDER'], spec.pdf_filename))
         if os.path.exists(file_path):
             ext = spec.pdf_filename.lower().split('.')[-1]
             mimetype_map = {
@@ -614,13 +631,17 @@ def view_image(id):
                 'png': 'image/png'
             }
             mimetype = mimetype_map.get(ext, 'image/jpeg')
-            return send_file(file_path, mimetype=mimetype)
-        else:
-            flash('Arquivo de imagem não encontrado.')
-            return redirect(url_for('specifications.view', id=id))
+            return send_file(
+                file_path,
+                mimetype=mimetype,
+                as_attachment=False,
+                download_name=spec.pdf_filename,
+            )
+        print(f"View image not found: {file_path}")
+        return 'Arquivo de imagem nao encontrado.', 404
     except Exception as e:
-        flash('Erro ao visualizar o arquivo de imagem.')
-        return redirect(url_for('specifications.view', id=id))
+        print(f"View image error: {e}")
+        return 'Erro ao visualizar o arquivo de imagem.', 500
 
 
 @specifications_bp.route('/upload_batch', methods=['GET', 'POST'])
@@ -704,10 +725,10 @@ def upload_batch_files():
             spec.batch_id = batch_id
             spec.processing_status = 'pending'
             spec.processing_stage = 0
-            spec.status = 'draft'
             spec.stylists = stylist
             spec.price_range = price_range if price_range else None
             spec.created_at = datetime.now()
+            spec.set_status('in_development')
             
             if supplier_id and supplier_id != 0:
                 spec.supplier_id = supplier_id

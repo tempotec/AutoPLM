@@ -218,6 +218,25 @@
             border-color: #2563eb;
         }
 
+        .material-filter-group {
+            min-width: 220px;
+        }
+
+        .material-filter-group select {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .material-filter-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
         .btn-primary {
             display: inline-flex;
             align-items: center;
@@ -413,6 +432,58 @@
             max-height: 90vh;
             overflow-y: auto;
             border: 1px solid #1e293b;
+        }
+
+        .products-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .product-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background-color: #0b1220;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .product-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            background-color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .product-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .product-meta h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .product-meta span {
+            font-size: 12px;
+            color: #94a3b8;
         }
 
         .modal-header {
@@ -671,6 +742,16 @@
                     <i class="fas fa-search"></i>
                     <input type="text" id="searchInput" placeholder="Buscar fornecedor..." value="{{ search_query }}">
                 </div>
+                <div class="material-filter-group">
+                    <select id="materialFilter">
+                        <option value="">Todos os materiais</option>
+                        {% for material in materials_options %}
+                            <option value="{{ material }}" {{ 'selected' if material == material_filter else '' }}>
+                                {{ material }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <button class="btn-primary" onclick="openModal()">
                     <i class="fas fa-plus"></i>
                     Novo Fornecedor
@@ -727,6 +808,9 @@
                         <button class="action-btn" onclick="viewSupplier({{ item.supplier.id }})">
                             <i class="fas fa-eye"></i>
                         </button>
+                        <button class="action-btn" onclick="viewSupplierProducts({{ item.supplier.id }})">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
                         <button class="action-btn" onclick="editSupplier({{ item.supplier.id }})">
                             <i class="fas fa-edit"></i>
                         </button>
@@ -747,14 +831,14 @@
             {% if pagination.pages > 1 %}
             <div class="pagination">
                 {% if pagination.has_prev %}
-                <a href="?page={{ pagination.prev_num }}&search={{ search_query }}" class="page-btn">
+                <a href="?page={{ pagination.prev_num }}&search={{ search_query }}&material={{ material_filter }}" class="page-btn">
                     <i class="fas fa-chevron-left"></i>
                 </a>
                 {% endif %}
 
                 {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
                     {% if page_num %}
-                        <a href="?page={{ page_num }}&search={{ search_query }}" 
+                        <a href="?page={{ page_num }}&search={{ search_query }}&material={{ material_filter }}" 
                            class="page-btn {{ 'active' if page_num == pagination.page else '' }}">
                             {{ page_num }}
                         </a>
@@ -764,7 +848,7 @@
                 {% endfor %}
 
                 {% if pagination.has_next %}
-                <a href="?page={{ pagination.next_num }}&search={{ search_query }}" class="page-btn">
+                <a href="?page={{ pagination.next_num }}&search={{ search_query }}&material={{ material_filter }}" class="page-btn">
                     <i class="fas fa-chevron-right"></i>
                 </a>
                 {% endif %}
@@ -844,6 +928,18 @@
         </div>
     </div>
 
+    <div id="productsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="productsModalTitle">Produtos do Fornecedor</h2>
+                <button class="close-btn" onclick="closeProductsModal()">&times;</button>
+            </div>
+            <div id="productsModalBody">
+                <p>Carregando...</p>
+            </div>
+        </div>
+    </div>
+
     <script>
         let materials = [];
         let selectedColor = '#667eea';
@@ -853,8 +949,15 @@
         document.getElementById('searchInput').addEventListener('keyup', function(e) {
             if (e.key === 'Enter') {
                 const searchValue = this.value;
-                window.location.href = `?search=${encodeURIComponent(searchValue)}`;
+                const materialValue = document.getElementById('materialFilter').value;
+                window.location.href = `?search=${encodeURIComponent(searchValue)}&material=${encodeURIComponent(materialValue)}`;
             }
+        });
+
+        document.getElementById('materialFilter').addEventListener('change', function() {
+            const searchValue = document.getElementById('searchInput').value;
+            const materialValue = this.value;
+            window.location.href = `?search=${encodeURIComponent(searchValue)}&material=${encodeURIComponent(materialValue)}`;
         });
 
         // Avatar color selection
@@ -975,6 +1078,75 @@
             }
         }
 
+        function closeProductsModal() {
+            document.getElementById('productsModal').classList.remove('show');
+        }
+
+        function formatProductStatus(status) {
+            const normalized = (status || '').toLowerCase();
+            if (normalized === 'completed') {
+                return 'Concluido';
+            }
+            if (normalized === 'in_development') {
+                return 'Em desenvolvimento';
+            }
+            if (normalized === 'approved') {
+                return 'Aprovado';
+            }
+            return 'Rascunho';
+        }
+
+        async function viewSupplierProducts(id) {
+            const modal = document.getElementById('productsModal');
+            const body = document.getElementById('productsModalBody');
+            const title = document.getElementById('productsModalTitle');
+
+            modal.classList.add('show');
+            body.innerHTML = '<p>Carregando...</p>';
+            title.textContent = 'Produtos do fornecedor';
+
+            try {
+                const response = await fetch(`/suppliers/${id}/products`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    body.innerHTML = '<p>Erro ao carregar produtos.</p>';
+                    return;
+                }
+
+                title.textContent = `Produtos de ${data.supplier_name || 'Fornecedor'}`;
+
+                if (!data.products || data.products.length === 0) {
+                    body.innerHTML = '<p>Nenhum produto associado.</p>';
+                    return;
+                }
+
+                const itemsHtml = data.products.map(product => {
+                    const thumbHtml = product.thumbnail
+                        ? `<img src="${product.thumbnail}" alt="">`
+                        : '<i class="fas fa-file"></i>';
+                    const refLabel = product.ref ? `Ref: ${product.ref}` : 'Ref: -';
+                    const statusLabel = formatProductStatus(product.status);
+                    const nameLabel = product.name || 'Produto';
+                    return `
+                        <div class="product-item">
+                            <div class="product-thumb">${thumbHtml}</div>
+                            <div class="product-meta">
+                                <h4>${nameLabel}</h4>
+                                <span>${refLabel}</span>
+                                <span>Status: ${statusLabel}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                body.innerHTML = `<div class="products-list">${itemsHtml}</div>`;
+            } catch (error) {
+                console.error('Error:', error);
+                body.innerHTML = '<p>Erro ao carregar produtos.</p>';
+            }
+        }
+
         async function deleteSupplier(id, name) {
             if (confirm(`Tem certeza que deseja excluir o fornecedor "${name}"?\n\nEsta ação não pode ser desfeita.`)) {
                 try {
@@ -1006,8 +1178,12 @@
 
         window.onclick = function(event) {
             const modal = document.getElementById('supplierModal');
+            const productsModal = document.getElementById('productsModal');
             if (event.target == modal) {
                 closeModal();
+            }
+            if (event.target == productsModal) {
+                closeProductsModal();
             }
         }
     </script>

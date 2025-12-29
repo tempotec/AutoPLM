@@ -1,4 +1,5 @@
 import json
+import math
 from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify
 from app.extensions import db
 from app.models import User, Supplier, Specification
@@ -11,6 +12,43 @@ suppliers_bp = Blueprint('suppliers', __name__)
 @suppliers_bp.route('/suppliers')
 @login_required
 def index():
+    class SimplePagination:
+        def __init__(self, items, page, per_page, total):
+            self.items = items
+            self.page = page
+            self.per_page = per_page
+            self.total = total
+            self.pages = int(math.ceil(total / float(per_page))) if total else 0
+
+        @property
+        def has_prev(self):
+            return self.page > 1
+
+        @property
+        def has_next(self):
+            return self.page < self.pages
+
+        @property
+        def prev_num(self):
+            return self.page - 1
+
+        @property
+        def next_num(self):
+            return self.page + 1
+
+        def iter_pages(self, left_edge=1, right_edge=1, left_current=1, right_current=2):
+            last = 0
+            for num in range(1, self.pages + 1):
+                if (
+                    num <= left_edge
+                    or (self.page - left_current - 1 < num < self.page + right_current)
+                    or num > self.pages - right_edge
+                ):
+                    if last + 1 != num:
+                        yield None
+                    yield num
+                    last = num
+
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
@@ -18,6 +56,7 @@ def index():
         return redirect(url_for('auth.login'))
 
     search_query = request.args.get('search', '')
+    material_filter = request.args.get('material', '').strip()
     page = request.args.get('page', 1, type=int)
     per_page = 5
 
@@ -29,8 +68,42 @@ def index():
     if search_query:
         query = query.filter(Supplier.name.ilike(f'%{search_query}%'))
 
-    suppliers_paginated = query.order_by(Supplier.created_at.desc()).paginate(
-        page=page, per_page=per_page, error_out=False)
+    suppliers_list = query.order_by(Supplier.created_at.desc()).all()
+
+    materials_options = {}
+    for supplier in suppliers_list:
+        if not supplier.materials_json:
+            continue
+        try:
+            materials = json.loads(supplier.materials_json)
+        except json.JSONDecodeError:
+            continue
+        for material in materials:
+            name = material.get('name', '').strip()
+            if not name:
+                continue
+            key = name.lower()
+            if key not in materials_options:
+                materials_options[key] = name
+
+    if material_filter:
+        material_filter_lower = material_filter.lower()
+        filtered_suppliers = []
+        for supplier in suppliers_list:
+            if not supplier.materials_json:
+                continue
+            try:
+                materials = json.loads(supplier.materials_json)
+            except json.JSONDecodeError:
+                continue
+            if any(material_filter_lower in (m.get('name', '').lower()) for m in materials):
+                filtered_suppliers.append(supplier)
+        suppliers_list = filtered_suppliers
+
+    total = len(suppliers_list)
+    start = (page - 1) * per_page
+    end = start + per_page
+    suppliers_paginated = SimplePagination(suppliers_list[start:end], page, per_page, total)
 
     suppliers_with_counts = []
     for supplier in suppliers_paginated.items:
@@ -44,7 +117,9 @@ def index():
                            current_user=user,
                            suppliers=suppliers_with_counts,
                            pagination=suppliers_paginated,
-                           search_query=search_query)
+                           search_query=search_query,
+                           material_filter=material_filter,
+                           materials_options=sorted(materials_options.values(), key=str.lower))
 
 
 @suppliers_bp.route('/suppliers/create', methods=['POST'])
@@ -103,6 +178,40 @@ def get(id):
         'contact_phone': supplier.contact_phone,
         'materials': json.loads(supplier.materials_json) if supplier.materials_json else [],
         'avatar_color': supplier.avatar_color
+    })
+
+
+@suppliers_bp.route('/suppliers/<int:id>/products', methods=['GET'])
+@login_required
+def products(id):
+    supplier = Supplier.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+
+    if not user:
+        return jsonify({'success': False, 'message': 'SessÇœo invÇ­lida'}), 401
+    if not user.is_admin and supplier.user_id != user.id:
+        return jsonify({'success': False, 'message': 'Acesso negado'}), 403
+
+    specs = (Specification.query
+             .filter_by(supplier_id=supplier.id)
+             .order_by(Specification.created_at.desc())
+             .all())
+
+    products = []
+    for spec in specs:
+        products.append({
+            'id': spec.id,
+            'ref': spec.ref_souq,
+            'name': spec.description or spec.pdf_filename,
+            'status': spec.status or 'draft',
+            'thumbnail': spec.pdf_thumbnail or spec.technical_drawing_url,
+        })
+
+    return jsonify({
+        'success': True,
+        'supplier_id': supplier.id,
+        'supplier_name': supplier.name,
+        'products': products,
     })
 
 

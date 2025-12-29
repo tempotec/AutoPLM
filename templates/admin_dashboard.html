@@ -365,6 +365,11 @@
             color: #93c5fd;
         }
 
+        .badge-imported {
+            background-color: #4c1d95;
+            color: #c4b5fd;
+        }
+
         .badge-user {
             background-color: #581c87;
             color: #c084fc;
@@ -606,7 +611,8 @@
                     <option value="in_development">Em Desenvolvimento</option>
                     <option value="approved">Aprovado</option>
                     <option value="in_production">Em Produção</option>
-                </select>
+                                    <option value="completed">Concluido</option>
+</select>
             </div>
 
             <!-- Products Grid -->
@@ -640,15 +646,22 @@
                                     <i class="fas fa-truck"></i> {{ spec.supplier }}
                                 </span>
                                 {% endif %}
-                                {% if spec.status == 'draft' %}
-                                    <span class="badge badge-draft">Rascunho</span>
-                                {% elif spec.status == 'in_development' %}
-                                    <span class="badge badge-development">Em Desenvolvimento</span>
-                                {% elif spec.status == 'approved' %}
-                                    <span class="badge badge-approved">Aprovado</span>
-                                {% elif spec.status == 'in_production' %}
-                                    <span class="badge badge-production">Em Produção</span>
+                                {% if spec.is_imported %}
+                                <span class="badge badge-imported">
+                                    <i class="fas fa-box-open"></i> Importado{% if spec.import_category %} - {{ spec.import_category|capitalize }}{% endif %}
+                                </span>
                                 {% endif %}
+                                {% if spec.status == 'draft' %}
+                                <span class="badge badge-draft">Rascunho</span>
+                            {% elif spec.status == 'in_development' %}
+                                <span class="badge badge-development">Em Desenvolvimento</span>
+                            {% elif spec.status == 'approved' %}
+                                <span class="badge badge-approved">Aprovado</span>
+                            {% elif spec.status == 'in_production' %}
+                                <span class="badge badge-production">Em Produ????o</span>
+                            {% elif spec.status == 'completed' %}
+                                <span class="badge badge-completed">Concluido</span>
+                            {% endif %}
                                 
                                 {% if spec.processing_status == 'completed' %}
                                     <span class="badge badge-completed">Completo</span>

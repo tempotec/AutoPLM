@@ -1,5 +1,58 @@
 import json
+import re
+import unicodedata
 from app.extensions import get_openai_client
+
+def _normalize_text(value):
+    if value is None:
+        return ""
+    return unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+
+
+def _extract_labeled_fields(text):
+    normalized = _normalize_text(text)
+    results = {}
+
+    label_map = {
+        "REF SOUQ": "ref_souq",
+        "REF": "ref_souq",
+        "COLECAO": "collection",
+        "FORNECEDOR": "supplier",
+        "CORNER": "corner",
+        "DESCRICAO": "description",
+        "ESTILISTA": "stylists",
+        "MATERIA-PRIMA E COMPOSICAO": "main_fabric",
+        "MATERIA-PRIMA": "main_fabric",
+        "TECIDO PRINCIPAL": "main_fabric",
+        "TECIDO": "main_fabric",
+    }
+    labels = sorted(label_map.keys(), key=len, reverse=True)
+    label_pattern = "|".join(re.escape(label) for label in labels)
+
+    pattern = re.compile(rf"(?P<label>{label_pattern})\s*:?\s*", re.IGNORECASE)
+    matches = list(pattern.finditer(normalized))
+    if not matches:
+        return results
+
+    for idx, match in enumerate(matches):
+        label = match.group("label").upper()
+        start = match.end()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(normalized)
+        value = normalized[start:end].strip()
+
+        if not value:
+            continue
+
+        value = re.split(r"\s{2,}|\n", value)[0].strip()
+        if not value:
+            continue
+
+        key = label_map.get(label)
+        if key and key not in results:
+            results[key] = value
+
+    return results
+
 
 
 def analyze_images_with_gpt4_vision(images_base64):
@@ -392,6 +445,7 @@ def process_specification_with_openai(text_content):
         return None
 
     try:
+        labeled_fallback = _extract_labeled_fields(text_content)
         prompt = f"""Você é um especialista em análise de fichas técnicas de vestuário da marca SOUQ. Extraia TODAS as informações disponíveis do texto abaixo e retorne em formato JSON estruturado.
 
 ESTRUTURA TÍPICA DA FICHA TÉCNICA SOUQ:
@@ -543,6 +597,14 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                         print(f"  - {key}: {str(value)[:80]}...")
 
                 print(f"{'='*80}\n")
+                if labeled_fallback:
+                    supplier_fallback = labeled_fallback.get('supplier')
+                    corner_fallback = labeled_fallback.get('corner')
+
+                    if supplier_fallback:
+                        flattened['supplier'] = supplier_fallback
+                    if corner_fallback:
+                        flattened['corner'] = corner_fallback
                 return flattened
             except json.JSONDecodeError as je:
                 print(f"JSON parsing error: {je}")

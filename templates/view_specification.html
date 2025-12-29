@@ -242,7 +242,9 @@
         .status-draft { background: #3a4a6a; color: #a5b4fc; }
         .status-in_development { background: #1e3a8a; color: #93c5fd; }
         .status-approved { background: #065f46; color: #6ee7b7; }
-        .status-in_production { background: #7c2d12; color: #fca5a5; }
+        .status-completed { background: #065f46; color: #6ee7b7; }
+.status-in_production { background: #7c2d12; color: #fca5a5; }
+        .status-imported { background: #4c1d95; color: #c4b5fd; }
         
         /* Price Range Badges */
         .price-badge-p1 { background: #065f46; color: #6ee7b7; }
@@ -568,12 +570,18 @@
                     <div class="spec-title-section">
                         {% if specification.status %}
                         <span class="status-badge status-{{ specification.status }}">
-                            {% if specification.status == 'draft' %}Em Desenvolvimento
+                            {% if specification.status == 'draft' %}Rascunho
                             {% elif specification.status == 'in_development' %}Em Desenvolvimento
                             {% elif specification.status == 'approved' %}Aprovado
-                            {% elif specification.status == 'in_production' %}Em Produção
+                            {% elif specification.status == 'in_production' %}Em Produ????o
+                            {% elif specification.status == 'completed' %}Concluido
                             {% else %}{{ specification.status }}
                             {% endif %}
+                        </span>
+                        {% endif %}
+                        {% if specification.is_imported %}
+                        <span class="status-badge status-imported" style="margin-left: 0.5rem;">
+                            Importado{% if specification.import_category %}: {{ specification.import_category|capitalize }}{% endif %}
                         </span>
                         {% endif %}
                         {% if specification.price_range %}
@@ -717,7 +725,7 @@
                                     <div class="value">{{ specification.supplier or '-' }}</div>
                                 </div>
                                 <div class="detail-item">
-                                    <label>Matéria-Prima</label>
+                                    <label>Matéria-prima e composição (tecido principal)</label>
                                     <div class="value">{{ specification.main_fabric or '-' }}</div>
                                 </div>
                             </div>
@@ -908,14 +916,17 @@
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body p-0">
+                <div class="modal-body p-0" style="background: #0f1320;">
                     {% set is_image = specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
                     {% if is_image %}
                     <div class="text-center p-3" style="background-color: #0f1320; height: 90vh; overflow: auto;">
-                        <img id="imageDisplay" src="" alt="{{ specification.pdf_filename }}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                        <img id="imageDisplay" src="" alt="{{ specification.pdf_filename }}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.style.display='none'; document.getElementById('imageError').classList.remove('d-none');">
+                        <div id="imageError" class="d-none text-muted" style="padding: 2rem;">
+                            Nao foi possivel carregar a imagem.
+                        </div>
                     </div>
                     {% else %}
-                    <iframe id="pdfFrame" src="" style="width: 100%; height: 90vh; border: none;"></iframe>
+                    <iframe id="pdfFrame" src="" style="width: 100%; height: 90vh; border: none; background: #0f1320;"></iframe>
                     {% endif %}
                 </div>
                 <div class="modal-footer" style="border-top: 1px solid #2a3348;">
@@ -1028,6 +1039,9 @@
         
         if (isImage) {
             const imageDisplay = document.getElementById('imageDisplay');
+            const imageError = document.getElementById('imageError');
+            imageDisplay.style.display = '';
+            imageError.classList.add('d-none');
             imageDisplay.src = '{{ url_for("specifications.view_image", id=specification.id) }}';
         } else {
             const iframe = document.getElementById('pdfFrame');
@@ -1040,6 +1054,7 @@
         const isImage = {{ 'true' if specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false' }};
         if (isImage) {
             document.getElementById('imageDisplay').src = '';
+            document.getElementById('imageError').classList.add('d-none');
         } else {
             document.getElementById('pdfFrame').src = '';
         }

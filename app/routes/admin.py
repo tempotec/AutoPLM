@@ -52,10 +52,11 @@ def view_user(id):
     collections = [c[0] for c in collections if c[0]]
 
     status_counts = {
-        'Draft': Specification.query.filter_by(user_id=user_to_view.id, status='Draft').count(),
-        'In Development': Specification.query.filter_by(user_id=user_to_view.id, status='In Development').count(),
-        'Approved': Specification.query.filter_by(user_id=user_to_view.id, status='Approved').count(),
-        'In Production': Specification.query.filter_by(user_id=user_to_view.id, status='In Production').count(),
+        'Draft': Specification.query.filter_by(user_id=user_to_view.id, status='draft').count(),
+        'In Development': Specification.query.filter_by(user_id=user_to_view.id, status='in_development').count(),
+        'Approved': Specification.query.filter_by(user_id=user_to_view.id, status='approved').count(),
+        'In Production': Specification.query.filter_by(user_id=user_to_view.id, status='in_production').count(),
+        'Completed': Specification.query.filter_by(user_id=user_to_view.id, status='completed').count(),
     }
 
     current_user = User.query.get(session['user_id'])

@@ -91,6 +91,12 @@
                             <div class="status-count text-warning">{{ status_counts['In Production'] }}</div>
                             <div class="status-label">Em Produção</div>
                         </div>
+                      <div class="col-3">
+                          <div class="status-card">
+                              <div class="status-count text-success">{{ status_counts['Completed'] }}</div>
+                              <div class="status-label">Concluido</div>
+                          </div>
+                      </div>
                     </div>
                 </div>
             </div>
@@ -127,14 +133,16 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if spec.status == 'Draft' %}
+                                    {% if spec.status == 'draft' %}
                                         <span class="badge bg-secondary">Rascunho</span>
-                                    {% elif spec.status == 'In Development' %}
+                                    {% elif spec.status == 'in_development' %}
                                         <span class="badge bg-primary">Em Desenvolvimento</span>
-                                    {% elif spec.status == 'Approved' %}
+                                    {% elif spec.status == 'approved' %}
                                         <span class="badge bg-success">Aprovado</span>
-                                    {% elif spec.status == 'In Production' %}
-                                        <span class="badge bg-warning">Em Produção</span>
+                                    {% elif spec.status == 'in_production' %}
+                                        <span class="badge bg-warning">Em Produ????o</span>
+                                    {% elif spec.status == 'completed' %}
+                                        <span class="badge bg-success">Concluido</span>
                                     {% endif %}
                                 </td>
                                 <td>{{ spec.created_at.strftime('%d/%m/%Y') }}</td>

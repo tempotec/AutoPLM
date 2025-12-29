@@ -11,7 +11,10 @@ Este script:
 
 import os
 import sys
-from replit.object_storage import Client
+try:
+    from replit.object_storage import Client
+except ImportError:
+    Client = None
 from app import app, db, Specification
 
 def migrate_drawings():

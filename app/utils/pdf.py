@@ -31,6 +31,64 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error extracting text from PDF: {e}")
         import traceback
         traceback.print_exc()
+    if len(text.strip()) < 50:
+        try:
+            import pymupdf as fitz
+            print(f"\n{'='*80}")
+            print(f"PDF text fallback via PyMuPDF: {pdf_path}")
+            print(f"{'='*80}")
+            doc = fitz.open(pdf_path)
+            fallback_text = []
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                page_text = page.get_text()
+                fallback_text.append(page_text)
+                print(f"\n--- Fallback page {page_num + 1} ---")
+                print(f"Text length: {len(page_text)}")
+            doc.close()
+            fallback_text = "".join(fallback_text)
+            if len(fallback_text.strip()) > len(text.strip()):
+                text = fallback_text
+            print(f"\n{'='*80}")
+            print(f"TOTAL DE TEXTO FALLBACK: {len(fallback_text)} caracteres")
+            print(f"{'='*80}\n")
+        except Exception as e:
+            print(f"Error extracting fallback text from PDF: {e}")
+            import traceback
+            traceback.print_exc()
+
+    if len(text.strip()) < 50:
+        try:
+            import pymupdf as fitz
+            import pytesseract
+            print(f"\n{'='*80}")
+            print(f"PDF OCR fallback via Tesseract: {pdf_path}")
+            print(f"{'='*80}")
+            doc = fitz.open(pdf_path)
+            ocr_text_parts = []
+            for page_num in range(len(doc)):
+                page = doc[page_num]
+                pix = page.get_pixmap(matrix=fitz.Matrix(2.0, 2.0), alpha=False)
+                img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                try:
+                    page_text = pytesseract.image_to_string(img, lang="por")
+                except Exception:
+                    page_text = pytesseract.image_to_string(img, lang="eng")
+                ocr_text_parts.append(page_text)
+                print(f"\n--- OCR page {page_num + 1} ---")
+                print(f"Text length: {len(page_text)}")
+            doc.close()
+            ocr_text = "".join(ocr_text_parts)
+            if len(ocr_text.strip()) > len(text.strip()):
+                text = ocr_text
+            print(f"\n{'='*80}")
+            print(f"TOTAL DE TEXTO OCR: {len(ocr_text)} caracteres")
+            print(f"{'='*80}\n")
+        except Exception as e:
+            print(f"Error extracting OCR text from PDF: {e}")
+            import traceback
+            traceback.print_exc()
+
     return text
 
 
