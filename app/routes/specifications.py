@@ -9,7 +9,7 @@ from app.models import User, Specification, Collection, Supplier
 from app.forms import UploadPDFForm, SpecificationForm
 from app.utils.auth import login_required
 from app.utils.files import is_image_file, is_pdf_file, convert_image_to_base64
-from app.utils.pdf import extract_text_from_pdf, extract_images_from_pdf, generate_pdf_thumbnail, generate_image_thumbnail
+from app.utils.pdf import extract_text_from_pdf, extract_text_from_image, generate_pdf_thumbnail, generate_image_thumbnail
 from app.utils.ai import analyze_images_with_gpt4_vision, process_specification_with_openai
 from app.utils.helpers import convert_value_to_string, get_or_create_supplier
 from app.utils.logging import log_activity, rpa_info, rpa_error
@@ -64,104 +64,121 @@ def process_pdf_specification(spec_id, file_path, app):
                 spec.pdf_thumbnail = thumbnail_url
                 print(f"✓ Thumbnail da imagem gerado: {thumbnail_url}")
 
-            product_img_url = save_product_image(spec_id, file_path, is_b64=False)
-            if product_img_url:
-                spec.technical_drawing_url = product_img_url
-                print(f"✓ Imagem do produto salva: {product_img_url}")
+            print("Arquivo de imagem detectado: iniciando OCR e/ou analise visual.")
 
-            print("⚠️ Arquivo de imagem: pulando extração de texto.")
-            print("📸 Usando APENAS análise visual GPT-4o para extrair informações.")
+            ocr_text = extract_text_from_image(file_path)
+            extracted_data = None
+            if ocr_text and len(ocr_text.strip()) >= 50:
+                extracted_data = process_specification_with_openai(ocr_text)
 
-            image_b64 = convert_image_to_base64(file_path)
-            if not image_b64:
-                print("❌ Erro ao converter imagem para base64")
-                spec.processing_status = 'error'
-                thread_session.commit()
-                thread_session.close()
-                return
+            if extracted_data:
+                for key, value in extracted_data.items():
+                    if hasattr(spec, key) and value is not None:
+                        if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
+                            if isinstance(value, str):
+                                if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                                    print(f"  ⚠️ Ignorando data invalida para {key}: {value}")
+                                    continue
+                        setattr(spec, key, convert_value_to_string(value))
 
-            visual_analysis = analyze_images_with_gpt4_vision([image_b64])
-
-            if not visual_analysis:
-                print("❌ Erro na análise visual da imagem")
-                spec.processing_status = 'error'
-                thread_session.commit()
-                thread_session.close()
-                return
-
-            if isinstance(visual_analysis, dict):
-                ident = visual_analysis.get('identificacao', {})
-                gola = visual_analysis.get('gola_decote', {})
-                mangas = visual_analysis.get('mangas', {})
-                corpo = visual_analysis.get('corpo', {})
-                textura = visual_analysis.get('textura_padronagem', {})
-
-                tipo_peca = ident.get('tipo_peca', '')
-                categoria = ident.get('categoria', '')
-                grupo = ident.get('grupo', '')
-                subgrupo = ident.get('subgrupo', '')
-
-                spec.description = f"{tipo_peca}" if tipo_peca else "Peça de Vestuário (Imagem)"
-                spec.composition = categoria if categoria else None
-                
-                if textura.get('tipo_trico_malha') and textura['tipo_trico_malha'] != 'nao_visivel':
-                    pattern_parts = [textura['tipo_trico_malha']]
-                    if textura.get('direcao') and textura['direcao'] != 'nao_visivel':
-                        pattern_parts.append(textura['direcao'])
-                    if textura.get('rapport_ou_repeticao'):
-                        pattern_parts.append(textura['rapport_ou_repeticao'])
-                    spec.pattern = ' - '.join(pattern_parts)
-                else:
-                    spec.pattern = None
-
-                spec.main_group = grupo if grupo else None
-                spec.sub_group = subgrupo if subgrupo else None
-
-                detalhes = []
-                if gola.get('tipo') and gola['tipo'] != 'nao_visivel':
-                    detalhes.append(f"Gola: {gola['tipo']}")
-                if mangas.get('comprimento') and mangas['comprimento'] != 'nao_visivel':
-                    detalhes.append(f"Mangas: {mangas['comprimento']}")
-                if corpo.get('comprimento_visual'):
-                    detalhes.append(f"Comprimento: {corpo['comprimento_visual']}")
-
-                if detalhes:
-                    spec.finishes = ' | '.join(detalhes)
-
-                print(f"✓ Dados extraídos da análise visual (JSON estruturado):")
-                print(f"  - Descrição: {spec.description}")
-                print(f"  - Categoria: {spec.composition}")
-                print(f"  - Grupo: {spec.main_group}")
-                print(f"  - Subgrupo: {spec.sub_group}")
+                supplier_name = extracted_data.get('supplier')
+                if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
+                    print(f"\nFornecedor detectado no OCR: {supplier_name}")
+                    supplier = get_or_create_supplier(supplier_name, spec.user_id, thread_session)
+                    if supplier:
+                        spec.supplier_id = supplier.id
+                        spec.supplier = supplier.name
             else:
-                print("⚠️ Análise visual retornou texto (fallback de JSON)")
-                visual_text = str(visual_analysis)
-                extracted_data = process_specification_with_openai(visual_text)
+                image_b64 = convert_image_to_base64(file_path)
+                if not image_b64:
+                    print("Erro ao converter imagem para base64")
+                    spec.processing_status = 'error'
+                    thread_session.commit()
+                    thread_session.close()
+                    return
 
-                if extracted_data:
-                    for key, value in extracted_data.items():
-                        if hasattr(spec, key) and value is not None:
-                            if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
-                                if isinstance(value, str):
-                                    if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
-                                        print(f"  ⚠️ Ignorando data inválida para {key}: {value}")
-                                        continue
-                            setattr(spec, key, convert_value_to_string(value))
+                visual_analysis = analyze_images_with_gpt4_vision([image_b64])
 
-                    supplier_name = extracted_data.get('supplier')
-                    if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
-                        print(f"\n📦 Fornecedor detectado na análise: {supplier_name}")
-                        supplier = get_or_create_supplier(supplier_name, spec.user_id, thread_session)
-                        if supplier:
-                            spec.supplier_id = supplier.id
-                            spec.supplier = supplier.name
+                if not visual_analysis:
+                    print("Erro na analise visual da imagem")
+                    spec.processing_status = 'error'
+                    thread_session.commit()
+                    thread_session.close()
+                    return
+
+                if isinstance(visual_analysis, dict):
+                    ident = visual_analysis.get('identificacao', {})
+                    gola = visual_analysis.get('gola_decote', {})
+                    mangas = visual_analysis.get('mangas', {})
+                    corpo = visual_analysis.get('corpo', {})
+                    textura = visual_analysis.get('textura_padronagem', {})
+
+                    tipo_peca = ident.get('tipo_peca', '')
+                    categoria = ident.get('categoria', '')
+                    grupo = ident.get('grupo', '')
+                    subgrupo = ident.get('subgrupo', '')
+
+                    spec.description = f"{tipo_peca}" if tipo_peca else "Peca de Vestuario (Imagem)"
+                    spec.composition = categoria if categoria else None
+
+                    if textura.get('tipo_trico_malha') and textura['tipo_trico_malha'] != 'nao_visivel':
+                        pattern_parts = [textura['tipo_trico_malha']]
+                        if textura.get('direcao') and textura['direcao'] != 'nao_visivel':
+                            pattern_parts.append(textura['direcao'])
+                        if textura.get('rapport_ou_repeticao'):
+                            pattern_parts.append(textura['rapport_ou_repeticao'])
+                        spec.pattern = ' - '.join(pattern_parts)
+                    else:
+                        spec.pattern = None
+
+                    spec.main_group = grupo if grupo else None
+                    spec.sub_group = subgrupo if subgrupo else None
+
+                    detalhes = []
+                    if gola.get('tipo') and gola['tipo'] != 'nao_visivel':
+                        detalhes.append(f"Gola: {gola['tipo']}")
+                    if mangas.get('comprimento') and mangas['comprimento'] != 'nao_visivel':
+                        detalhes.append(f"Mangas: {mangas['comprimento']}")
+                    if corpo.get('comprimento_visual'):
+                        detalhes.append(f"Comprimento: {corpo['comprimento_visual']}")
+
+                    if detalhes:
+                        spec.finishes = ' | '.join(detalhes)
+
+                    print("Dados extraidos da analise visual (JSON estruturado):")
+                    print(f"  - Descricao: {spec.description}")
+                    print(f"  - Categoria: {spec.composition}")
+                    print(f"  - Grupo: {spec.main_group}")
+                    print(f"  - Subgrupo: {spec.sub_group}")
                 else:
-                    spec.description = "Peça de Vestuário (Imagem)"
+                    print("Analise visual retornou texto (fallback de JSON)")
+                    visual_text = str(visual_analysis)
+                    extracted_data = process_specification_with_openai(visual_text)
+
+                    if extracted_data:
+                        for key, value in extracted_data.items():
+                            if hasattr(spec, key) and value is not None:
+                                if key in ['tech_sheet_delivery_date', 'pilot_delivery_date']:
+                                    if isinstance(value, str):
+                                        if not re.match(r'^\d{4}-\d{2}-\d{2}$', value):
+                                            print(f"  ⚠️ Ignorando data invalida para {key}: {value}")
+                                            continue
+                                setattr(spec, key, convert_value_to_string(value))
+
+                        supplier_name = extracted_data.get('supplier')
+                        if supplier_name and isinstance(supplier_name, str) and supplier_name.strip():
+                            print(f"\nFornecedor detectado na analise: {supplier_name}")
+                            supplier = get_or_create_supplier(supplier_name, spec.user_id, thread_session)
+                            if supplier:
+                                spec.supplier_id = supplier.id
+                                spec.supplier = supplier.name
+                    else:
+                        spec.description = "Peca de Vestuario (Imagem)"
 
             spec.processing_status = 'completed'
             thread_session.commit()
             thread_session.close()
-            print(f"✓ Imagem processada com sucesso via análise visual!")
+            print("Imagem processada com sucesso!")
             return
 
         elif is_pdf_file(filename):
@@ -173,14 +190,6 @@ def process_pdf_specification(spec_id, file_path, app):
             if thumbnail_url:
                 spec.pdf_thumbnail = thumbnail_url
                 print(f"✓ Thumbnail do PDF gerado: {thumbnail_url}")
-
-            pdf_images = extract_images_from_pdf(file_path)
-            if pdf_images and len(pdf_images) > 0:
-                largest_img = max(pdf_images, key=lambda x: x.get('area', 0))
-                product_img_url = save_product_image(spec_id, largest_img['base64'], is_b64=True)
-                if product_img_url:
-                    spec.technical_drawing_url = product_img_url
-                    print(f"✓ Imagem do produto extraída do PDF e salva: {product_img_url}")
 
             text_content = extract_text_from_pdf(file_path)
 
@@ -584,7 +593,7 @@ def view_pdf(id):
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
-        flash('Sess??o inv??lida. Por favor, fa??a login novamente.')
+        flash('SessWARNo invWARNlida. Por favor, faWARNa login novamente.')
         return redirect(url_for('auth.login'))
 
     if not user.is_admin and spec.user_id != user.id:
@@ -614,7 +623,7 @@ def view_image(id):
     user = User.query.get(session['user_id'])
     if not user:
         session.clear()
-        flash('Sess??o inv??lida. Por favor, fa??a login novamente.')
+        flash('SessWARNo invWARNlida. Por favor, faWARNa login novamente.')
         return redirect(url_for('auth.login'))
 
     if not user.is_admin and spec.user_id != user.id:

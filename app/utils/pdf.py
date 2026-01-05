@@ -1,6 +1,8 @@
 import os
 import io
 import base64
+import re
+import shutil
 import PyPDF2
 from PIL import Image
 
@@ -61,6 +63,10 @@ def extract_text_from_pdf(pdf_path):
         try:
             import pymupdf as fitz
             import pytesseract
+            tesseract_cmd = _configure_tesseract(pytesseract)
+            if not tesseract_cmd:
+                print("Tesseract binary not found. Install it or set TESSERACT_CMD.")
+                return text
             print(f"\n{'='*80}")
             print(f"PDF OCR fallback via Tesseract: {pdf_path}")
             print(f"{'='*80}")
@@ -89,6 +95,102 @@ def extract_text_from_pdf(pdf_path):
             import traceback
             traceback.print_exc()
 
+    return text
+
+
+def normalize_ocr_text(text):
+    if not text:
+        return text
+    text = text.replace("\x0c", " ")
+    text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r"\n{2,}", "\n", text)
+    text = text.replace("|", "I")
+    return text.strip()
+
+
+def _configure_tesseract(pytesseract):
+    env_cmd = os.environ.get('TESSERACT_CMD')
+    if env_cmd and os.path.exists(env_cmd):
+        pytesseract.pytesseract.tesseract_cmd = env_cmd
+        return env_cmd
+
+    candidates = [
+        r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+        r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+    ]
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            pytesseract.pytesseract.tesseract_cmd = candidate
+            return candidate
+
+    cmd = shutil.which('tesseract')
+    if cmd:
+        pytesseract.pytesseract.tesseract_cmd = cmd
+        return cmd
+
+    return None
+
+
+def extract_text_from_image(image_path):
+    text = ""
+    try:
+        import pytesseract
+        tesseract_cmd = _configure_tesseract(pytesseract)
+        if not tesseract_cmd:
+            print("Tesseract binary not found. Install it or set TESSERACT_CMD.")
+            return text
+        print(f"\n{'='*80}")
+        print(f"OCR DE IMAGEM: {image_path}")
+        print(f"{'='*80}")
+        with Image.open(image_path) as img:
+            def _preprocess(src):
+                gray = src.convert("L")
+                try:
+                    from PIL import ImageOps, ImageFilter
+                    gray = ImageOps.autocontrast(gray)
+                    gray = gray.filter(ImageFilter.SHARPEN)
+                except Exception:
+                    pass
+                bw = gray.point(lambda x: 0 if x < 160 else 255, "1")
+                return bw.convert("L")
+
+            def _ocr(src, label):
+                try:
+                    result = pytesseract.image_to_string(src, lang="por")
+                except Exception:
+                    result = pytesseract.image_to_string(src, lang="eng")
+                print(f"OCR {label}: {len(result)} caracteres")
+                return result
+
+            variants = []
+            variants.append(("original", img.copy()))
+            variants.append(("preprocess", _preprocess(img)))
+
+            upscale = img.resize((img.width * 2, img.height * 2), Image.Resampling.LANCZOS)
+            variants.append(("upscale2x_preprocess", _preprocess(upscale)))
+
+            top_h = max(1, int(img.height * 0.35))
+            top_crop = img.crop((0, 0, img.width, top_h))
+            variants.append(("top35_preprocess", _preprocess(top_crop)))
+
+            best_text = ""
+            best_label = ""
+            for label, variant in variants:
+                result = _ocr(variant, label)
+                if len(result) > len(best_text):
+                    best_text = result
+                    best_label = label
+
+            text = normalize_ocr_text(best_text)
+            if best_label:
+                print(f"OCR selecionado: {best_label}")
+        print(f"Texto OCR extraido: {len(text)} caracteres")
+        print(f"{'='*80}\n")
+    except Exception as e:
+        print(f"Error extracting OCR text from image: {e}")
+        import traceback
+        traceback.print_exc()
     return text
 
 

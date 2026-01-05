@@ -296,6 +296,56 @@ def download(id):
         return redirect(url_for('specifications.view', id=id))
 
 
+@drawings_bp.route('/specification/<int:id>/view_drawing', methods=['GET'])
+@login_required
+def view_drawing(id):
+    spec = Specification.query.get_or_404(id)
+    user = User.query.get(session['user_id'])
+    if not user:
+        session.clear()
+        flash('SessÇœo invÇ­lida. Por favor, faÇõa login novamente.')
+        return redirect(url_for('auth.login'))
+
+    if not user.is_admin and spec.user_id != user.id:
+        flash('Acesso negado.')
+        return redirect(url_for('dashboard.index'))
+
+    if not spec.technical_drawing_url:
+        flash('Esta especificaÇõÇœo nÇœo possui desenho tÇ¸cnico.')
+        return redirect(url_for('specifications.view', id=id))
+
+    drawing_url = spec.technical_drawing_url
+
+    if drawing_url.startswith('/static/'):
+        return redirect(drawing_url)
+
+    if drawing_url.startswith('http://') or drawing_url.startswith('https://'):
+        return redirect(drawing_url)
+
+    if Client:
+        try:
+            storage_client = Client()
+            if storage_client.exists(drawing_url):
+                image_data = storage_client.download_as_bytes(drawing_url)
+                return send_file(io.BytesIO(image_data), mimetype='image/png', as_attachment=False)
+        except Exception as storage_error:
+            print(f"Object Storage lookup failed: {storage_error}")
+
+    drawing_path = os.path.join(current_app.config['UPLOAD_FOLDER'], drawing_url)
+    if os.path.exists(drawing_path):
+        ext = drawing_url.lower().rsplit('.', 1)[-1]
+        mimetype_map = {
+            'jpg': 'image/jpeg',
+            'jpeg': 'image/jpeg',
+            'png': 'image/png'
+        }
+        mimetype = mimetype_map.get(ext, 'image/png')
+        return send_file(drawing_path, mimetype=mimetype, as_attachment=False)
+
+    flash('Arquivo de desenho nÇœo encontrado.')
+    return redirect(url_for('specifications.view', id=id))
+
+
 @drawings_bp.route('/technical-drawings')
 @login_required
 def gallery():

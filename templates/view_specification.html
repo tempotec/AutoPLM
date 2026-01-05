@@ -654,7 +654,7 @@
                                 {% if specification.technical_drawing_url.startswith('/static/') %}
                                     <img src="{{ specification.technical_drawing_url }}" alt="Desenho Técnico">
                                 {% else %}
-                                    <img src="{{ url_for('view_drawing', id=specification.id) }}" alt="Desenho Técnico">
+                                    <img src="{{ url_for('drawings.view_drawing', id=specification.id) }}" alt="Desenho Técnico">
                                 {% endif %}
                             </div>
                         </div>
@@ -675,7 +675,7 @@
                                         <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
                                     </a>
                                 {% else %}
-                                    <a href="{{ url_for('view_drawing', id=specification.id) }}" target="_blank" class="btn-image-action">
+                                    <a href="{{ url_for('drawings.view_drawing', id=specification.id) }}" target="_blank" class="btn-image-action">
                                         <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
                                     </a>
                                 {% endif %}

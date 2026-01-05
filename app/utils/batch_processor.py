@@ -66,66 +66,42 @@ def process_stage_thumbnail(spec, file_path, thread_session):
 
 
 def process_stage_extract_image(spec, file_path, thread_session):
-    from app.utils.files import is_image_file, is_pdf_file
-    from app.utils.pdf import extract_images_from_pdf
-    
     filename = spec.pdf_filename
-    
-    if is_image_file(filename):
-        print(f"[ETAPA 2] Salvando imagem do produto: {filename}")
-        from app.routes.specifications import save_product_image
-        product_img_url = save_product_image(spec.id, file_path, is_b64=False)
-        if product_img_url:
-            spec.technical_drawing_url = product_img_url
-            print(f"  ✓ Imagem salva: {product_img_url}")
-    
-    elif is_pdf_file(filename):
-        print(f"[ETAPA 2] Extraindo imagens do PDF: {filename}")
-        pdf_images = extract_images_from_pdf(file_path)
-        
-        if pdf_images and len(pdf_images) > 0:
-            spec.extracted_images_json = json.dumps([
-                {'base64': img['base64'][:100] + '...', 'area': img.get('area', 0)} 
-                for img in pdf_images
-            ])
-            
-            largest_img = max(pdf_images, key=lambda x: x.get('area', 0))
-            from app.routes.specifications import save_product_image
-            product_img_url = save_product_image(spec.id, largest_img['base64'], is_b64=True)
-            if product_img_url:
-                spec.technical_drawing_url = product_img_url
-                print(f"  ✓ Imagem do produto extraída: {product_img_url}")
-    
+    if filename:
+        print(f"[ETAPA 2] Pulando extracao de imagem para processamento: {filename}")
+        print("  Desenho tecnico e gerado separadamente.")
+
     spec.processing_stage = STAGE_EXTRACT_IMAGE
     thread_session.commit()
     return True
 
 
 def process_stage_extract_text(spec, file_path, thread_session):
-    from app.utils.files import is_image_file, is_pdf_file, convert_image_to_base64
-    from app.utils.pdf import extract_text_from_pdf
-    
+    from app.utils.files import is_image_file, is_pdf_file
+    from app.utils.pdf import extract_text_from_pdf, extract_text_from_image
+
     filename = spec.pdf_filename
-    
+
     if is_image_file(filename):
-        print(f"[ETAPA 3] Convertendo imagem para base64: {filename}")
-        image_b64 = convert_image_to_base64(file_path)
-        if image_b64:
-            spec.raw_extracted_text = f"IMAGE_BASE64:{image_b64[:100]}..."
-            print(f"  ✓ Imagem convertida para análise visual")
+        print(f"[ETAPA 3] Extraindo texto via OCR da imagem: {filename}")
+        text_content = extract_text_from_image(file_path)
+        if text_content and len(text_content.strip()) >= 50:
+            spec.raw_extracted_text = text_content
+            print(f"  Texto OCR extraido: {len(text_content)} caracteres")
         else:
-            raise Exception("Erro ao converter imagem para base64")
-    
+            spec.raw_extracted_text = ""
+            print("  OCR insuficiente; usando fallback visual.")
+
     elif is_pdf_file(filename):
         print(f"[ETAPA 3] Extraindo texto do PDF: {filename}")
         text_content = extract_text_from_pdf(file_path)
-        
+
         if not text_content or len(text_content.strip()) < 50:
-            raise Exception(f"Texto insuficiente extraído do PDF ({len(text_content) if text_content else 0} chars)")
-        
+            raise Exception(f"Texto insuficiente extraido do PDF ({len(text_content) if text_content else 0} chars)")
+
         spec.raw_extracted_text = text_content
-        print(f"  ✓ Texto extraído: {len(text_content)} caracteres")
-    
+        print(f"  Texto extraido: {len(text_content)} caracteres")
+
     spec.processing_stage = STAGE_EXTRACT_TEXT
     thread_session.commit()
     return True
@@ -134,44 +110,52 @@ def process_stage_extract_text(spec, file_path, thread_session):
 def process_stage_openai_parse(spec, file_path, thread_session):
     from app.utils.files import is_image_file, is_pdf_file, convert_image_to_base64
     from app.utils.ai import analyze_images_with_gpt4_vision, process_specification_with_openai
-    from app.utils.helpers import convert_value_to_string
-    
+
     filename = spec.pdf_filename
-    
+
     if is_image_file(filename):
-        print(f"[ETAPA 4] Analisando imagem com GPT-4o Vision: {filename}")
-        image_b64 = convert_image_to_base64(file_path)
-        if not image_b64:
-            raise Exception("Erro ao converter imagem para base64")
-        
-        visual_analysis = analyze_images_with_gpt4_vision([image_b64])
-        
-        if not visual_analysis:
-            raise Exception("Erro na análise visual da imagem")
-        
-        if isinstance(visual_analysis, dict):
-            _apply_visual_analysis_to_spec(spec, visual_analysis)
+        text_content = spec.raw_extracted_text
+        extracted_data = None
+        if text_content and len(text_content.strip()) >= 50:
+            print(f"[ETAPA 4] Processando OCR com OpenAI: {filename}")
+            extracted_data = process_specification_with_openai(text_content)
+
+        if extracted_data:
+            _apply_extracted_data_to_spec(spec, extracted_data)
         else:
-            extracted_data = process_specification_with_openai(str(visual_analysis))
-            if extracted_data:
-                _apply_extracted_data_to_spec(spec, extracted_data)
+            print(f"[ETAPA 4] Analisando imagem com GPT-4o Vision: {filename}")
+            image_b64 = convert_image_to_base64(file_path)
+            if not image_b64:
+                raise Exception("Erro ao converter imagem para base64")
+
+            visual_analysis = analyze_images_with_gpt4_vision([image_b64])
+
+            if not visual_analysis:
+                raise Exception("Erro na analise visual da imagem")
+
+            if isinstance(visual_analysis, dict):
+                _apply_visual_analysis_to_spec(spec, visual_analysis)
             else:
-                spec.description = "Peça de Vestuário (Imagem)"
-    
+                extracted_data = process_specification_with_openai(str(visual_analysis))
+                if extracted_data:
+                    _apply_extracted_data_to_spec(spec, extracted_data)
+                else:
+                    spec.description = "Peca de Vestuario (Imagem)"
+
     elif is_pdf_file(filename):
         print(f"[ETAPA 4] Processando texto com OpenAI: {filename}")
         text_content = spec.raw_extracted_text
-        
+
         if not text_content:
-            raise Exception("Texto não encontrado - etapa 3 não foi concluída")
-        
+            raise Exception("Texto nao encontrado - etapa 3 nao foi concluida")
+
         extracted_data = process_specification_with_openai(text_content)
-        
+
         if not extracted_data:
-            raise Exception("OpenAI não retornou dados extraídos")
-        
+            raise Exception("OpenAI nao retornou dados extraidos")
+
         _apply_extracted_data_to_spec(spec, extracted_data)
-    
+
     spec.processing_stage = STAGE_OPENAI_PARSE
     thread_session.commit()
     return True

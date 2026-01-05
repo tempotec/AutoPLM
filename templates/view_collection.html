@@ -478,7 +478,7 @@
                         {% if spec.pdf_thumbnail %}
                             <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.description or 'Produto' }}">
                         {% elif spec.technical_drawing_url %}
-                            <img src="{{ url_for('view_drawing', id=spec.id) }}" alt="Desenho Técnico">
+                            <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="Desenho Técnico">
                         {% else %}
                             <i class="fas fa-image"></i>
                         {% endif %}
