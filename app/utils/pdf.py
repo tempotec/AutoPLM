@@ -7,6 +7,10 @@ import PyPDF2
 from PIL import Image
 
 
+def _get_static_dir():
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'static'))
+
+
 def extract_text_from_pdf(pdf_path):
     text = ""
     try:
@@ -354,8 +358,12 @@ def generate_image_thumbnail(image_path, spec_id):
         max_size = (800, 800)
         img.thumbnail(max_size, Image.Resampling.LANCZOS)
 
+        static_dir = _get_static_dir()
+        thumbnails_dir = os.path.join(static_dir, 'thumbnails')
+        os.makedirs(thumbnails_dir, exist_ok=True)
+
         thumbnail_filename = f"thumbnail_{spec_id}_{uuid.uuid4().hex[:8]}.png"
-        thumbnail_path = os.path.join('static', 'thumbnails', thumbnail_filename)
+        thumbnail_path = os.path.join(thumbnails_dir, thumbnail_filename)
 
         img.save(thumbnail_path, 'PNG')
 
@@ -392,8 +400,12 @@ def generate_pdf_thumbnail(pdf_path, spec_id):
         mat = fitz.Matrix(2.0, 2.0)
         pix = page.get_pixmap(matrix=mat)
 
+        static_dir = _get_static_dir()
+        thumbnails_dir = os.path.join(static_dir, 'thumbnails')
+        os.makedirs(thumbnails_dir, exist_ok=True)
+
         thumbnail_filename = f"thumbnail_{spec_id}_{uuid.uuid4().hex[:8]}.png"
-        thumbnail_path = os.path.join('static', 'thumbnails', thumbnail_filename)
+        thumbnail_path = os.path.join(thumbnails_dir, thumbnail_filename)
 
         pix.save(thumbnail_path)
         doc.close()

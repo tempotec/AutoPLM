@@ -22,8 +22,9 @@ def save_product_image(spec_id, image_b64_or_path, is_b64=True):
         import uuid
         import base64
         product_image_filename = f"product_{spec_id}_{uuid.uuid4().hex[:8]}.png"
-        product_image_path = os.path.join('static', 'product_images', product_image_filename)
-        os.makedirs(os.path.dirname(product_image_path), exist_ok=True)
+        product_images_dir = os.path.join(current_app.static_folder, 'product_images')
+        os.makedirs(product_images_dir, exist_ok=True)
+        product_image_path = os.path.join(product_images_dir, product_image_filename)
 
         if is_b64:
             image_data = base64.b64decode(

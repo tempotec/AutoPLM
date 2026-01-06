@@ -117,9 +117,9 @@ def generate_drawing_background(spec_id, file_path, app):
             raise ValueError("No b64_json in response")
         drawing_filename = f"drawing_{spec.id}_{uuid.uuid4().hex[:8]}.png"
         
-        static_drawings_dir = os.path.join('static', 'drawings')
-        os.makedirs(static_drawings_dir, exist_ok=True)
-        static_drawing_path = os.path.join(static_drawings_dir, drawing_filename)
+        drawings_dir = os.path.join(current_app.static_folder, 'drawings')
+        os.makedirs(drawings_dir, exist_ok=True)
+        static_drawing_path = os.path.join(drawings_dir, drawing_filename)
         
         with open(static_drawing_path, 'wb') as f:
             f.write(image_data)

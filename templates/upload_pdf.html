@@ -1153,6 +1153,52 @@
             };
 
             console.log('Payload upload ficha tecnica:', payload);
+
+            const formData = new FormData(formEl);
+            submitBtn.disabled = true;
+            showProcessingArea(selectedFiles);
+
+            fetch(formEl.action || window.location.pathname, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+                .then(async (response) => {
+                    const data = await response.json().catch(() => null);
+                    if (!response.ok || !data || data.success === false) {
+                        const message = data?.message || 'Falha ao enviar os arquivos.';
+                        throw new Error(message);
+                    }
+                    return data;
+                })
+                .then((data) => {
+                    if (data.spec_id) {
+                        updateFileStatus(0, 'processing', 'pending', data.spec_id);
+                        pollSingleSpecVisual(data.spec_id, data.filename);
+                        return;
+                    }
+
+                    if (data.batch_id) {
+                        const specs = Array.isArray(data.specs) ? data.specs : [];
+                        specs.forEach((spec) => {
+                            if (spec.index !== undefined) {
+                                updateFileStatus(spec.index, 'processing', 'pending', spec.id);
+                            }
+                        });
+                        pollBatchStatusVisual(data.batch_id, specs);
+                        return;
+                    }
+
+                    throw new Error('Resposta inesperada do servidor.');
+                })
+                .catch((error) => {
+                    submitBtn.disabled = false;
+                    if (window.Toast && typeof window.Toast.error === 'function') {
+                        window.Toast.error(error.message || 'Erro ao enviar arquivos.');
+                    }
+                });
         }
 
         function showProcessingArea(files) {

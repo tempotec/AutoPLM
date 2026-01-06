@@ -77,8 +77,9 @@ def create():
             cover_file = request.files.get('cover_image')
             if cover_file and cover_file.filename:
                 filename = secure_filename(cover_file.filename)
-                cover_path = os.path.join('static', 'covers', filename)
-                os.makedirs(os.path.dirname(cover_path), exist_ok=True)
+                covers_dir = os.path.join(current_app.static_folder, 'covers')
+                os.makedirs(covers_dir, exist_ok=True)
+                cover_path = os.path.join(covers_dir, filename)
                 cover_file.save(cover_path)
                 collection.cover_image = f'/static/covers/{filename}'
 
@@ -137,8 +138,9 @@ def edit(id):
         cover_file = request.files.get('cover_image')
         if cover_file and cover_file.filename:
             filename = secure_filename(cover_file.filename)
-            cover_path = os.path.join('static', 'covers', filename)
-            os.makedirs(os.path.dirname(cover_path), exist_ok=True)
+            covers_dir = os.path.join(current_app.static_folder, 'covers')
+            os.makedirs(covers_dir, exist_ok=True)
+            cover_path = os.path.join(covers_dir, filename)
             cover_file.save(cover_path)
             collection.cover_image = f'/static/covers/{filename}'
 

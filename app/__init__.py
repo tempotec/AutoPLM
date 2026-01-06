@@ -43,10 +43,10 @@ def create_app(config_name=None):
     app.config['RPA_MONITOR_TRANSPORT'] = os.environ.get('RPA_MONITOR_TRANSPORT', 'ws')
     
     os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
-    os.makedirs('static/thumbnails', exist_ok=True)
-    os.makedirs('static/drawings', exist_ok=True)
-    os.makedirs('static/covers', exist_ok=True)
-    os.makedirs('static/product_images', exist_ok=True)
+    os.makedirs(os.path.join(app.static_folder, 'thumbnails'), exist_ok=True)
+    os.makedirs(os.path.join(app.static_folder, 'drawings'), exist_ok=True)
+    os.makedirs(os.path.join(app.static_folder, 'covers'), exist_ok=True)
+    os.makedirs(os.path.join(app.static_folder, 'product_images'), exist_ok=True)
     
     db.init_app(app)
     csrf.init_app(app)
