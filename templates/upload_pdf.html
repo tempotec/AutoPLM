@@ -209,11 +209,37 @@
         }
 
         /* Form Fields */
+        .content-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 30px rgba(8, 15, 30, 0.35);
+        }
+
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 32px;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
         }
 
         .form-field {
@@ -222,6 +248,10 @@
         }
 
         .form-field.import-field {
+            grid-column: span 2;
+        }
+
+        .form-field.full-width {
             grid-column: span 2;
         }
 
@@ -272,6 +302,67 @@
             margin-top: 4px;
         }
 
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .switch-input {
+            appearance: none;
+            width: 44px;
+            height: 24px;
+            background-color: #1f2937;
+            border: 1px solid #334155;
+            border-radius: 999px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .switch-input::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #94a3b8;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .switch-input:checked {
+            background-color: #2563eb;
+            border-color: #1d4ed8;
+        }
+
+        .switch-input:checked::after {
+            transform: translateX(20px);
+            background: #e0f2fe;
+        }
+
+        .switch-input:focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: 2px;
+        }
+
+        .import-category {
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-6px);
+            overflow: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, max-height 0.2s ease, transform 0.2s ease;
+        }
+
+        .import-category.is-visible {
+            max-height: 160px;
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
         /* Upload Area */
         .upload-section {
             background-color: #1e293b;
@@ -287,6 +378,16 @@
         .upload-section.dragover {
             border-color: #2563eb;
             background-color: #1e3a5f;
+        }
+
+        .upload-section:hover {
+            border-color: #3b82f6;
+            background-color: #13213a;
+        }
+
+        .upload-section:focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: 2px;
         }
 
         .upload-icon {
@@ -423,6 +524,17 @@
         .btn-primary:disabled {
             background-color: #475569;
             cursor: not-allowed;
+        }
+
+        @media (max-width: 900px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-field.import-field,
+            .form-field.full-width {
+                grid-column: span 1;
+            }
         }
 
         /* Loading Indicator */
@@ -675,6 +787,10 @@
                     <i class="fas fa-home"></i>
                     <span>Painel</span>
                 </a>
+                <a href="{{ url_for('specifications.upload') }}" class="nav-item active">
+                    <i class="fas fa-file-upload"></i>
+                    <span>Fichas Tecnicas</span>
+                </a>
                 <a href="{{ url_for('collections.index') }}" class="nav-item">
                     <i class="fas fa-folder"></i>
                     <span>Minhas Coleções</span>
@@ -720,7 +836,7 @@
             <!-- Header -->
             <header class="page-header">
                 <h1 class="page-title">Enviar Ficha Técnica</h1>
-                <p class="page-subtitle">Envie seu arquivo PDF ou imagem para extração automática de dados</p>
+                <p class="page-subtitle">Envie PDF ou imagens para extração automática de dados.</p>
             </header>
 
             <!-- Flash Messages -->
@@ -740,97 +856,109 @@
                 {{ form.hidden_tag() }}
                 
                 <!-- Collection, Supplier and Stylist Fields -->
-                <div class="form-grid">
-                    <div class="form-field">
-                        <label for="collection_id" class="form-label">
-                            <i class="fas fa-link"></i>Vincular à Coleção
-                        </label>
-                        {{ form.collection_id(class="form-control") }}
-                        <small class="form-hint">Selecione uma coleção existente (opcional)</small>
+                <div class="content-card">
+                    <div class="card-header">
+                        <div class="card-title">Metadados</div>
+                        <div class="card-subtitle">Preencha os dados principais para contextualizar a ficha.</div>
                     </div>
-                    
-                    <div class="form-field">
-                        <label for="supplier_id" class="form-label">
-                            <i class="fas fa-industry"></i>Fornecedor
-                        </label>
-                        {{ form.supplier_id(class="form-control") }}
-                        <small class="form-hint">Selecione o fornecedor (opcional)</small>
-                    </div>
-                    
-                    <div class="form-field">
-                        <label for="stylist" class="form-label">
-                            <i class="fas fa-user"></i>Estilista
-                        </label>
-                        {{ form.stylist(class="form-control", readonly=True) }}
-                        <small class="form-hint">Preenchido automaticamente</small>
-                    </div>
-                    
-                    <div class="form-field">
-                        <label for="price_range" class="form-label">
-                            <i class="fas fa-tag"></i>Faixa de Preço
-                        </label>
-                        {{ form.price_range(class="form-control") }}
-                        <small class="form-hint">Classifique a peça em uma das faixas de preço (opcional)</small>
-                    </div>
-
-                    <div class="form-field import-field">
-                        <label for="is_imported" class="form-label">
-                            <i class="fas fa-globe"></i>Documento importado
-                        </label>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            {{ form.is_imported() }}
-                            <span style="color: #94a3b8; font-size: 12px;">Marque se esta ficha é importada</span>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="collection_id" class="form-label">
+                                <i class="fas fa-link"></i>Vincular a Coleção
+                            </label>
+                            {{ form.collection_id(class="form-control") }}
+                            <small class="form-hint">Selecione uma coleção existente (opcional)</small>
                         </div>
-                        <small class="form-hint">A ficha receberá um badge de importado</small>
-                    </div>
+                        
+                        <div class="form-field">
+                            <label for="supplier_id" class="form-label">
+                                <i class="fas fa-industry"></i>Fornecedor
+                            </label>
+                            {{ form.supplier_id(class="form-control") }}
+                            <small class="form-hint">Selecione o fornecedor (opcional)</small>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="stylist" class="form-label">
+                                <i class="fas fa-user"></i>Estilista
+                            </label>
+                            {{ form.stylist(class="form-control", readonly=True) }}
+                            <small class="form-hint">Preenchido automaticamente</small>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="price_range" class="form-label">
+                                <i class="fas fa-tag"></i>Faixa de preço
+                            </label>
+                            {{ form.price_range(class="form-control") }}
+                            <small class="form-hint">Classifique a peça em uma das faixas de preço (opcional)</small>
+                        </div>
 
-                    <div class="form-field import-field">
-                        <label for="import_category" class="form-label">
-                            <i class="fas fa-layer-group"></i>Categoria do importado
-                        </label>
-                        {{ form.import_category(class="form-control") }}
-                        <small class="form-hint">Use quando marcar como importado</small>
+                        <div class="form-field full-width">
+                            <label for="is_imported" class="form-label">
+                                <i class="fas fa-globe"></i>Documento importado
+                            </label>
+                            <div class="toggle-row">
+                                {{ form.is_imported(class="switch-input", id="is_imported") }}
+                                <span style="color: #94a3b8; font-size: 12px;">Ative para exigir categoria de importação.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-field full-width import-category" id="import-category-wrapper" hidden>
+                            <label for="import_category" class="form-label">
+                                <i class="fas fa-layer-group"></i>Categoria do importado
+                            </label>
+                            {{ form.import_category(class="form-control", id="import_category") }}
+                            <div class="text-danger" id="import-category-error" style="display: none;"></div>
+                            {% if form.import_category.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.import_category.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
 
                 <!-- Upload Area -->
-                <div class="upload-section" id="upload-area" onclick="document.getElementById('pdf-input').click()">
-                    <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                    <h3>Arraste e solte seus arquivos aqui</h3>
-                    <p>ou clique para navegar</p>
-                    <p style="font-size: 12px; color: #64748b; margin-top: -12px;">Formatos suportados: PDF, JPG, PNG (um ou vários arquivos)</p>
-                    {{ form.pdf_file(id="pdf-input", accept=".pdf,.jpg,.jpeg,.png", style="display: none;", multiple=True) }}
-                    <button type="button" class="btn-upload" onclick="event.stopPropagation(); document.getElementById('pdf-input').click()">
-                        <i class="fas fa-folder-open"></i> Selecionar Arquivos
-                    </button>
+                <div class="content-card">
+                    <div class="card-header">
+                        <div class="card-title">Arquivos</div>
+                        <div class="card-subtitle">Arraste e solte ou selecione arquivos PDF/JPG/PNG.</div>
+                    </div>
+                    <div class="upload-section" id="upload-area" role="button" tabindex="0" onclick="document.getElementById('pdf-input').click()">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h3>Arraste e solte seus arquivos aqui</h3>
+                        <p>ou clique para navegar</p>
+                        <p style="font-size: 12px; color: #64748b; margin-top: -12px;">Formatos suportados: PDF, JPG, PNG (multiplos arquivos)</p>
+                        {{ form.pdf_file(id="pdf-input", accept=".pdf,.jpg,.jpeg,.png", style="display: none;", multiple=True) }}
+                        <button type="button" class="btn-upload" onclick="event.stopPropagation(); document.getElementById('pdf-input').click()">
+                            <i class="fas fa-folder-open"></i> Selecionar arquivos
+                        </button>
+                        
+                        {% if form.pdf_file.errors %}
+                            <div class="text-danger" style="margin-top: 12px;">
+                                {% for error in form.pdf_file.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div id="files-error" class="text-danger" style="display: none;"></div>
                     
-                    {% if form.pdf_file.errors %}
-                        <div class="text-danger" style="margin-top: 12px;">
-                            {% for error in form.pdf_file.errors %}
-                                {{ error }}
-                            {% endfor %}
+                    <div id="files-list" style="display: none; margin-top: 16px;">
+                        <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span style="font-weight: 600; color: #e5e7eb;">
+                                    <i class="fas fa-files"></i> Arquivos selecionados: <span id="files-count">0</span>
+                                </span>
+                                <button type="button" onclick="clearFiles()" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">
+                                    <i class="fas fa-times"></i> Limpar
+                                </button>
+                            </div>
+                            <div id="files-items" style="max-height: 200px; overflow-y: auto;"></div>
                         </div>
-                    {% endif %}
-                </div>
-                
-                <!-- File Info (single file) -->
-                <div id="file-info" class="file-info" style="display: none;">
-                    <i id="file-icon" class="fas fa-file"></i>
-                    <span id="file-name"></span>
-                </div>
-                
-                <!-- Files List (multiple files) -->
-                <div id="files-list" style="display: none; margin-top: 16px;">
-                    <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-weight: 600; color: #e5e7eb;">
-                                <i class="fas fa-files"></i> Arquivos selecionados: <span id="files-count">0</span>
-                            </span>
-                            <button type="button" onclick="clearFiles()" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">
-                                <i class="fas fa-times"></i> Limpar
-                            </button>
-                        </div>
-                        <div id="files-items" style="max-height: 200px; overflow-y: auto;"></div>
                     </div>
                 </div>
                 
@@ -857,7 +985,7 @@
                         <i class="fas fa-arrow-left"></i>
                         Voltar
                     </a>
-                    {{ form.submit(class="btn-primary", id="submit-btn") }}
+                    {{ form.submit(class="btn-primary", id="submit-btn", value="Enviar para extração") }}
                 </div>
             </form>
 
@@ -903,6 +1031,19 @@
     <script>
         let uploadedFiles = [];
         let processingState = {};
+        let selectedFiles = [];
+
+        const formEl = document.getElementById('upload-form');
+        const fileInput = document.getElementById('pdf-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const importToggle = document.getElementById('is_imported');
+        const importCategoryWrapper = document.getElementById('import-category-wrapper');
+        const importCategorySelect = document.getElementById('import_category');
+        const importCategoryError = document.getElementById('import-category-error');
+        const filesError = document.getElementById('files-error');
+        const filesList = document.getElementById('files-list');
+        const filesItems = document.getElementById('files-items');
+        const filesCount = document.getElementById('files-count');
         
         const stageLabels = {
             'pending': 'Aguardando...',
@@ -915,6 +1056,104 @@
             'completed': 'Concluído!',
             'error': 'Erro no processamento'
         };
+
+        function syncImportCategoryVisibility() {
+            if (importToggle.checked) {
+                importCategoryWrapper.hidden = false;
+                requestAnimationFrame(() => {
+                    importCategoryWrapper.classList.add('is-visible');
+                });
+                return;
+            }
+
+            // When the toggle is off, clear the category and unmount the field.
+            importCategorySelect.value = '';
+            importCategorySelect.setAttribute('aria-invalid', 'false');
+            importCategoryError.style.display = 'none';
+            importCategoryWrapper.classList.remove('is-visible');
+            window.setTimeout(() => {
+                importCategoryWrapper.hidden = true;
+            }, 200);
+        }
+
+        function syncFilesToInput() {
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach((file) => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+        }
+
+        function renderFilesList() {
+            if (!filesList || !filesItems || !filesCount) {
+                return;
+            }
+
+            if (selectedFiles.length === 0) {
+                filesList.style.display = 'none';
+                return;
+            }
+
+            filesList.style.display = 'block';
+            filesCount.textContent = selectedFiles.length;
+            filesItems.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const icon = file.type === 'application/pdf' ? 'fa-file-pdf' : 'fa-file-image';
+                const item = document.createElement('div');
+                item.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #0f1420; border-radius: 6px; margin-bottom: 6px; font-size: 13px;';
+                item.innerHTML = `
+                    <i class="fas ${icon}" style="color: #3b82f6;"></i>
+                    <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</span>
+                    <span style="color: #64748b; font-size: 12px;">${Math.round(file.size / 1024)} KB</span>
+                    <button type="button" data-index="${index}" style="background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 12px;">
+                        Remover
+                    </button>
+                `;
+                filesItems.appendChild(item);
+            });
+        }
+
+        function validateForm() {
+            const hasFiles = selectedFiles.length > 0;
+            const needsImportCategory = importToggle.checked;
+            const hasImportCategory = !!importCategorySelect.value;
+
+            if (filesError) {
+                filesError.style.display = hasFiles ? 'none' : 'block';
+                filesError.textContent = hasFiles ? '' : 'Selecione ao menos 1 arquivo.';
+            }
+
+            if (needsImportCategory) {
+                const isValidImportCategory = hasImportCategory;
+                importCategorySelect.setAttribute('aria-invalid', isValidImportCategory ? 'false' : 'true');
+                importCategoryError.style.display = isValidImportCategory ? 'none' : 'block';
+                importCategoryError.textContent = isValidImportCategory ? '' : 'Categoria do importado é obrigatória.';
+            } else {
+                importCategorySelect.setAttribute('aria-invalid', 'false');
+                importCategoryError.style.display = 'none';
+            }
+
+            const isValid = hasFiles && (!needsImportCategory || hasImportCategory);
+            submitBtn.disabled = !isValid;
+            return isValid;
+        }
+
+        function handleSubmit() {
+            const payload = {
+                colecaoId: document.getElementById('collection_id')?.value || '',
+                fornecedorId: document.getElementById('supplier_id')?.value || '',
+                estilista: document.getElementById('stylist')?.value || '',
+                faixaPreco: document.getElementById('price_range')?.value || '',
+                isImportado: importToggle.checked,
+                categoriaImportado: importCategorySelect.value || undefined,
+                files: selectedFiles.map((file) => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                }))
+            };
+
+            console.log('Payload upload ficha tecnica:', payload);
+        }
 
         function showProcessingArea(files) {
             const area = document.getElementById('processing-area');
@@ -987,66 +1226,14 @@
             }
         }
 
-        document.getElementById('upload-form').addEventListener('submit', function(e) {
+        formEl.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const fileInput = document.getElementById('pdf-input');
-            const submitBtn = document.getElementById('submit-btn');
-            
-            if (fileInput.files.length === 0) {
-                Toast.warning('Por favor, selecione um ou mais arquivos para enviar.');
+
+            if (!validateForm()) {
                 return;
             }
-            
-            const formData = new FormData(this);
-            const files = fileInput.files;
-            const fileCount = files.length;
-            
-            showProcessingArea(files);
-            
-            document.getElementById('file-info').style.display = 'none';
-            document.getElementById('files-list').style.display = 'none';
-            
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
-            
-            fetch('/upload_pdf', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('upload-form').reset();
-                    
-                    if (data.batch_id && data.specs) {
-                        Toast.success('Arquivos enviados! Iniciando processamento...');
-                        pollBatchStatusVisual(data.batch_id, data.specs);
-                    } else if (data.spec_id) {
-                        Toast.success('Arquivo enviado! Iniciando processamento...');
-                        pollSingleSpecVisual(data.spec_id, data.filename || uploadedFiles[0]?.name);
-                    }
-                } else {
-                    Toast.error('Erro ao enviar: ' + (data.message || 'Erro desconhecido'));
-                    for (let i = 0; i < uploadedFiles.length; i++) {
-                        updateFileStatus(i, 'error', 'error');
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Upload error:', error);
-                Toast.error('Erro na comunicação com o servidor');
-                for (let i = 0; i < uploadedFiles.length; i++) {
-                    updateFileStatus(i, 'error', 'error');
-                }
-            })
-            .finally(() => {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-upload"></i> Enviar';
-            });
+
+            handleSubmit();
         });
 
         function pollSingleSpecVisual(specId, filename) {
@@ -1150,69 +1337,62 @@
             setTimeout(checkStatus, 1500);
         }
 
-        function updateFileDisplay(files) {
-            const fileInfo = document.getElementById('file-info');
-            const filesList = document.getElementById('files-list');
-            const filesItems = document.getElementById('files-items');
-            const filesCount = document.getElementById('files-count');
-            
-            document.getElementById('processing-area').style.display = 'none';
-            
-            if (files.length === 0) {
-                fileInfo.style.display = 'none';
-                filesList.style.display = 'none';
-                return;
-            }
-            
-            if (files.length === 1) {
-                const file = files[0];
-                const fileName = document.getElementById('file-name');
-                const fileIcon = document.getElementById('file-icon');
-                
-                fileName.textContent = file.name;
-                
-                if (file.type === 'application/pdf') {
-                    fileIcon.className = 'fas fa-file-pdf';
-                } else if (file.type.startsWith('image/')) {
-                    fileIcon.className = 'fas fa-file-image';
-                } else {
-                    fileIcon.className = 'fas fa-file';
-                }
-                
-                fileInfo.style.display = 'flex';
-                filesList.style.display = 'none';
-            } else {
-                fileInfo.style.display = 'none';
-                filesList.style.display = 'block';
-                filesCount.textContent = files.length;
-                
-                filesItems.innerHTML = '';
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    const icon = file.type === 'application/pdf' ? 'fa-file-pdf' : 'fa-file-image';
-                    const item = document.createElement('div');
-                    item.style.cssText = 'display: flex; align-items: center; gap: 8px; padding: 6px 8px; background: #0f1420; border-radius: 4px; margin-bottom: 4px; font-size: 13px;';
-                    item.innerHTML = '<i class="fas ' + icon + '" style="color: #3b82f6;"></i><span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + file.name + '</span>';
-                    filesItems.appendChild(item);
-                }
-            }
+        function updateFileDisplay(files, append = false) {
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            const incoming = Array.from(files).filter((file) => allowedTypes.includes(file.type));
+
+            selectedFiles = append ? selectedFiles.concat(incoming) : incoming;
+            syncFilesToInput();
+            renderFilesList();
+            validateForm();
         }
         
         function clearFiles() {
-            document.getElementById('pdf-input').value = '';
-            document.getElementById('file-info').style.display = 'none';
-            document.getElementById('files-list').style.display = 'none';
-            document.getElementById('processing-area').style.display = 'none';
+            selectedFiles = [];
+            syncFilesToInput();
+            renderFilesList();
+            validateForm();
         }
 
-        document.getElementById('pdf-input').addEventListener('change', function(e) {
+        fileInput.addEventListener('change', function(e) {
             updateFileDisplay(e.target.files);
         });
 
+        filesItems.addEventListener('click', function(e) {
+            const button = e.target.closest('button[data-index]');
+            if (!button) {
+                return;
+            }
+
+            const index = Number(button.dataset.index);
+            if (Number.isNaN(index)) {
+                return;
+            }
+
+            selectedFiles.splice(index, 1);
+            syncFilesToInput();
+            renderFilesList();
+            validateForm();
+        });
+
+        importToggle.addEventListener('change', function() {
+            // Toggle controls visibility and resets category when disabled.
+            syncImportCategoryVisibility();
+            validateForm();
+        });
+
+        importCategorySelect.addEventListener('change', function() {
+            validateForm();
+        });
+
         const uploadArea = document.getElementById('upload-area');
-        const fileInput = document.getElementById('pdf-input');
 
         uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragenter', function(e) {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
@@ -1227,16 +1407,19 @@
             uploadArea.classList.remove('dragover');
             
             const files = e.dataTransfer.files;
-            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
-            
-            const validFiles = Array.from(files).filter(f => allowedTypes.includes(f.type));
-            if (validFiles.length > 0) {
-                const dt = new DataTransfer();
-                validFiles.forEach(f => dt.items.add(f));
-                fileInput.files = dt.files;
-                updateFileDisplay(fileInput.files);
+            updateFileDisplay(files, true);
+        });
+
+        uploadArea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
             }
         });
+
+        syncImportCategoryVisibility();
+        renderFilesList();
+        validateForm();
     </script>
 </body>
 </html>
