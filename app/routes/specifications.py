@@ -9,7 +9,7 @@ from app.extensions import db, get_openai_client
 from app.models import User, Specification, Collection, Supplier
 from app.forms import UploadPDFForm, SpecificationForm
 from app.utils.auth import login_required
-from app.utils.files import is_image_file, is_pdf_file, convert_image_to_base64
+from app.utils.files import is_image_file, is_pdf_file, convert_image_to_data_url
 from app.utils.pdf import extract_text_from_pdf, extract_text_from_image, generate_pdf_thumbnail, generate_image_thumbnail
 from app.utils.ai import analyze_images_with_gpt4_vision, process_specification_with_openai
 from app.utils.helpers import convert_value_to_string, get_or_create_supplier
@@ -91,15 +91,15 @@ def process_pdf_specification(spec_id, file_path, app):
                         spec.supplier_id = supplier.id
                         spec.supplier = supplier.name
             else:
-                image_b64 = convert_image_to_base64(file_path)
-                if not image_b64:
+                image_data_url = convert_image_to_data_url(file_path)
+                if not image_data_url:
                     print("Erro ao converter imagem para base64")
                     spec.processing_status = 'error'
                     thread_session.commit()
                     thread_session.close()
                     return
 
-                visual_analysis = analyze_images_with_gpt4_vision([image_b64])
+                visual_analysis = analyze_images_with_gpt4_vision([image_data_url])
 
                 if not visual_analysis:
                     print("Erro na analise visual da imagem")

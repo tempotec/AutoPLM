@@ -12,7 +12,7 @@ except ImportError:
 from app.extensions import db, get_openai_client
 from app.models import User, Specification, Collection
 from app.utils.auth import login_required, admin_required
-from app.utils.files import is_image_file, is_pdf_file, convert_image_to_base64
+from app.utils.files import is_image_file, is_pdf_file, convert_image_to_data_url
 from app.utils.pdf import extract_images_from_pdf, generate_image_thumbnail, generate_pdf_thumbnail
 from app.utils.ai import analyze_images_with_gpt4_vision, build_technical_drawing_prompt
 from app.utils.logging import log_activity, rpa_info, rpa_error
@@ -67,9 +67,9 @@ def generate_drawing_background(spec_id, file_path, app):
             
             images = []
             if is_image_file(spec.pdf_filename):
-                image_b64 = convert_image_to_base64(file_path)
-                if image_b64:
-                    images = [image_b64]
+                image_data_url = convert_image_to_data_url(file_path)
+                if image_data_url:
+                    images = [image_data_url]
             elif is_pdf_file(spec.pdf_filename):
                 pdf_images_data = extract_images_from_pdf(file_path)
                 images = [img['base64'] for img in pdf_images_data] if pdf_images_data else []
@@ -87,9 +87,9 @@ def generate_drawing_background(spec_id, file_path, app):
         else:
             images_b64 = []
             if is_image_file(spec.pdf_filename):
-                img_b64 = convert_image_to_base64(file_path)
-                if img_b64:
-                    images_b64 = [img_b64]
+                img_data_url = convert_image_to_data_url(file_path)
+                if img_data_url:
+                    images_b64 = [img_data_url]
             elif is_pdf_file(spec.pdf_filename):
                 pdf_images_data = extract_images_from_pdf(file_path)
                 images_b64 = [img['base64'] for img in pdf_images_data] if pdf_images_data else []

@@ -108,7 +108,7 @@ def process_stage_extract_text(spec, file_path, thread_session):
 
 
 def process_stage_openai_parse(spec, file_path, thread_session):
-    from app.utils.files import is_image_file, is_pdf_file, convert_image_to_base64
+    from app.utils.files import is_image_file, is_pdf_file, convert_image_to_data_url
     from app.utils.ai import analyze_images_with_gpt4_vision, process_specification_with_openai
 
     filename = spec.pdf_filename
@@ -124,11 +124,11 @@ def process_stage_openai_parse(spec, file_path, thread_session):
             _apply_extracted_data_to_spec(spec, extracted_data)
         else:
             print(f"[ETAPA 4] Analisando imagem com GPT-4o Vision: {filename}")
-            image_b64 = convert_image_to_base64(file_path)
-            if not image_b64:
+            image_data_url = convert_image_to_data_url(file_path)
+            if not image_data_url:
                 raise Exception("Erro ao converter imagem para base64")
 
-            visual_analysis = analyze_images_with_gpt4_vision([image_b64])
+            visual_analysis = analyze_images_with_gpt4_vision([image_data_url])
 
             if not visual_analysis:
                 raise Exception("Erro na analise visual da imagem")

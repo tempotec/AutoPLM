@@ -262,10 +262,14 @@ Retorne SOMENTE o JSON, sem texto adicional."""
         }]
 
         for img_b64 in images_base64[:3]:
+            if isinstance(img_b64, str) and img_b64.startswith("data:"):
+                image_url = img_b64
+            else:
+                image_url = f"data:image/png;base64,{img_b64}"
             content.append({
                 "type": "image_url",
                 "image_url": {
-                    "url": f"data:image/png;base64,{img_b64}",
+                    "url": image_url,
                     "detail": "high"
                 }
             })

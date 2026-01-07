@@ -25,3 +25,25 @@ def convert_image_to_base64(image_path):
     except Exception as e:
         print(f"Erro ao converter imagem para base64: {e}")
         return None
+
+
+def get_image_mimetype(filename_or_path):
+    if not filename_or_path:
+        return 'image/jpeg'
+    ext = filename_or_path.rsplit('.', 1)[-1].lower() if '.' in filename_or_path else ''
+    mime_map = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+    }
+    return mime_map.get(ext, 'image/jpeg')
+
+
+def convert_image_to_data_url(image_path):
+    base64_string = convert_image_to_base64(image_path)
+    if not base64_string:
+        return None
+    mime_type = get_image_mimetype(image_path)
+    return f"data:{mime_type};base64,{base64_string}"

@@ -217,6 +217,17 @@ def extract_images_from_pdf(pdf_path):
                                 height = xObject[obj]['/Height']
                                 size = (width, height)
                                 data = xObject[obj].get_data()
+                                filter_raw = xObject[obj].get('/Filter', None)
+                                if hasattr(filter_raw, 'get_object'):
+                                    filter_value = filter_raw.get_object()
+                                else:
+                                    filter_value = filter_raw
+                                if isinstance(filter_value, list):
+                                    filters = filter_value
+                                elif filter_value:
+                                    filters = [filter_value]
+                                else:
+                                    filters = []
 
                                 colorspace_raw = xObject[obj].get('/ColorSpace', None)
 
@@ -226,7 +237,11 @@ def extract_images_from_pdf(pdf_path):
                                     colorspace = colorspace_raw
 
                                 try:
-                                    if colorspace == '/DeviceRGB':
+                                    if '/DCTDecode' in filters or '/JPXDecode' in filters:
+                                        img = Image.open(io.BytesIO(data))
+                                        if img.mode not in ('RGB', 'L'):
+                                            img = img.convert('RGB')
+                                    elif colorspace == '/DeviceRGB':
                                         img = Image.frombytes('RGB', size, data)
                                     elif colorspace == '/DeviceGray':
                                         img = Image.frombytes('L', size, data)

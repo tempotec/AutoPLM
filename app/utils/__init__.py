@@ -1,5 +1,11 @@
 from app.utils.auth import login_required, admin_required
-from app.utils.files import is_image_file, is_pdf_file, convert_image_to_base64
+from app.utils.files import (
+    is_image_file,
+    is_pdf_file,
+    convert_image_to_base64,
+    convert_image_to_data_url,
+    get_image_mimetype,
+)
 from app.utils.logging import log_activity, rpa_info, rpa_warn, rpa_error, init_rpa_monitor
 from app.utils.pdf import (
     extract_text_from_pdf, 
@@ -21,6 +27,8 @@ __all__ = [
     'is_image_file',
     'is_pdf_file',
     'convert_image_to_base64',
+    'convert_image_to_data_url',
+    'get_image_mimetype',
     'log_activity',
     'rpa_info',
     'rpa_warn',
