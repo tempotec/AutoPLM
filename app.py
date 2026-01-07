@@ -20,7 +20,7 @@ Para executar: python run.py
 from app import create_app, init_db
 
 # Criar instância da aplicação usando factory pattern
-app = create_app()
+app = create_app()  
 
 # Inicializar banco de dados
 init_db(app)

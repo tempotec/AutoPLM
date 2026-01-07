@@ -900,6 +900,15 @@
                                         <p><strong>Estilista(s):</strong> {{ specification.stylists }}</p>
                                     </div>
                                     {% endif %}
+
+                                    {% if extra_fields %}
+                                    <div class="info-section">
+                                        <h6>Campos Detectados no PDF</h6>
+                                        {% for label, value in extra_fields|dictsort %}
+                                        <p><strong>{{ label }}:</strong> {{ value }}</p>
+                                        {% endfor %}
+                                    </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>

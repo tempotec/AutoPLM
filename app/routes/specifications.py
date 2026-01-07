@@ -1,6 +1,7 @@
 import os
 import threading
 import re
+import json
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify, send_file, current_app
 from werkzeug.utils import secure_filename
@@ -474,7 +475,16 @@ def view(id):
     log_activity('VIEW_SPECIFICATION', 'specification', spec.id, 
                 target_name=spec.description or spec.ref_souq)
     rpa_info(f"VIEW_SPEC: Visualização da especificação ID {spec.id}")
-    return render_template('view_specification.html', specification=spec)
+    extra_fields = {}
+    if spec.extra_fields:
+        try:
+            extra_fields = json.loads(spec.extra_fields)
+        except (TypeError, ValueError):
+            extra_fields = {}
+    if not isinstance(extra_fields, dict):
+        extra_fields = {}
+
+    return render_template('view_specification.html', specification=spec, extra_fields=extra_fields)
 
 
 @specifications_bp.route('/specification/<int:id>/edit', methods=['GET', 'POST'])
@@ -522,7 +532,16 @@ def edit(id):
     
     elif request.method == 'POST' and form.errors:
         flash(f"Erro de validacao: {form.errors}")
-    return render_template('edit_specification.html', form=form, specification=spec)
+    extra_fields = {}
+    if spec.extra_fields:
+        try:
+            extra_fields = json.loads(spec.extra_fields)
+        except (TypeError, ValueError):
+            extra_fields = {}
+    if not isinstance(extra_fields, dict):
+        extra_fields = {}
+
+    return render_template('edit_specification.html', form=form, specification=spec, extra_fields=extra_fields)
 
 
 @specifications_bp.route('/specification/<int:id>/delete', methods=['POST'])

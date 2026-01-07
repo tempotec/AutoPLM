@@ -55,6 +55,7 @@ class Specification(db.Model):
 
     raw_extracted_text = db.Column(db.Text)
     processing_status = db.Column(db.String(50), default='pending')
+    extra_fields = db.Column(db.Text)
 
     is_imported = db.Column(db.Boolean, default=False)
     import_category = db.Column(db.String(50))

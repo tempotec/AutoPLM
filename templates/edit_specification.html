@@ -654,6 +654,20 @@
                                 </div>
                             </div>
                         </div>
+
+                        {% if extra_fields %}
+                        <div class="card">
+                            <div class="card-header">Campos Detectados no PDF</div>
+                            <div class="form-grid">
+                                {% for label, value in extra_fields|dictsort %}
+                                <div class="form-group">
+                                    <label class="form-label">{{ label }}</label>
+                                    <input type="text" class="form-input" value="{{ value }}" readonly>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
 
                     <!-- Right Column: Image -->

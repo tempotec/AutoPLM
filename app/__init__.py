@@ -9,14 +9,35 @@ from app.utils.logging import init_rpa_monitor
 
 
 def create_app(config_name=None):
-    env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
-    load_dotenv(env_path, override=True)
-    if not os.environ.get('DATABASE_URL') and os.path.exists(env_path):
-        for key, value in dotenv_values(env_path).items():
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    app_env = os.environ.get('APP_ENV') or os.environ.get('FLASK_ENV') or 'development'
+    env_key = app_env.strip().lower()
+
+    if env_key in {'prod', 'production'}:
+        env_filename = '.env.prod'
+    elif env_key in {'dev', 'development', 'local'}:
+        env_filename = '.env.local'
+    else:
+        env_filename = '.env'
+
+    env_path = os.path.join(base_dir, env_filename)
+    fallback_env_path = os.path.join(base_dir, '.env')
+
+    active_env_path = None
+    if os.path.exists(env_path):
+        active_env_path = env_path
+    elif os.path.exists(fallback_env_path):
+        active_env_path = fallback_env_path
+
+    if active_env_path:
+        load_dotenv(active_env_path, override=True)
+
+    if not os.environ.get('DATABASE_URL') and active_env_path:
+        for key, value in dotenv_values(active_env_path).items():
             if value is not None and not os.environ.get(key):
                 os.environ[key] = value
         if not os.environ.get('DATABASE_URL'):
-            with open(env_path, 'r', encoding='utf-8') as env_file:
+            with open(active_env_path, 'r', encoding='utf-8') as env_file:
                 for raw_line in env_file:
                     line = raw_line.strip()
                     if not line or line.startswith('#') or '=' not in line:
@@ -27,7 +48,12 @@ def create_app(config_name=None):
                     if key and not os.environ.get(key):
                         os.environ[key] = value
     if config_name is None:
-        config_name = os.environ.get('FLASK_ENV', 'default')
+        if env_key in {'prod', 'production'}:
+            config_name = 'production'
+        elif env_key in {'dev', 'development', 'local'}:
+            config_name = 'development'
+        else:
+            config_name = os.environ.get('FLASK_ENV', 'default')
     
     app = Flask(__name__, 
                 template_folder='../templates',

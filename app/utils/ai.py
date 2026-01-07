@@ -25,6 +25,8 @@ def _extract_labeled_fields(text):
         "MATERIA-PRIMA": "main_fabric",
         "TECIDO PRINCIPAL": "main_fabric",
         "TECIDO": "main_fabric",
+        "TAM. PILOTO": "pilot_size",
+        "TAM. DA PILOTO": "pilot_size",
     }
     labels = sorted(label_map.keys(), key=len, reverse=True)
     label_pattern = "|".join(re.escape(label) for label in labels)
@@ -52,6 +54,83 @@ def _extract_labeled_fields(text):
             results[key] = value
 
     return results
+
+
+def _extract_extra_fields(text):
+    normalized = _normalize_text(text)
+    results = {}
+
+    label_map = {
+        "STATUS INTEGRACAO": "Status Integracao",
+        "ORIGEM": "Origem",
+        "INCOTERM": "Incoterm",
+        "NCM": "NCM",
+        "REFERENCIA NS": "Referencia NS",
+        "REFERENCIA": "Referencia",
+        "REF ESTILO": "Ref Estilo",
+        "MARCA": "Marca",
+        "LINHA": "Linha",
+        "GRUPO": "Grupo",
+        "SUB GRUPO": "Subgrupo",
+        "GRADE": "Grade",
+        "SUB GRADE": "Subgrade",
+        "ENTRADA": "Entrada",
+        "CANAL": "Canal",
+        "FAIXA PRECO PLANEJADA": "Faixa Preco Planejada",
+        "MES PLANEJADO": "Mes Planejado",
+        "MES ENTRADA NA LOJA": "Mes Entrada na Loja",
+        "PLANEJADO/PIR. COLECAO": "Planejado Pir Colecao",
+        "FOC/PA": "FOC/PA",
+        "N DO LACRE": "N do Lacre",
+        "N. DO LACRE": "N do Lacre",
+        "MATERIAL PRINCIPAL": "Material Principal",
+        "COMP (CM)": "Comprimento (cm)",
+        "LARG (CM)": "Largura (cm)",
+        "ALTURA (CM)": "Altura (cm)",
+        "DIAMETRO (CM)": "Diametro (cm)",
+        "PESO LIQUIDO UNITARIO": "Peso Liquido Unitario",
+        "DESCRICAO TITULO PECA": "Descricao Titulo Peca",
+        "DESCRICAO DO SITE": "Descricao do Site",
+        "PRE CUSTO/SERVICOS": "Pre Custo/Servicos",
+        "CORES DO MODELO": "Cores do Modelo",
+    }
+    labels = sorted(label_map.keys(), key=len, reverse=True)
+    label_pattern = "|".join(re.escape(label) for label in labels)
+
+    pattern = re.compile(rf"(?P<label>{label_pattern})\s*:?\s*", re.IGNORECASE)
+    matches = list(pattern.finditer(normalized))
+    if not matches:
+        return results
+
+    for idx, match in enumerate(matches):
+        label = match.group("label").upper()
+        start = match.end()
+        end = matches[idx + 1].start() if idx + 1 < len(matches) else len(normalized)
+        value = normalized[start:end].strip()
+
+        if not value:
+            continue
+
+        value = re.split(r"\s{2,}|\n", value)[0].strip()
+        if not value:
+            continue
+
+        display_label = label_map.get(label)
+        if display_label and display_label not in results:
+            results[display_label] = value
+
+    return results
+
+
+def _trim_value_at_labels(value, labels):
+    if not value:
+        return value
+    label_pattern = "|".join(re.escape(label) for label in labels)
+    match = re.search(rf"\b({label_pattern})\b", value, re.IGNORECASE)
+    if not match:
+        return value.strip()
+    trimmed = value[:match.start()].strip()
+    return trimmed if trimmed else None
 
 
 
@@ -446,6 +525,7 @@ def process_specification_with_openai(text_content):
 
     try:
         labeled_fallback = _extract_labeled_fields(text_content)
+        extra_fields = _extract_extra_fields(text_content)
         prompt = f"""Você é um especialista em análise de fichas técnicas de vestuário da marca SOUQ. Extraia TODAS as informações disponíveis do texto abaixo e retorne em formato JSON estruturado.
 
 ESTRUTURA TÍPICA DA FICHA TÉCNICA SOUQ:
@@ -605,6 +685,30 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                         flattened['supplier'] = supplier_fallback
                     if corner_fallback:
                         flattened['corner'] = corner_fallback
+                if extra_fields:
+                    flattened['extra_fields'] = extra_fields
+
+                corner_value = flattened.get('corner')
+                corner_value = _trim_value_at_labels(
+                    corner_value,
+                    [
+                        "MES PLANEJADO",
+                        "ENTRADA",
+                        "MARCA",
+                        "LINHA",
+                        "COLECAO",
+                        "REFERENCIA",
+                        "REF ESTILO",
+                        "GRUPO",
+                        "SUB GRUPO",
+                        "GRADE",
+                        "SUB GRADE",
+                    ],
+                )
+                if corner_value is None:
+                    flattened['corner'] = None
+                else:
+                    flattened['corner'] = corner_value
                 return flattened
             except json.JSONDecodeError as je:
                 print(f"JSON parsing error: {je}")
