@@ -1,0 +1,51 @@
+modules = ["python-3.11", "postgresql-16"]
+[agent]
+expertMode = true
+integrations = ["python_openai:1.0.0"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["freetype", "gumbo", "harfbuzz", "jbig2dec", "lcms2", "libimagequant", "libjpeg", "libjpeg_turbo", "libtiff", "libwebp", "libxcrypt", "mupdf", "openjpeg", "swig", "tcl", "tk", "xcbuild", "zlib", "unzip"]
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Flask Server"
+
+[[workflows.workflow]]
+name = "Flask Server"
+author = "agent"
+
+[workflows.workflow.metadata]
+outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python run.py"
+waitForPort = 5000
+
+[[ports]]
+localPort = 5000
+externalPort = 80
+
+[deployment]
+deploymentTarget = "cloudrun"
+run = ["sh", "-c", "python app.py"]
+
+[objectStorage]
+defaultBucketID = "replit-objstore-1091eb61-871b-4870-987a-a5e22c119989"
+
+[userenv]
+
+[userenv.shared]
+RPA_MONITOR_ID = "APP-GESTAO-INOVAILAB"
+RPA_MONITOR_HOST = "wss://app-in-sight.replit.app/ws"
+RPA_MONITOR_REGION = "Sudeste"
+RPA_MONITOR_TRANSPORT = "ws"

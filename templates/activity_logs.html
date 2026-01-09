@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs de Atividade - StyleSheet</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #0a0e1a;
+            color: #e5e7eb;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .nav-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid #1e293b;
+            margin-top: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background-color: transparent;
+            border: none;
+            color: #94a3b8;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background-color: #1e293b;
+            color: #ef4444;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 32px;
+            overflow-y: auto;
+            margin-left: 240px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .filters-container {
+            background-color: #0f1420;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+            border: 1px solid #1e293b;
+        }
+
+        .filters-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-label {
+            display: block;
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .filter-input, .filter-select {
+            width: 100%;
+            padding: 10px 14px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            background-color: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .filter-btn:hover {
+            background-color: #2563eb;
+        }
+
+        .clear-btn {
+            padding: 10px 20px;
+            background-color: transparent;
+            color: #94a3b8;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .clear-btn:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .logs-table {
+            width: 100%;
+            background-color: #0f1420;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+        }
+
+        .logs-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .logs-table th {
+            background-color: #1e293b;
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .logs-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #1e293b;
+            font-size: 14px;
+        }
+
+        .logs-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .logs-table tr:hover {
+            background-color: #1e293b33;
+        }
+
+        .action-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .action-login { background-color: #10b98133; color: #10b981; }
+        .action-logout { background-color: #6b728033; color: #9ca3af; }
+        .action-login_failed { background-color: #ef444433; color: #ef4444; }
+        .action-upload { background-color: #3b82f633; color: #3b82f6; }
+        .action-view { background-color: #8b5cf633; color: #a78bfa; }
+        .action-edit { background-color: #f59e0b33; color: #f59e0b; }
+        .action-delete { background-color: #ef444433; color: #ef4444; }
+        .action-download { background-color: #06b6d433; color: #06b6d4; }
+        .action-generate { background-color: #ec489933; color: #ec4899; }
+        .action-create { background-color: #22c55e33; color: #22c55e; }
+
+        .target-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .target-type {
+            font-size: 11px;
+            color: #64748b;
+            text-transform: uppercase;
+        }
+
+        .target-name {
+            color: #e5e7eb;
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .ip-address {
+            font-family: monospace;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .timestamp {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .pagination a, .pagination span {
+            padding: 8px 14px;
+            background-color: #1e293b;
+            border-radius: 6px;
+            color: #94a3b8;
+            text-decoration: none;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .pagination a:hover {
+            background-color: #334155;
+            color: #e5e7eb;
+        }
+
+        .pagination .active {
+            background-color: #3b82f6;
+            color: white;
+        }
+
+        .pagination .disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: #0f1420;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 16px 20px;
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            .filters-row {
+                flex-direction: column;
+            }
+            .filter-group {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="StyleSheet">
+                <span>StyleSheet</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="{{ url_for('collections.index') }}" class="nav-item">
+                    <i class="fas fa-folder"></i>
+                    <span>Coleções</span>
+                </a>
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Fornecedores</span>
+                </a>
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
+                    <i class="fas fa-pencil-ruler"></i>
+                    <span>Desenhos Técnicos</span>
+                </a>
+                {% if current_user.is_admin %}
+                <a href="{{ url_for('admin.manage_users') }}" class="nav-item">
+                    <i class="fas fa-users-cog"></i>
+                    <span>Usuários</span>
+                </a>
+                <a href="{{ url_for('drawings.activity_logs') }}" class="nav-item active">
+                    <i class="fas fa-history"></i>
+                    <span>Logs de Atividade</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <div class="user-profile">
+                <div class="user-avatar">{{ current_user.username[0].upper() }}</div>
+                <div class="user-info">
+                    <div class="user-name">{{ current_user.username }}</div>
+                    <div class="user-role">{{ 'Administrador' if current_user.is_admin else 'Estilista' }}</div>
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sair
+            </a>
+        </aside>
+
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">
+                    <i class="fas fa-history" style="margin-right: 12px; color: #3b82f6;"></i>
+                    Logs de Atividade
+                </h1>
+            </div>
+
+            <div class="stats-bar">
+                <div class="stat-card">
+                    <div class="stat-value">{{ pagination.total }}</div>
+                    <div class="stat-label">Total de Registros</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ users_list|length }}</div>
+                    <div class="stat-label">Usuários Ativos</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">{{ actions_list|length }}</div>
+                    <div class="stat-label">Tipos de Ação</div>
+                </div>
+            </div>
+
+            <div class="filters-container">
+                <form method="GET" action="{{ url_for('drawings.activity_logs') }}">
+                    <div class="filters-row">
+                        <div class="filter-group">
+                            <label class="filter-label">Buscar</label>
+                            <input type="text" name="search" class="filter-input" placeholder="Usuário, ação ou alvo..." value="{{ search_query }}">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Ação</label>
+                            <select name="action" class="filter-select">
+                                <option value="">Todas as ações</option>
+                                {% for action in actions_list %}
+                                <option value="{{ action }}" {% if action_filter == action %}selected{% endif %}>{{ action }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Usuário</label>
+                            <select name="user" class="filter-select">
+                                <option value="">Todos os usuários</option>
+                                {% for user in users_list %}
+                                <option value="{{ user }}" {% if user_filter == user %}selected{% endif %}>{{ user }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Data Início</label>
+                            <input type="date" name="date_from" class="filter-input" value="{{ date_from }}">
+                        </div>
+                        <div class="filter-group">
+                            <label class="filter-label">Data Fim</label>
+                            <input type="date" name="date_to" class="filter-input" value="{{ date_to }}">
+                        </div>
+                        <button type="submit" class="filter-btn">
+                            <i class="fas fa-filter"></i> Filtrar
+                        </button>
+                        <a href="{{ url_for('drawings.activity_logs') }}" class="clear-btn">Limpar</a>
+                    </div>
+                </form>
+            </div>
+
+            {% if logs %}
+            <div class="logs-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Data/Hora</th>
+                            <th>Usuário</th>
+                            <th>Ação</th>
+                            <th>Alvo</th>
+                            <th>IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>
+                                <div class="timestamp">
+                                    {{ log.created_at.strftime('%d/%m/%Y') }}<br>
+                                    <small style="color: #64748b;">{{ log.created_at.strftime('%H:%M:%S') }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ log.username or 'Anônimo' }}</strong>
+                            </td>
+                            <td>
+                                {% set action_class = 'action-' + log.action.lower().split('_')[0] %}
+                                <span class="action-badge {{ action_class }}">
+                                    {% if 'LOGIN' in log.action %}
+                                        <i class="fas fa-sign-in-alt"></i>
+                                    {% elif 'LOGOUT' in log.action %}
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    {% elif 'UPLOAD' in log.action %}
+                                        <i class="fas fa-upload"></i>
+                                    {% elif 'VIEW' in log.action %}
+                                        <i class="fas fa-eye"></i>
+                                    {% elif 'EDIT' in log.action %}
+                                        <i class="fas fa-edit"></i>
+                                    {% elif 'DELETE' in log.action %}
+                                        <i class="fas fa-trash"></i>
+                                    {% elif 'DOWNLOAD' in log.action %}
+                                        <i class="fas fa-download"></i>
+                                    {% elif 'GENERATE' in log.action %}
+                                        <i class="fas fa-magic"></i>
+                                    {% elif 'CREATE' in log.action %}
+                                        <i class="fas fa-plus"></i>
+                                    {% else %}
+                                        <i class="fas fa-circle"></i>
+                                    {% endif %}
+                                    {{ log.action.replace('_', ' ') }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if log.target_type or log.target_name %}
+                                <div class="target-info">
+                                    {% if log.target_type %}
+                                    <span class="target-type">{{ log.target_type }}</span>
+                                    {% endif %}
+                                    {% if log.target_name %}
+                                    <span class="target-name" title="{{ log.target_name }}">{{ log.target_name }}</span>
+                                    {% elif log.target_id %}
+                                    <span class="target-name">#{{ log.target_id }}</span>
+                                    {% endif %}
+                                </div>
+                                {% else %}
+                                <span style="color: #64748b;">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="ip-address">{{ log.ip_address or '-' }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            {% if pagination.pages > 1 %}
+            <div class="pagination">
+                {% if pagination.has_prev %}
+                <a href="{{ url_for('drawings.activity_logs', page=pagination.prev_num, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% else %}
+                <span class="disabled"><i class="fas fa-chevron-left"></i></span>
+                {% endif %}
+
+                {% for page in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page %}
+                        {% if page == pagination.page %}
+                        <span class="active">{{ page }}</span>
+                        {% else %}
+                        <a href="{{ url_for('drawings.activity_logs', page=page, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">{{ page }}</a>
+                        {% endif %}
+                    {% else %}
+                    <span>...</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <a href="{{ url_for('drawings.activity_logs', page=pagination.next_num, search=search_query, action=action_filter, user=user_filter, date_from=date_from, date_to=date_to) }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% else %}
+                <span class="disabled"><i class="fas fa-chevron-right"></i></span>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-clipboard-list"></i>
+                <h3>Nenhum registro encontrado</h3>
+                <p>Os logs de atividade aparecerão aqui conforme os usuários interagem com o sistema.</p>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+</body>
+</html>

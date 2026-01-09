@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fornecedores - StyleFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #0a0e1a;
+            color: #e5e7eb;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .nav-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid #1e293b;
+            margin-top: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            margin-top: 12px;
+            background-color: #dc2626;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .logout-btn:hover {
+            background-color: #b91c1c;
+            transform: translateY(-1px);
+        }
+
+        .logout-btn i {
+            font-size: 16px;
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+            margin-left: 240px;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .search-bar {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            align-items: center;
+        }
+
+        .search-input-group {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-input-group i {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .search-input-group input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .search-input-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .material-filter-group {
+            min-width: 220px;
+        }
+
+        .material-filter-group select {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .material-filter-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            background-color: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .suppliers-table {
+            background-color: #0f1420;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #1e293b;
+        }
+
+        .table-header {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 2fr 1fr 120px;
+            padding: 16px 24px;
+            background-color: #1e293b;
+            font-size: 12px;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .table-row {
+            display: grid;
+            grid-template-columns: 2fr 1.5fr 2fr 1fr 120px;
+            padding: 20px 24px;
+            align-items: center;
+            border-bottom: 1px solid #1e293b;
+            transition: background-color 0.2s;
+        }
+
+        .table-row:hover {
+            background-color: #1e293b;
+        }
+
+        .supplier-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .supplier-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .supplier-details h4 {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+            margin-bottom: 4px;
+        }
+
+        .supplier-details p {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .contact-info p {
+            font-size: 14px;
+            color: #e5e7eb;
+            margin-bottom: 2px;
+        }
+
+        .contact-info span {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .materials-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .material-tag {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .spec-count {
+            font-size: 20px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: #334155;
+            color: #e5e7eb;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            margin-top: 24px;
+        }
+
+        .page-btn {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .page-btn:hover {
+            background-color: #334155;
+        }
+
+        .page-btn.active {
+            background-color: #2563eb;
+            color: #ffffff;
+            border-color: #2563eb;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: #0f1420;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border: 1px solid #1e293b;
+        }
+
+        .products-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .product-item {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background-color: #0b1220;
+            border: 1px solid #1e293b;
+            border-radius: 10px;
+            padding: 12px;
+        }
+
+        .product-thumb {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            background-color: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .product-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-meta {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .product-meta h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #e2e8f0;
+        }
+
+        .product-meta span {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            color: #ffffff;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+        }
+
+        .close-btn:hover {
+            color: #e5e7eb;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .materials-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 12px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            min-height: 80px;
+        }
+
+        .material-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .material-chip button {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-material-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .add-material-form input {
+            flex: 1;
+        }
+
+        .add-material-form select {
+            padding: 8px 12px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+        }
+
+        .add-material-form button {
+            padding: 8px 16px;
+            background-color: #334155;
+            border: none;
+            border-radius: 8px;
+            color: #e5e7eb;
+            cursor: pointer;
+        }
+
+        .add-material-form button:hover {
+            background-color: #475569;
+        }
+
+        .avatar-colors {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        .avatar-color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .avatar-color-option:hover {
+            transform: scale(1.1);
+        }
+
+        .avatar-color-option.selected {
+            border-color: #2563eb;
+        }
+
+        .btn-save {
+            width: 100%;
+            padding: 14px;
+            background-color: #2563eb;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-save:hover {
+            background-color: #1d4ed8;
+        }
+
+        .flash-message {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .flash-message.success {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .flash-message.error {
+            background-color: #7f1d1d;
+            color: #f87171;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                <span>StyleFlow</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Painel</span>
+                </a>
+                <a href="{{ url_for('collections.index') }}" class="nav-item">
+                    <i class="fas fa-folder"></i>
+                    <span>Minhas Coleções</span>
+                </a>
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
+                    <i class="fas fa-drafting-compass"></i>
+                    <span>Desenhos Técnicos</span>
+                </a>
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item active">
+                    <i class="fas fa-truck"></i>
+                    <span>Fornecedores</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Relatórios</span>
+                </a>
+            </nav>
+
+            <div style="margin-top: auto;">
+                <a href="{{ url_for('settings.index') }}" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </a>
+                
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        {{ current_user.username[0].upper() }}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">{{ current_user.username }}</div>
+                        <div class="user-role">{{ 'Administrador' if current_user.is_admin else 'Estilista' }}</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-top">
+                    <div>
+                        <h1 class="page-title">Fornecedores</h1>
+                        <p class="page-subtitle">Gerencie seus contatos e parcerias de forma eficiente</p>
+                    </div>
+                </div>
+            </header>
+
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-message success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <div class="search-bar">
+                <div class="search-input-group">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Buscar fornecedor..." value="{{ search_query }}">
+                </div>
+                <div class="material-filter-group">
+                    <select id="materialFilter">
+                        <option value="">Todos os materiais</option>
+                        {% for material in materials_options %}
+                            <option value="{{ material }}" {{ 'selected' if material == material_filter else '' }}>
+                                {{ material }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <button class="btn-primary" onclick="openModal()">
+                    <i class="fas fa-plus"></i>
+                    Novo Fornecedor
+                </button>
+            </div>
+
+            <div class="suppliers-table">
+                <div class="table-header">
+                    <div>FORNECEDOR</div>
+                    <div>CONTATO</div>
+                    <div>MATERIAIS FORNECIDOS</div>
+                    <div>PEÇAS ASSOCIADAS</div>
+                    <div>AÇÕES</div>
+                </div>
+
+                {% for item in suppliers %}
+                <div class="table-row">
+                    <div class="supplier-info">
+                        <div class="supplier-avatar" style="background-color: {{ item.supplier.avatar_color }};">
+                            {{ item.supplier.name[0].upper() }}
+                        </div>
+                        <div class="supplier-details">
+                            <h4>{{ item.supplier.name }}</h4>
+                            <p>{{ item.supplier.location or 'Localização não informada' }}</p>
+                        </div>
+                    </div>
+
+                    <div class="contact-info">
+                        <p>{{ item.supplier.contact_name or 'Sem contato' }}</p>
+                        <span>{{ item.supplier.contact_email or '' }}</span>
+                    </div>
+
+                    <div class="materials-tags">
+                        {% if item.supplier.materials_json %}
+                            {% set materials_list = item.supplier.materials_json | from_json %}
+                            {% for material in materials_list[:3] %}
+                                <span class="material-tag" style="background-color: {{ material.color }}; color: white;">
+                                    {{ material.name }}
+                                </span>
+                            {% endfor %}
+                            {% if materials_list | length > 3 %}
+                                <span class="material-tag" style="background-color: #64748b; color: white;">
+                                    +{{ materials_list | length - 3 }}
+                                </span>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <div class="spec-count">
+                        {{ item.spec_count }}
+                    </div>
+
+                    <div class="actions">
+                        <button class="action-btn" onclick="viewSupplier({{ item.supplier.id }})">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="action-btn" onclick="viewSupplierProducts({{ item.supplier.id }})">
+                            <i class="fas fa-ellipsis-h"></i>
+                        </button>
+                        <button class="action-btn" onclick="editSupplier({{ item.supplier.id }})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="action-btn" onclick="deleteSupplier({{ item.supplier.id }}, '{{ item.supplier.name }}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                {% else %}
+                <div class="table-row" style="justify-content: center;">
+                    <div style="grid-column: 1 / -1; text-align: center; color: #64748b;">
+                        Nenhum fornecedor encontrado
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if pagination.pages > 1 %}
+            <div class="pagination">
+                {% if pagination.has_prev %}
+                <a href="?page={{ pagination.prev_num }}&search={{ search_query }}&material={{ material_filter }}" class="page-btn">
+                    <i class="fas fa-chevron-left"></i>
+                </a>
+                {% endif %}
+
+                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+                    {% if page_num %}
+                        <a href="?page={{ page_num }}&search={{ search_query }}&material={{ material_filter }}" 
+                           class="page-btn {{ 'active' if page_num == pagination.page else '' }}">
+                            {{ page_num }}
+                        </a>
+                    {% else %}
+                        <span class="page-btn" style="cursor: default;">...</span>
+                    {% endif %}
+                {% endfor %}
+
+                {% if pagination.has_next %}
+                <a href="?page={{ pagination.next_num }}&search={{ search_query }}&material={{ material_filter }}" class="page-btn">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <div id="supplierModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Novo Fornecedor</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+
+            <form id="supplierForm" onsubmit="saveSupplier(event)">
+                <input type="hidden" id="supplierId">
+
+                <div class="form-group">
+                    <label>Nome do Fornecedor *</label>
+                    <input type="text" id="supplierName" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Localização</label>
+                    <input type="text" id="supplierLocation" placeholder="Ex: São Paulo, SP">
+                </div>
+
+                <div class="form-group">
+                    <label>Nome do Contato</label>
+                    <input type="text" id="contactName">
+                </div>
+
+                <div class="form-group">
+                    <label>E-mail do Contato</label>
+                    <input type="email" id="contactEmail">
+                </div>
+
+                <div class="form-group">
+                    <label>Telefone do Contato</label>
+                    <input type="tel" id="contactPhone">
+                </div>
+
+                <div class="form-group">
+                    <label>Materiais Fornecidos</label>
+                    <div class="materials-input" id="materialsContainer"></div>
+                    <div class="add-material-form">
+                        <input type="text" id="newMaterialName" placeholder="Nome do material">
+                        <select id="newMaterialColor">
+                            <option value="#6366f1">Roxo</option>
+                            <option value="#10b981">Verde</option>
+                            <option value="#3b82f6">Azul</option>
+                            <option value="#f59e0b">Laranja</option>
+                            <option value="#ef4444">Vermelho</option>
+                            <option value="#8b5cf6">Violeta</option>
+                            <option value="#ec4899">Rosa</option>
+                            <option value="#14b8a6">Teal</option>
+                        </select>
+                        <button type="button" onclick="addMaterial()">Adicionar</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Cor do Avatar</label>
+                    <div class="avatar-colors">
+                        <div class="avatar-color-option selected" style="background-color: #667eea;" data-color="#667eea"></div>
+                        <div class="avatar-color-option" style="background-color: #f093fb;" data-color="#f093fb"></div>
+                        <div class="avatar-color-option" style="background-color: #4facfe;" data-color="#4facfe"></div>
+                        <div class="avatar-color-option" style="background-color: #43e97b;" data-color="#43e97b"></div>
+                        <div class="avatar-color-option" style="background-color: #fa709a;" data-color="#fa709a"></div>
+                        <div class="avatar-color-option" style="background-color: #ff9a56;" data-color="#ff9a56"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save">Salvar Fornecedor</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="productsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="productsModalTitle">Produtos do Fornecedor</h2>
+                <button class="close-btn" onclick="closeProductsModal()">&times;</button>
+            </div>
+            <div id="productsModalBody">
+                <p>Carregando...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let materials = [];
+        let selectedColor = '#667eea';
+        let currentSupplierId = null;
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('keyup', function(e) {
+            if (e.key === 'Enter') {
+                const searchValue = this.value;
+                const materialValue = document.getElementById('materialFilter').value;
+                window.location.href = `?search=${encodeURIComponent(searchValue)}&material=${encodeURIComponent(materialValue)}`;
+            }
+        });
+
+        document.getElementById('materialFilter').addEventListener('change', function() {
+            const searchValue = document.getElementById('searchInput').value;
+            const materialValue = this.value;
+            window.location.href = `?search=${encodeURIComponent(searchValue)}&material=${encodeURIComponent(materialValue)}`;
+        });
+
+        // Avatar color selection
+        document.querySelectorAll('.avatar-color-option').forEach(option => {
+            option.addEventListener('click', function() {
+                document.querySelectorAll('.avatar-color-option').forEach(opt => opt.classList.remove('selected'));
+                this.classList.add('selected');
+                selectedColor = this.dataset.color;
+            });
+        });
+
+        function openModal() {
+            document.getElementById('modalTitle').textContent = 'Novo Fornecedor';
+            document.getElementById('supplierForm').reset();
+            document.getElementById('supplierId').value = '';
+            materials = [];
+            renderMaterials();
+            currentSupplierId = null;
+            document.getElementById('supplierModal').classList.add('show');
+        }
+
+        function closeModal() {
+            document.getElementById('supplierModal').classList.remove('show');
+        }
+
+        function addMaterial() {
+            const name = document.getElementById('newMaterialName').value.trim();
+            const color = document.getElementById('newMaterialColor').value;
+
+            if (name) {
+                materials.push({ name, color });
+                document.getElementById('newMaterialName').value = '';
+                renderMaterials();
+            }
+        }
+
+        function removeMaterial(index) {
+            materials.splice(index, 1);
+            renderMaterials();
+        }
+
+        function renderMaterials() {
+            const container = document.getElementById('materialsContainer');
+            container.innerHTML = materials.map((material, index) => `
+                <div class="material-chip" style="background-color: ${material.color}">
+                    ${material.name}
+                    <button type="button" onclick="removeMaterial(${index})">×</button>
+                </div>
+            `).join('');
+        }
+
+        async function saveSupplier(e) {
+            e.preventDefault();
+
+            const data = {
+                name: document.getElementById('supplierName').value,
+                location: document.getElementById('supplierLocation').value,
+                contact_name: document.getElementById('contactName').value,
+                contact_email: document.getElementById('contactEmail').value,
+                contact_phone: document.getElementById('contactPhone').value,
+                materials: materials,
+                avatar_color: selectedColor
+            };
+
+            try {
+                const url = currentSupplierId 
+                    ? `/suppliers/${currentSupplierId}/update`
+                    : '/suppliers/create';
+
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    window.location.reload();
+                } else {
+                    alert('Erro: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Erro ao salvar fornecedor');
+            }
+        }
+
+        async function editSupplier(id) {
+            try {
+                const response = await fetch(`/suppliers/${id}`);
+                const supplier = await response.json();
+
+                document.getElementById('modalTitle').textContent = 'Editar Fornecedor';
+                document.getElementById('supplierId').value = supplier.id;
+                document.getElementById('supplierName').value = supplier.name;
+                document.getElementById('supplierLocation').value = supplier.location || '';
+                document.getElementById('contactName').value = supplier.contact_name || '';
+                document.getElementById('contactEmail').value = supplier.contact_email || '';
+                document.getElementById('contactPhone').value = supplier.contact_phone || '';
+                
+                materials = supplier.materials || [];
+                renderMaterials();
+                
+                selectedColor = supplier.avatar_color;
+                document.querySelectorAll('.avatar-color-option').forEach(opt => {
+                    opt.classList.toggle('selected', opt.dataset.color === selectedColor);
+                });
+
+                currentSupplierId = id;
+                document.getElementById('supplierModal').classList.add('show');
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Erro ao carregar fornecedor');
+            }
+        }
+
+        function closeProductsModal() {
+            document.getElementById('productsModal').classList.remove('show');
+        }
+
+        function formatProductStatus(status) {
+            const normalized = (status || '').toLowerCase();
+            if (normalized === 'completed') {
+                return 'Concluido';
+            }
+            if (normalized === 'in_development') {
+                return 'Em desenvolvimento';
+            }
+            if (normalized === 'approved') {
+                return 'Aprovado';
+            }
+            return 'Rascunho';
+        }
+
+        async function viewSupplierProducts(id) {
+            const modal = document.getElementById('productsModal');
+            const body = document.getElementById('productsModalBody');
+            const title = document.getElementById('productsModalTitle');
+
+            modal.classList.add('show');
+            body.innerHTML = '<p>Carregando...</p>';
+            title.textContent = 'Produtos do fornecedor';
+
+            try {
+                const response = await fetch(`/suppliers/${id}/products`);
+                const data = await response.json();
+
+                if (!data.success) {
+                    body.innerHTML = '<p>Erro ao carregar produtos.</p>';
+                    return;
+                }
+
+                title.textContent = `Produtos de ${data.supplier_name || 'Fornecedor'}`;
+
+                if (!data.products || data.products.length === 0) {
+                    body.innerHTML = '<p>Nenhum produto associado.</p>';
+                    return;
+                }
+
+                const itemsHtml = data.products.map(product => {
+                    const thumbHtml = product.thumbnail
+                        ? `<img src="${product.thumbnail}" alt="">`
+                        : '<i class="fas fa-file"></i>';
+                    const refLabel = product.ref ? `Ref: ${product.ref}` : 'Ref: -';
+                    const statusLabel = formatProductStatus(product.status);
+                    const nameLabel = product.name || 'Produto';
+                    return `
+                        <div class="product-item">
+                            <div class="product-thumb">${thumbHtml}</div>
+                            <div class="product-meta">
+                                <h4>${nameLabel}</h4>
+                                <span>${refLabel}</span>
+                                <span>Status: ${statusLabel}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                body.innerHTML = `<div class="products-list">${itemsHtml}</div>`;
+            } catch (error) {
+                console.error('Error:', error);
+                body.innerHTML = '<p>Erro ao carregar produtos.</p>';
+            }
+        }
+
+        async function deleteSupplier(id, name) {
+            if (confirm(`Tem certeza que deseja excluir o fornecedor "${name}"?\n\nEsta ação não pode ser desfeita.`)) {
+                try {
+                    const response = await fetch(`/suppliers/${id}/delete`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': '{{ csrf_token() }}'
+                        }
+                    });
+
+                    const result = await response.json();
+
+                    if (result.success) {
+                        window.location.reload();
+                    } else {
+                        alert('Erro: ' + result.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Erro ao excluir fornecedor');
+                }
+            }
+        }
+
+        function viewSupplier(id) {
+            editSupplier(id);
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('supplierModal');
+            const productsModal = document.getElementById('productsModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+            if (event.target == productsModal) {
+                closeProductsModal();
+            }
+        }
+    </script>
+</body>
+</html>

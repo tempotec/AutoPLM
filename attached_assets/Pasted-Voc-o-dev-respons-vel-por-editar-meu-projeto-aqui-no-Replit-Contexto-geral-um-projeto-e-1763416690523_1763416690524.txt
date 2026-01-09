@@ -1,0 +1,176 @@
+Você é o dev responsável por editar meu projeto aqui no Replit.
+
+Contexto geral:
+- É um projeto em Python/Flask, com SQLAlchemy e WTForms.
+- Existe um modelo que representa a ficha técnica / peça de roupa (Specification ou nome parecido).
+- Já existe uma integração com GPT (OpenAI) que analisa a imagem da peça e devolve um JSON com informações da peça.
+- Quero que o GPT preencha automaticamente as categorias de roupa (Grupo e Subgrupo), mas que esses campos continuem totalmente editáveis na tela de edição/criação.
+
+OBJETIVO
+Adicionar dois campos à ficha de produto:
+1. **Grupo (main_group)** → um destes valores fixos:
+   - TECIDO PLANO  
+   - MALHA  
+   - TRICOT  
+   - JEANS  
+
+2. **Subgrupo (sub_group)** → valores fixos (subgrupos da imagem que enviei, use exatamente estes):
+   - BLAZER
+   - BLUSA
+   - BRINCO
+   - CALÇA
+   - CAMISA
+   - CAMISA/CAMISÃO
+   - CAMISETA
+   - CARDIGÃ
+   - JAQUETA
+   - KAFTAN
+   - REGATA
+   - SAIA
+   - TÚNICA
+
+Esses campos devem:
+- Ser preenchidos automaticamente pelo GPT na criação da ficha.
+- Ficar salvos no banco.
+- Aparecer na tela de edição/criação como campos editáveis (SelectField).
+- Na segunda vez que eu abrir a ficha, mostrar o que está no banco (mesmo se eu tiver corrigido manualmente), sem sobrescrever automaticamente.
+
+---
+
+### 1) Modelo (SQLAlchemy)
+
+1. Encontre o modelo que representa a ficha da peça (provavelmente `Specification`).
+2. Adicione duas colunas novas (se ainda não existirem):
+
+```python
+main_group = db.Column(db.String(30))   # TECIDO PLANO / MALHA / TRICOT / JEANS
+sub_group = db.Column(db.String(30))    # BLUSA / CALÇA / etc.
+Crie a migração ou ajuste o banco conforme o padrão atual do projeto (Alembic ou recriar a tabela, conforme você detectar).
+
+Em ambiente de dev, o mais simples pode ser dropar e recriar o banco, mas faça do jeito mais seguro de acordo com o projeto.
+
+2) Formulário (WTForms)
+Localize a classe de formulário usada para criar/editar a ficha (provavelmente SpecificationForm).
+
+Perto dessa classe, crie duas constantes de choices:
+
+python
+Copiar código
+GROUP_CHOICES = [
+    ('', 'Selecione...'),
+    ('TECIDO PLANO', 'Tecido Plano'),
+    ('MALHA', 'Malha'),
+    ('TRICOT', 'Tricot'),
+    ('JEANS', 'Jeans'),
+]
+
+SUBGROUP_CHOICES = [
+    ('BLAZER', 'Blazer'),
+    ('BLUSA', 'Blusa'),
+    ('BRINCO', 'Brinco'),
+    ('CALÇA', 'Calça'),
+    ('CAMISA', 'Camisa'),
+    ('CAMISA/CAMISÃO', 'Camisa/Camisão'),
+    ('CAMISETA', 'Camiseta'),
+    ('CARDIGÃ', 'Cardigã'),
+    ('JAQUETA', 'Jaqueta'),
+    ('KAFTAN', 'Kaftan'),
+    ('REGATA', 'Regata'),
+    ('SAIA', 'Saia'),
+    ('TÚNICA', 'Túnica'),
+]
+Na SpecificationForm, adicione os campos:
+
+python
+Copiar código
+main_group = SelectField('Grupo', choices=GROUP_CHOICES)
+sub_group = SelectField('Subgrupo', choices=SUBGROUP_CHOICES)
+Garanta que a rota de edição/criação instancia o form com obj=spec ou equivalente, para pré-preencher os campos a partir do modelo.
+
+Exemplo esperado:
+
+python
+Copiar código
+spec = Specification.query.get_or_404(spec_id)
+form = SpecificationForm(obj=spec)
+
+if form.validate_on_submit():
+    form.populate_obj(spec)
+    db.session.commit()
+3) Templates (HTML/Jinja)
+Localize o template usado para editar/criar a ficha (algo como edit_specification.html ou similar).
+
+Na seção de dados gerais da peça, adicione dois blocos de formulário para Grupo e Subgrupo, usando os campos do WTForms:
+
+html
+Copiar código
+<div class="form-group">
+    <label class="form-label">Grupo</label>
+    {{ form.main_group(class="form-input") }}
+</div>
+
+<div class="form-group">
+    <label class="form-label">Subgrupo</label>
+    {{ form.sub_group(class="form-input") }}
+</div>
+Estilize de forma consistente com os outros campos já existentes.
+
+4) Integração com GPT (preenchimento automático)
+Localize a parte do código onde a imagem da peça é enviada para o GPT/OpenAI e o JSON de resposta é processado (provavelmente uma rota que cria a Specification após o upload da imagem).
+
+Atualize o prompt enviado ao GPT para garantir que ele SEMPRE devolva, no JSON, os campos abaixo dentro de alguma seção de identificação:
+
+grupo: valor exatamente igual a um destes: TECIDO PLANO, MALHA, TRICOT, JEANS.
+
+subgrupo: valor exatamente igual a um dos subgrupos listados acima (BLUSA, CALÇA, etc).
+
+Coloque instruções claras no prompt, por exemplo (em português mesmo):
+
+“No campo grupo, retorne exatamente um destes valores: TECIDO PLANO, MALHA, TRICOT, JEANS.
+No campo subgrupo, retorne exatamente um destes valores: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA, TÚNICA.
+Use letras maiúsculas e não crie novos valores fora dessa lista.”
+
+No código que consome essa resposta do GPT, extraia esses campos. Algo nesse estilo (ajuste aos nomes reais das variáveis):
+
+python
+Copiar código
+ident = analysis_json.get('identificacao', {})
+
+grupo = ident.get('grupo', '')
+subgrupo = ident.get('subgrupo', '')
+
+spec.main_group = grupo or None
+spec.sub_group  = subgrupo or None
+Certifique-se de que isso é feito apenas na criação da Specification (primeira vez).
+Na edição, NÃO reescreva main_group e sub_group automaticamente com base na IA, a não ser que exista um botão específico para “reanalisar com IA”.
+
+5) Comportamento final esperado
+Quando eu criar uma nova ficha a partir de uma imagem:
+
+O GPT analisa a peça.
+
+Ele devolve grupo e subgrupo dentro do JSON, respeitando as listas fixas.
+
+O backend grava spec.main_group e spec.sub_group com esses valores.
+
+Quando eu abrir a tela de edição:
+
+Os selects de Grupo e Subgrupo aparecem preenchidos com os valores que estão no banco.
+
+Eu posso mudar manualmente qualquer um deles e salvar.
+
+Em reaberturas futuras:
+
+Os valores mostrados são SEMPRE os do banco (ou seja, levam em conta uma eventual correção manual).
+
+A IA não sobrescreve mais automaticamente na edição, apenas na criação ou quando eu clicar explicitamente em algum botão de “reanalisar” (se você quiser implementar esse botão, pode fazer, mas é opcional).
+
+Por favor, implemente tudo isso, ajustando nomes de arquivos, modelos, formulários e templates de acordo com o que existir de fato no projeto. No final, rode o app e verifique se:
+
+O banco é criado/migrado com as novas colunas.
+
+Os campos aparecem na tela.
+
+O GPT preenche automaticamente.
+
+A edição manual funciona corretamente.

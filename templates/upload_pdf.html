@@ -1,0 +1,1471 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enviar Ficha Técnica - StyleFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #0a0e1a;
+            color: #e5e7eb;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .nav-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Settings & Logout Section */
+        .settings-section {
+            border-top: 1px solid #1e293b;
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .settings-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .settings-btn:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .settings-btn i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #ef4444;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
+
+        .logout-btn i {
+            width: 18px;
+            text-align: center;
+        }
+
+        /* User Profile */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid #1e293b;
+            margin-top: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            overflow-y: auto;
+            margin-left: 240px;
+        }
+
+        /* Header */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Form Fields */
+        .content-card {
+            background: #0f172a;
+            border: 1px solid #1e293b;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 12px 30px rgba(8, 15, 30, 0.35);
+        }
+
+        .card-header {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 20px;
+        }
+
+        .form-field {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-field.import-field {
+            grid-column: span 2;
+        }
+
+        .form-field.full-width {
+            grid-column: span 2;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+            margin-bottom: 8px;
+        }
+
+        .form-label i {
+            margin-right: 6px;
+            color: #64748b;
+        }
+
+        .form-control {
+            padding: 12px 16px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        .form-control::placeholder {
+            color: #64748b;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .form-control:read-only {
+            background-color: #0f1420;
+            color: #64748b;
+        }
+
+        .form-hint {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        .text-danger {
+            color: #f87171;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .switch-input {
+            appearance: none;
+            width: 44px;
+            height: 24px;
+            background-color: #1f2937;
+            border: 1px solid #334155;
+            border-radius: 999px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .switch-input::after {
+            content: "";
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #94a3b8;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .switch-input:checked {
+            background-color: #2563eb;
+            border-color: #1d4ed8;
+        }
+
+        .switch-input:checked::after {
+            transform: translateX(20px);
+            background: #e0f2fe;
+        }
+
+        .switch-input:focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: 2px;
+        }
+
+        .import-category {
+            max-height: 0;
+            opacity: 0;
+            transform: translateY(-6px);
+            overflow: hidden;
+            pointer-events: none;
+            transition: opacity 0.2s ease, max-height 0.2s ease, transform 0.2s ease;
+        }
+
+        .import-category.is-visible {
+            max-height: 160px;
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        /* Upload Area */
+        .upload-section {
+            background-color: #1e293b;
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            margin-bottom: 24px;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .upload-section.dragover {
+            border-color: #2563eb;
+            background-color: #1e3a5f;
+        }
+
+        .upload-section:hover {
+            border-color: #3b82f6;
+            background-color: #13213a;
+        }
+
+        .upload-section:focus-visible {
+            outline: 2px solid #60a5fa;
+            outline-offset: 2px;
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #475569;
+            margin-bottom: 16px;
+        }
+
+        .upload-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #e5e7eb;
+            margin-bottom: 8px;
+        }
+
+        .upload-section p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .btn-upload {
+            padding: 12px 24px;
+            background-color: #334155;
+            color: #e5e7eb;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-upload:hover {
+            background-color: #475569;
+        }
+
+        /* File Info */
+        .file-info {
+            background-color: #1e3a8a;
+            border: 1px solid #2563eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .file-info i {
+            font-size: 24px;
+            color: #60a5fa;
+        }
+
+        .file-info span {
+            color: #93c5fd;
+            font-weight: 500;
+        }
+
+        /* Info Box */
+        .info-box {
+            background-color: #854d0e;
+            border: 1px solid #a16207;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 24px;
+        }
+
+        .info-box-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fbbf24;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .info-box ul {
+            color: #fde68a;
+            font-size: 14px;
+            margin-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 6px;
+        }
+
+        /* Buttons */
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .btn-secondary {
+            background-color: #334155;
+            color: #e5e7eb;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .btn-primary:disabled {
+            background-color: #475569;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 900px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-field.import-field,
+            .form-field.full-width {
+                grid-column: span 1;
+            }
+        }
+
+        /* Loading Indicator */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            background-color: #1e293b;
+            padding: 40px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 400px;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #334155;
+            border-top-color: #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-content h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .loading-content p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        /* Flash Messages */
+        .flash-message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .flash-message.success {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .flash-message.error {
+            background-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        /* Processing Progress Area */
+        .processing-area {
+            background-color: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            display: none;
+        }
+
+        .processing-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .processing-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #e5e7eb;
+        }
+
+        .processing-title .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .processing-stats {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        .overall-progress {
+            background-color: #0f1420;
+            border-radius: 8px;
+            height: 8px;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .overall-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        .processing-files-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .processing-file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background-color: #0f1420;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .processing-file-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .processing-file-icon.pdf {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .processing-file-icon.image {
+            background-color: #1e3a5f;
+            color: #93c5fd;
+        }
+
+        .processing-file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .processing-file-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .processing-file-status {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        .processing-file-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .processing-file-badge.uploading {
+            background-color: #1e3a5f;
+            color: #60a5fa;
+        }
+
+        .processing-file-badge.processing {
+            background-color: #854d0e;
+            color: #fbbf24;
+        }
+
+        .processing-file-badge.completed {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .processing-file-badge.error {
+            background-color: #7f1d1d;
+            color: #f87171;
+        }
+
+        .processing-file-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #334155;
+            border-top-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        .btn-dashboard {
+            background-color: #065f46;
+            color: #34d399;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-dashboard:hover {
+            background-color: #047857;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                <span>StyleFlow</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Painel</span>
+                </a>
+                <a href="{{ url_for('specifications.upload') }}" class="nav-item active">
+                    <i class="fas fa-file-upload"></i>
+                    <span>Fichas Tecnicas</span>
+                </a>
+                <a href="{{ url_for('collections.index') }}" class="nav-item">
+                    <i class="fas fa-folder"></i>
+                    <span>Minhas Coleções</span>
+                </a>
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
+                    <i class="fas fa-drafting-compass"></i>
+                    <span>Desenhos Técnicos</span>
+                </a>
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Fornecedores</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Relatórios</span>
+                </a>
+            </nav>
+
+            <div style="margin-top: auto;">
+                <a href="{{ url_for('settings.index') }}" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </a>
+                
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        {{ current_user.username[0].upper() }}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">{{ current_user.username }}</div>
+                        <div class="user-role">{% if current_user.is_admin %}Admin{% else %}Estilista{% endif %}</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="page-header">
+                <h1 class="page-title">Enviar Ficha Técnica</h1>
+                <p class="page-subtitle">Envie PDF ou imagens para extração automática de dados.</p>
+            </header>
+
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flash-message success">
+                            <i class="fas fa-check-circle"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <!-- Upload Form -->
+            <form method="POST" enctype="multipart/form-data" id="upload-form">
+                {{ form.hidden_tag() }}
+                
+                <!-- Collection, Supplier and Stylist Fields -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <div class="card-title">Metadados</div>
+                        <div class="card-subtitle">Preencha os dados principais para contextualizar a ficha.</div>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-field">
+                            <label for="collection_id" class="form-label">
+                                <i class="fas fa-link"></i>Vincular a Coleção
+                            </label>
+                            {{ form.collection_id(class="form-control") }}
+                            <small class="form-hint">Selecione uma coleção existente (opcional)</small>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="supplier_id" class="form-label">
+                                <i class="fas fa-industry"></i>Fornecedor
+                            </label>
+                            {{ form.supplier_id(class="form-control") }}
+                            <small class="form-hint">Selecione o fornecedor (opcional)</small>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="stylist" class="form-label">
+                                <i class="fas fa-user"></i>Estilista
+                            </label>
+                            {{ form.stylist(class="form-control", readonly=True) }}
+                            <small class="form-hint">Preenchido automaticamente</small>
+                        </div>
+                        
+                        <div class="form-field">
+                            <label for="price_range" class="form-label">
+                                <i class="fas fa-tag"></i>Faixa de preço
+                            </label>
+                            {{ form.price_range(class="form-control") }}
+                            <small class="form-hint">Classifique a peça em uma das faixas de preço (opcional)</small>
+                        </div>
+
+                        <div class="form-field full-width">
+                            <label for="is_imported" class="form-label">
+                                <i class="fas fa-globe"></i>Documento importado
+                            </label>
+                            <div class="toggle-row">
+                                {{ form.is_imported(class="switch-input", id="is_imported") }}
+                                <span style="color: #94a3b8; font-size: 12px;">Ative para exigir categoria de importação.</span>
+                            </div>
+                        </div>
+
+                        <div class="form-field full-width import-category" id="import-category-wrapper" hidden>
+                            <label for="import_category" class="form-label">
+                                <i class="fas fa-layer-group"></i>Categoria do importado
+                            </label>
+                            {{ form.import_category(class="form-control", id="import_category") }}
+                            <div class="text-danger" id="import-category-error" style="display: none;"></div>
+                            {% if form.import_category.errors %}
+                                <div class="text-danger">
+                                    {% for error in form.import_category.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Area -->
+                <div class="content-card">
+                    <div class="card-header">
+                        <div class="card-title">Arquivos</div>
+                        <div class="card-subtitle">Arraste e solte ou selecione arquivos PDF/JPG/PNG.</div>
+                    </div>
+                    <div class="upload-section" id="upload-area" role="button" tabindex="0" onclick="document.getElementById('pdf-input').click()">
+                        <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                        <h3>Arraste e solte seus arquivos aqui</h3>
+                        <p>ou clique para navegar</p>
+                        <p style="font-size: 12px; color: #64748b; margin-top: -12px;">Formatos suportados: PDF, JPG, PNG (multiplos arquivos)</p>
+                        {{ form.pdf_file(id="pdf-input", accept=".pdf,.jpg,.jpeg,.png", style="display: none;", multiple=True) }}
+                        <button type="button" class="btn-upload" onclick="event.stopPropagation(); document.getElementById('pdf-input').click()">
+                            <i class="fas fa-folder-open"></i> Selecionar arquivos
+                        </button>
+                        
+                        {% if form.pdf_file.errors %}
+                            <div class="text-danger" style="margin-top: 12px;">
+                                {% for error in form.pdf_file.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div id="files-error" class="text-danger" style="display: none;"></div>
+                    
+                    <div id="files-list" style="display: none; margin-top: 16px;">
+                        <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span style="font-weight: 600; color: #e5e7eb;">
+                                    <i class="fas fa-files"></i> Arquivos selecionados: <span id="files-count">0</span>
+                                </span>
+                                <button type="button" onclick="clearFiles()" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">
+                                    <i class="fas fa-times"></i> Limpar
+                                </button>
+                            </div>
+                            <div id="files-items" style="max-height: 200px; overflow-y: auto;"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Info Box -->
+                <div class="info-box">
+                    <div class="info-box-title">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Processamento Automático</span>
+                    </div>
+                    <ul>
+                        <li>Identificação do Produto (REF, Descrição, Coleção)</li>
+                        <li>Informações Comerciais (Preço, Prazos)</li>
+                        <li>Prazos e Entregas</li>
+                        <li>Equipe Envolvida</li>
+                        <li>Matérias-Primas e Aviamentos</li>
+                        <li>Especificações Técnicas de Modelagem</li>
+                        <li>Design e Estilo</li>
+                    </ul>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{{ url_for('dashboard.index') }}" class="btn-secondary">
+                        <i class="fas fa-arrow-left"></i>
+                        Voltar
+                    </a>
+                    {{ form.submit(class="btn-primary", id="submit-btn", value="Enviar para extração") }}
+                </div>
+            </form>
+
+            <!-- Processing Progress Area -->
+            <div id="processing-area" class="processing-area">
+                <div class="processing-header">
+                    <div class="processing-title">
+                        <div class="spinner" id="processing-spinner"></div>
+                        <span id="processing-title-text">Processando arquivos...</span>
+                    </div>
+                    <div class="processing-stats">
+                        <span id="processing-stats-text">0 de 0 completos</span>
+                    </div>
+                </div>
+                
+                <div class="overall-progress">
+                    <div class="overall-progress-bar" id="overall-progress-bar"></div>
+                </div>
+                
+                <div class="processing-files-list" id="processing-files-list">
+                </div>
+                
+                <div style="margin-top: 16px; text-align: center;">
+                    <a href="{{ url_for('dashboard.index') }}" class="btn-dashboard" id="btn-go-dashboard">
+                        <i class="fas fa-check-circle"></i>
+                        Ver no Painel
+                    </a>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Processando seu arquivo...</h3>
+            <p>Extraindo dados da ficha técnica e analisando imagens. Isso pode levar alguns segundos.</p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script>
+        let uploadedFiles = [];
+        let processingState = {};
+        let selectedFiles = [];
+
+        const formEl = document.getElementById('upload-form');
+        const fileInput = document.getElementById('pdf-input');
+        const submitBtn = document.getElementById('submit-btn');
+        const importToggle = document.getElementById('is_imported');
+        const importCategoryWrapper = document.getElementById('import-category-wrapper');
+        const importCategorySelect = document.getElementById('import_category');
+        const importCategoryError = document.getElementById('import-category-error');
+        const filesError = document.getElementById('files-error');
+        const filesList = document.getElementById('files-list');
+        const filesItems = document.getElementById('files-items');
+        const filesCount = document.getElementById('files-count');
+        
+        const stageLabels = {
+            'pending': 'Aguardando...',
+            'uploading': 'Enviando...',
+            'thumbnail': 'Gerando miniatura...',
+            'extract_image': 'Extraindo imagens...',
+            'extract_text': 'Extraindo texto...',
+            'openai_parse': 'Analisando com IA...',
+            'supplier_link': 'Vinculando fornecedor...',
+            'completed': 'Concluído!',
+            'error': 'Erro no processamento'
+        };
+
+        function syncImportCategoryVisibility() {
+            if (importToggle.checked) {
+                importCategoryWrapper.hidden = false;
+                requestAnimationFrame(() => {
+                    importCategoryWrapper.classList.add('is-visible');
+                });
+                return;
+            }
+
+            // When the toggle is off, clear the category and unmount the field.
+            importCategorySelect.value = '';
+            importCategorySelect.setAttribute('aria-invalid', 'false');
+            importCategoryError.style.display = 'none';
+            importCategoryWrapper.classList.remove('is-visible');
+            window.setTimeout(() => {
+                importCategoryWrapper.hidden = true;
+            }, 200);
+        }
+
+        function syncFilesToInput() {
+            const dataTransfer = new DataTransfer();
+            selectedFiles.forEach((file) => dataTransfer.items.add(file));
+            fileInput.files = dataTransfer.files;
+        }
+
+        function renderFilesList() {
+            if (!filesList || !filesItems || !filesCount) {
+                return;
+            }
+
+            if (selectedFiles.length === 0) {
+                filesList.style.display = 'none';
+                return;
+            }
+
+            filesList.style.display = 'block';
+            filesCount.textContent = selectedFiles.length;
+            filesItems.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const icon = file.type === 'application/pdf' ? 'fa-file-pdf' : 'fa-file-image';
+                const item = document.createElement('div');
+                item.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: #0f1420; border-radius: 6px; margin-bottom: 6px; font-size: 13px;';
+                item.innerHTML = `
+                    <i class="fas ${icon}" style="color: #3b82f6;"></i>
+                    <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${file.name}</span>
+                    <span style="color: #64748b; font-size: 12px;">${Math.round(file.size / 1024)} KB</span>
+                    <button type="button" data-index="${index}" style="background: transparent; border: none; color: #f87171; cursor: pointer; font-size: 12px;">
+                        Remover
+                    </button>
+                `;
+                filesItems.appendChild(item);
+            });
+        }
+
+        function validateForm() {
+            const hasFiles = selectedFiles.length > 0;
+            const needsImportCategory = importToggle.checked;
+            const hasImportCategory = !!importCategorySelect.value;
+
+            if (filesError) {
+                filesError.style.display = hasFiles ? 'none' : 'block';
+                filesError.textContent = hasFiles ? '' : 'Selecione ao menos 1 arquivo.';
+            }
+
+            if (needsImportCategory) {
+                const isValidImportCategory = hasImportCategory;
+                importCategorySelect.setAttribute('aria-invalid', isValidImportCategory ? 'false' : 'true');
+                importCategoryError.style.display = isValidImportCategory ? 'none' : 'block';
+                importCategoryError.textContent = isValidImportCategory ? '' : 'Categoria do importado é obrigatória.';
+            } else {
+                importCategorySelect.setAttribute('aria-invalid', 'false');
+                importCategoryError.style.display = 'none';
+            }
+
+            const isValid = hasFiles && (!needsImportCategory || hasImportCategory);
+            submitBtn.disabled = !isValid;
+            return isValid;
+        }
+
+        function handleSubmit() {
+            const payload = {
+                colecaoId: document.getElementById('collection_id')?.value || '',
+                fornecedorId: document.getElementById('supplier_id')?.value || '',
+                estilista: document.getElementById('stylist')?.value || '',
+                faixaPreco: document.getElementById('price_range')?.value || '',
+                isImportado: importToggle.checked,
+                categoriaImportado: importCategorySelect.value || undefined,
+                files: selectedFiles.map((file) => ({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type
+                }))
+            };
+
+            console.log('Payload upload ficha tecnica:', payload);
+
+            const formData = new FormData(formEl);
+            submitBtn.disabled = true;
+            showProcessingArea(selectedFiles);
+
+            fetch(formEl.action || window.location.pathname, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+                .then(async (response) => {
+                    const data = await response.json().catch(() => null);
+                    if (!response.ok || !data || data.success === false) {
+                        const message = data?.message || 'Falha ao enviar os arquivos.';
+                        throw new Error(message);
+                    }
+                    return data;
+                })
+                .then((data) => {
+                    if (data.spec_id) {
+                        updateFileStatus(0, 'processing', 'pending', data.spec_id);
+                        pollSingleSpecVisual(data.spec_id, data.filename);
+                        return;
+                    }
+
+                    if (data.batch_id) {
+                        const specs = Array.isArray(data.specs) ? data.specs : [];
+                        specs.forEach((spec) => {
+                            if (spec.index !== undefined) {
+                                updateFileStatus(spec.index, 'processing', 'pending', spec.id);
+                            }
+                        });
+                        pollBatchStatusVisual(data.batch_id, specs);
+                        return;
+                    }
+
+                    throw new Error('Resposta inesperada do servidor.');
+                })
+                .catch((error) => {
+                    submitBtn.disabled = false;
+                    if (window.Toast && typeof window.Toast.error === 'function') {
+                        window.Toast.error(error.message || 'Erro ao enviar arquivos.');
+                    }
+                });
+        }
+
+        function showProcessingArea(files) {
+            const area = document.getElementById('processing-area');
+            const list = document.getElementById('processing-files-list');
+            area.style.display = 'block';
+            list.innerHTML = '';
+            
+            uploadedFiles = [];
+            processingState = {};
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const isPdf = file.type === 'application/pdf';
+                uploadedFiles.push({
+                    name: file.name,
+                    type: isPdf ? 'pdf' : 'image'
+                });
+                processingState[file.name] = { status: 'uploading', stage: 'pending' };
+                
+                const item = document.createElement('div');
+                item.className = 'processing-file-item';
+                item.id = 'proc-file-' + i;
+                item.innerHTML = `
+                    <div class="processing-file-icon ${isPdf ? 'pdf' : 'image'}">
+                        <i class="fas ${isPdf ? 'fa-file-pdf' : 'fa-file-image'}"></i>
+                    </div>
+                    <div class="processing-file-info">
+                        <div class="processing-file-name">${file.name}</div>
+                        <div class="processing-file-status" id="status-${i}">Enviando para o servidor...</div>
+                    </div>
+                    <div id="badge-${i}">
+                        <div class="processing-file-spinner"></div>
+                    </div>
+                `;
+                list.appendChild(item);
+            }
+            
+            updateOverallProgress(0, files.length);
+        }
+
+        function updateFileStatus(index, status, stage, specId) {
+            const statusEl = document.getElementById('status-' + index);
+            const badgeEl = document.getElementById('badge-' + index);
+            
+            if (!statusEl || !badgeEl) return;
+            
+            const stageText = stageLabels[stage] || stageLabels[status] || stage;
+            statusEl.textContent = stageText;
+            
+            if (status === 'completed') {
+                badgeEl.innerHTML = '<span class="processing-file-badge completed"><i class="fas fa-check"></i> Pronto</span>';
+            } else if (status === 'error') {
+                badgeEl.innerHTML = '<span class="processing-file-badge error"><i class="fas fa-times"></i> Erro</span>';
+            } else if (status === 'processing') {
+                badgeEl.innerHTML = '<span class="processing-file-badge processing"><i class="fas fa-cog fa-spin"></i> Processando</span>';
+            } else {
+                badgeEl.innerHTML = '<div class="processing-file-spinner"></div>';
+            }
+        }
+
+        function updateOverallProgress(completed, total) {
+            const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('overall-progress-bar').style.width = percent + '%';
+            document.getElementById('processing-stats-text').textContent = completed + ' de ' + total + ' completos';
+            
+            if (completed >= total && total > 0) {
+                document.getElementById('processing-spinner').style.display = 'none';
+                document.getElementById('processing-title-text').textContent = 'Processamento concluído!';
+                document.getElementById('btn-go-dashboard').style.display = 'inline-flex';
+            }
+        }
+
+        formEl.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            handleSubmit();
+        });
+
+        function pollSingleSpecVisual(specId, filename) {
+            let pollCount = 0;
+            const maxPolls = 300;
+            
+            function checkStatus() {
+                fetch('/api/spec_status/' + specId)
+                    .then(response => response.json())
+                    .then(data => {
+                        pollCount++;
+                        const status = data.status || 'processing';
+                        const stage = data.processing_stage || 'processing';
+                        
+                        updateFileStatus(0, status, stage, specId);
+                        
+                        if (status === 'completed') {
+                            updateOverallProgress(1, 1);
+                            Toast.success('Arquivo processado com sucesso!');
+                        } else if (status === 'error') {
+                            updateOverallProgress(1, 1);
+                            Toast.error('Erro ao processar: ' + (data.error || 'Erro desconhecido'));
+                        } else if (pollCount < maxPolls) {
+                            setTimeout(checkStatus, 2000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Polling error:', error);
+                        if (pollCount < maxPolls) {
+                            setTimeout(checkStatus, 3000);
+                        }
+                    });
+            }
+            
+            setTimeout(checkStatus, 1500);
+        }
+
+        function pollBatchStatusVisual(batchId, specs) {
+            let pollCount = 0;
+            const maxPolls = 300;
+            const specIdToIndex = {};
+            const filenameToIndex = {};
+            
+            if (specs && Array.isArray(specs)) {
+                specs.forEach((spec) => {
+                    const idx = spec.index !== undefined ? spec.index : specs.indexOf(spec);
+                    specIdToIndex[spec.id] = idx;
+                    if (spec.filename) {
+                        filenameToIndex[spec.filename] = idx;
+                    }
+                });
+            }
+            
+            uploadedFiles.forEach((file, idx) => {
+                if (!Object.values(filenameToIndex).includes(idx)) {
+                    filenameToIndex[file.name] = idx;
+                }
+            });
+            
+            function checkStatus() {
+                fetch('/batch_status/' + batchId)
+                    .then(response => response.json())
+                    .then(data => {
+                        pollCount++;
+                        const completed = data.completed || 0;
+                        const total = data.total || uploadedFiles.length;
+                        const errors = data.errors || 0;
+                        
+                        if (data.specs && Array.isArray(data.specs)) {
+                            data.specs.forEach(spec => {
+                                let idx = specIdToIndex[spec.id];
+                                if (idx === undefined && spec.filename) {
+                                    idx = filenameToIndex[spec.filename];
+                                }
+                                if (idx !== undefined) {
+                                    updateFileStatus(idx, spec.status, spec.processing_stage || spec.status, spec.id);
+                                }
+                            });
+                        }
+                        
+                        updateOverallProgress(completed + errors, total);
+                        
+                        if (completed + errors >= total) {
+                            if (errors > 0) {
+                                Toast.warning('Lote concluído: ' + completed + ' processados, ' + errors + ' com erro');
+                            } else {
+                                Toast.success('Todos os ' + total + ' arquivos foram processados!');
+                            }
+                        } else if (pollCount < maxPolls) {
+                            setTimeout(checkStatus, 2000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Polling error:', error);
+                        if (pollCount < maxPolls) {
+                            setTimeout(checkStatus, 3000);
+                        }
+                    });
+            }
+            
+            setTimeout(checkStatus, 1500);
+        }
+
+        function updateFileDisplay(files, append = false) {
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+            const incoming = Array.from(files).filter((file) => allowedTypes.includes(file.type));
+
+            selectedFiles = append ? selectedFiles.concat(incoming) : incoming;
+            syncFilesToInput();
+            renderFilesList();
+            validateForm();
+        }
+        
+        function clearFiles() {
+            selectedFiles = [];
+            syncFilesToInput();
+            renderFilesList();
+            validateForm();
+        }
+
+        fileInput.addEventListener('change', function(e) {
+            updateFileDisplay(e.target.files);
+        });
+
+        filesItems.addEventListener('click', function(e) {
+            const button = e.target.closest('button[data-index]');
+            if (!button) {
+                return;
+            }
+
+            const index = Number(button.dataset.index);
+            if (Number.isNaN(index)) {
+                return;
+            }
+
+            selectedFiles.splice(index, 1);
+            syncFilesToInput();
+            renderFilesList();
+            validateForm();
+        });
+
+        importToggle.addEventListener('change', function() {
+            // Toggle controls visibility and resets category when disabled.
+            syncImportCategoryVisibility();
+            validateForm();
+        });
+
+        importCategorySelect.addEventListener('change', function() {
+            validateForm();
+        });
+
+        const uploadArea = document.getElementById('upload-area');
+
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragenter', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            updateFileDisplay(files, true);
+        });
+
+        uploadArea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                fileInput.click();
+            }
+        });
+
+        syncImportCategoryVisibility();
+        renderFilesList();
+        validateForm();
+    </script>
+</body>
+</html>

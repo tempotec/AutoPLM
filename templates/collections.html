@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minhas Coleções - StyleFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0a0e1a 0%, #1a1f35 100%);
+            min-height: 100vh;
+            color: #e8eaf0;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo img {
+            height: 32px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .nav-item.active {
+            background-color: #2563eb;
+            color: #ffffff;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Settings & Logout Section */
+        .settings-section {
+            border-top: 1px solid #1e293b;
+            padding-top: 16px;
+            margin-top: 16px;
+        }
+
+        .settings-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .settings-btn:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .settings-btn i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #ef4444;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
+
+        .logout-btn i {
+            width: 18px;
+            text-align: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid #1e293b;
+            margin-top: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .user-info {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 240px;
+            padding: 2rem;
+        }
+
+        .header {
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            color: #8b92b0;
+            font-size: 0.95rem;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 1rem;
+        }
+
+        .search-bar {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.5rem;
+            background: #1e2538;
+            border: 1px solid #2a3348;
+            border-radius: 8px;
+            color: #e8eaf0;
+            font-size: 0.95rem;
+        }
+
+        .search-bar input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .filters {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .filter-btn {
+            padding: 0.75rem 1.25rem;
+            background: #1e2538;
+            border: 1px solid #2a3348;
+            border-radius: 8px;
+            color: #8b92b0;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filter-btn:hover {
+            background: #2a3348;
+            border-color: #3a4560;
+        }
+
+        .btn-primary {
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        /* Collections Grid */
+        .collections-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .collection-card {
+            background: #1e2538;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .collection-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .collection-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .collection-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .collection-image.placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2a3348 0%, #1e2538 100%);
+        }
+
+        .collection-image.placeholder i {
+            font-size: 3rem;
+            color: #4a5072;
+        }
+
+        .collection-info {
+            padding: 1.25rem;
+        }
+
+        .collection-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .collection-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .collection-count {
+            font-size: 0.85rem;
+            color: #8b92b0;
+        }
+
+        .collection-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-em-desenvolvimento {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-finalizada {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #1e2538;
+            border-radius: 12px;
+            border: 2px dashed #2a3348;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #3b82f6;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        .empty-state p {
+            color: #8b92b0;
+            margin-bottom: 1.5rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #1e2538;
+            border-radius: 12px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #8b92b0;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+
+        .close-modal:hover {
+            background: #2a3348;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #8b92b0;
+        }
+
+        .form-input,
+        .form-textarea,
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            background: #0f1320;
+            border: 1px solid #2a3348;
+            border-radius: 6px;
+            color: #e8eaf0;
+            font-size: 0.95rem;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus,
+        .form-select:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            background: #374151;
+            color: #e8eaf0;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+
+        /* Edit Button on Collection Card */
+        .collection-card {
+            position: relative;
+        }
+
+        .btn-edit-collection {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: rgba(59, 130, 246, 0.9);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+
+        .btn-edit-collection:hover {
+            background: rgba(37, 99, 235, 1);
+            transform: scale(1.1);
+        }
+
+        .btn-edit-collection i {
+            font-size: 0.9rem;
+        }
+
+        .btn-delete-collection {
+            position: absolute;
+            top: 56px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: rgba(239, 68, 68, 0.9);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            z-index: 10;
+            backdrop-filter: blur(4px);
+        }
+
+        .btn-delete-collection:hover {
+            background: rgba(220, 38, 38, 1);
+            transform: scale(1.1);
+        }
+
+        .btn-delete-collection i {
+            font-size: 0.9rem;
+        }
+
+        /* File Upload Styling */
+        .file-upload-wrapper {
+            position: relative;
+            margin-bottom: 1.25rem;
+        }
+
+        .file-upload-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #8b92b0;
+        }
+
+        .file-upload-input {
+            width: 100%;
+            padding: 0.75rem;
+            background: #0f1320;
+            border: 2px dashed #2a3348;
+            border-radius: 6px;
+            color: #e8eaf0;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .file-upload-input:hover {
+            border-color: #3b82f6;
+        }
+
+        .file-upload-input::file-selector-button {
+            padding: 0.5rem 1rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 0.75rem;
+            font-weight: 600;
+        }
+
+        .file-upload-input::file-selector-button:hover {
+            background: #2563eb;
+        }
+
+        .file-preview {
+            margin-top: 0.75rem;
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        .file-preview.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                <span>StyleFlow</span>
+            </div>
+
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item">
+                    <i class="fas fa-home"></i>
+                    <span>Painel</span>
+                </a>
+                <a href="{{ url_for('collections.index') }}" class="nav-item active">
+                    <i class="fas fa-folder"></i>
+                    <span>Minhas Coleções</span>
+                </a>
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
+                    <i class="fas fa-drafting-compass"></i>
+                    <span>Desenhos Técnicos</span>
+                </a>
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
+                    <i class="fas fa-truck"></i>
+                    <span>Fornecedores</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Relatórios</span>
+                </a>
+            </nav>
+
+            <div style="margin-top: auto;">
+                <a href="{{ url_for('settings.index') }}" class="nav-item">
+                    <i class="fas fa-cog"></i>
+                    <span>Configurações</span>
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Sair</span>
+                </a>
+                
+                <div class="user-profile">
+                    <div class="user-avatar">
+                        {{ current_user.username[0].upper() }}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">{{ current_user.username }}</div>
+                        <div class="user-role">{{ 'Admin' if current_user.is_admin else 'Estilista' }}</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="header">
+                <h1>Minhas Coleções</h1>
+                <p class="header-subtitle">Visualize e gerencie todas as suas coleções de roupas em um só lugar.</p>
+            </div>
+
+            <div class="header-actions">
+                <div class="search-bar">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Buscar coleções pelo nome..." id="searchInput">
+                </div>
+                <div class="filters">
+                    <button class="filter-btn">
+                        Ordenar por
+                        <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <button class="filter-btn">
+                        Status
+                        <i class="fas fa-filter"></i>
+                    </button>
+                </div>
+                <button class="btn-primary" onclick="openModal()">
+                    <i class="fas fa-plus"></i>
+                    Criar Nova Coleção
+                </button>
+            </div>
+
+            {% if collections %}
+            <div class="collections-grid">
+                {% for collection in collections %}
+                <a href="{{ url_for('collections.view', id=collection.id) }}" class="collection-card">
+                    <button class="btn-edit-collection" onclick="event.preventDefault(); event.stopPropagation(); editCollection({{ collection.id }}, '{{ collection.name }}', '{{ collection.description|replace("'", "\\'") if collection.description else '' }}', '{{ collection.status }}', '{{ collection.cover_image or '' }}')">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn-delete-collection" onclick="event.preventDefault(); event.stopPropagation(); deleteCollection({{ collection.id }}, '{{ collection.name }}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <div class="collection-image {% if not collection.cover_image %}placeholder{% endif %}">
+                        {% if collection.cover_image %}
+                            <img src="{{ url_for('static', filename=collection.cover_image) }}" alt="{{ collection.name }}">
+                        {% else %}
+                            <i class="fas fa-layer-group"></i>
+                        {% endif %}
+                    </div>
+                    <div class="collection-info">
+                        <div class="collection-name">{{ collection.name }}</div>
+                        <div class="collection-stats">
+                            <span class="collection-count">{{ collection.specifications|length }} peças</span>
+                            <span class="collection-status status-{{ collection.status }}">
+                                {{ 'Em desenvolvimento' if collection.status == 'em_desenvolvimento' else 'Finalizada' }}
+                            </span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-layer-group"></i>
+                <h3>Nenhuma coleção encontrada</h3>
+                <p>Que tal criar sua primeira coleção agora? Comece<br>agora a organizar suas peças.</p>
+                <button class="btn-primary" onclick="openModal()">
+                    <i class="fas fa-plus"></i>
+                    Criar Minha Primeira Coleção
+                </button>
+            </div>
+            {% endif %}
+        </main>
+    </div>
+
+    <!-- Modal Criar Coleção -->
+    <div class="modal" id="createModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Criar Nova Coleção</h2>
+                <button class="close-modal" onclick="closeModal()">×</button>
+            </div>
+            <form method="POST" action="{{ url_for('collections.create') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group">
+                    <label class="form-label">Nome da Coleção</label>
+                    <input type="text" name="name" class="form-input" placeholder="Ex: Primavera/Verão 2025" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea name="description" class="form-textarea" placeholder="Descreva sua coleção..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="em_desenvolvimento">Em desenvolvimento</option>
+                        <option value="finalizada">Finalizada</option>
+                    </select>
+                </div>
+
+                <div class="file-upload-wrapper">
+                    <label class="file-upload-label">Imagem de Capa (opcional)</label>
+                    <input type="file" name="cover_image" class="file-upload-input" accept="image/jpeg,image/jpg,image/png" onchange="previewImage(event, 'createPreview')">
+                    <img id="createPreview" class="file-preview" alt="Preview">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Criar Coleção</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal Editar Coleção -->
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Editar Coleção</h2>
+                <button class="close-modal" onclick="closeEditModal()">×</button>
+            </div>
+            <form method="POST" id="editForm" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                
+                <div class="form-group">
+                    <label class="form-label">Nome da Coleção</label>
+                    <input type="text" name="name" id="editName" class="form-input" placeholder="Ex: Primavera/Verão 2025" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Descrição</label>
+                    <textarea name="description" id="editDescription" class="form-textarea" placeholder="Descreva sua coleção..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select name="status" id="editStatus" class="form-select">
+                        <option value="em_desenvolvimento">Em desenvolvimento</option>
+                        <option value="finalizada">Finalizada</option>
+                    </select>
+                </div>
+
+                <div class="file-upload-wrapper">
+                    <label class="file-upload-label">Imagem de Capa (deixe em branco para manter a atual)</label>
+                    <input type="file" name="cover_image" class="file-upload-input" accept="image/jpeg,image/jpg,image/png" onchange="previewImage(event, 'editPreview')">
+                    <img id="editPreview" class="file-preview" alt="Preview">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeEditModal()">Cancelar</button>
+                    <button type="submit" class="btn-primary">Salvar Alterações</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        function openModal() {
+            document.getElementById('createModal').classList.add('active');
+            document.getElementById('createPreview').classList.remove('active');
+        }
+
+        function closeModal() {
+            document.getElementById('createModal').classList.remove('active');
+        }
+
+        function openEditModal() {
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+            document.getElementById('editPreview').classList.remove('active');
+        }
+
+        function editCollection(id, name, description, status, coverImage) {
+            document.getElementById('editName').value = name;
+            document.getElementById('editDescription').value = description;
+            document.getElementById('editStatus').value = status;
+            
+            const editForm = document.getElementById('editForm');
+            editForm.action = `/collection/${id}/edit`;
+            
+            if (coverImage) {
+                const preview = document.getElementById('editPreview');
+                preview.src = `/static/${coverImage}`;
+                preview.classList.add('active');
+            } else {
+                document.getElementById('editPreview').classList.remove('active');
+            }
+            
+            openEditModal();
+        }
+
+        function deleteCollection(id, name) {
+            if (confirm(`Tem certeza que deseja excluir a coleção "${name}"?\n\nAs fichas técnicas vinculadas a esta coleção NÃO serão excluídas, apenas desvinculadas.`)) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/collection/${id}/delete`;
+                
+                const csrfToken = document.querySelector('input[name="csrf_token"]').value;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+                
+                document.body.appendChild(form);
+                form.submit();
+            }
+        }
+
+        function previewImage(event, previewId) {
+            const file = event.target.files[0];
+            const preview = document.getElementById(previewId);
+            
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    preview.src = e.target.result;
+                    preview.classList.add('active');
+                };
+                reader.readAsDataURL(file);
+            } else {
+                preview.classList.remove('active');
+            }
+        }
+
+        // Close modals on outside click
+        document.getElementById('createModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('editModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.collection-card');
+            
+            cards.forEach(card => {
+                const name = card.querySelector('.collection-name').textContent.toLowerCase();
+                if (name.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

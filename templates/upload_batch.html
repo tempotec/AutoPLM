@@ -1,0 +1,327 @@
+{% extends "layout.html" %}
+{% block title %}Upload em Lote{% endblock %}
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card bg-dark border-secondary">
+                <div class="card-header bg-dark border-secondary">
+                    <h4 class="mb-0"><i class="fas fa-upload me-2"></i>Upload em Lote</h4>
+                    <small class="text-muted">Envie multiplos arquivos PDF ou imagens de uma vez</small>
+                </div>
+                <div class="card-body">
+                    <form id="batchUploadForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Vincular a Colecao</label>
+                                <select name="collection_id" class="form-select bg-dark text-light border-secondary">
+                                    {% for value, label in form.collection_id.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Fornecedor</label>
+                                <select name="supplier_id" class="form-select bg-dark text-light border-secondary">
+                                    {% for value, label in form.supplier_id.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label">Estilista</label>
+                                <input type="text" name="stylist" class="form-control bg-dark text-light border-secondary" value="{{ form.stylist.data or '' }}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Faixa de Preco</label>
+                                <select name="price_range" class="form-select bg-dark text-light border-secondary">
+                                    {% for value, label in form.price_range.choices %}
+                                    <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label class="form-label">Arquivos (PDF, JPG, PNG)</label>
+                            <div id="dropZone" class="border border-secondary rounded p-5 text-center" style="border-style: dashed !important; cursor: pointer;">
+                                <i class="fas fa-cloud-upload-alt fa-3x text-muted mb-3"></i>
+                                <p class="mb-2">Arraste arquivos aqui ou clique para selecionar</p>
+                                <p class="text-muted small">Suporta PDF, JPG, JPEG, PNG - Sem limite de arquivos</p>
+                                <input type="file" id="fileInput" name="files" multiple accept=".pdf,.jpg,.jpeg,.png" class="d-none">
+                            </div>
+                        </div>
+                        
+                        <div id="fileList" class="mb-4" style="display: none;">
+                            <h6><i class="fas fa-list me-2"></i>Arquivos Selecionados (<span id="fileCount">0</span>)</h6>
+                            <div id="fileListItems" class="border border-secondary rounded p-2" style="max-height: 300px; overflow-y: auto;"></div>
+                        </div>
+                        
+                        <div class="d-flex gap-2">
+                            <button type="submit" id="uploadBtn" class="btn btn-primary" disabled>
+                                <i class="fas fa-upload me-2"></i>Iniciar Upload
+                            </button>
+                            <button type="button" id="clearBtn" class="btn btn-outline-secondary" style="display: none;">
+                                <i class="fas fa-times me-2"></i>Limpar
+                            </button>
+                            <a href="{{ url_for('specifications.upload') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-file me-2"></i>Upload Individual
+                            </a>
+                        </div>
+                    </form>
+                    
+                    <div id="progressSection" class="mt-4" style="display: none;">
+                        <hr class="border-secondary">
+                        <h5><i class="fas fa-tasks me-2"></i>Progresso do Lote</h5>
+                        
+                        <div class="progress mb-3" style="height: 25px;">
+                            <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;">0%</div>
+                        </div>
+                        
+                        <div class="row text-center mb-3">
+                            <div class="col">
+                                <span class="badge bg-secondary fs-6" id="badgePending">0 Aguardando</span>
+                            </div>
+                            <div class="col">
+                                <span class="badge bg-primary fs-6" id="badgeProcessing">0 Processando</span>
+                            </div>
+                            <div class="col">
+                                <span class="badge bg-success fs-6" id="badgeCompleted">0 Concluido</span>
+                            </div>
+                            <div class="col">
+                                <span class="badge bg-danger fs-6" id="badgeErrors">0 Erros</span>
+                            </div>
+                        </div>
+                        
+                        <div id="specsList" class="border border-secondary rounded" style="max-height: 400px; overflow-y: auto;"></div>
+                        
+                        <div id="completionMessage" class="alert alert-success mt-3" style="display: none;">
+                            <i class="fas fa-check-circle me-2"></i>Processamento concluido!
+                            <a href="{{ url_for('dashboard.index') }}" class="btn btn-sm btn-success ms-3">Ver Dashboard</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+    const fileListItems = document.getElementById('fileListItems');
+    const fileCount = document.getElementById('fileCount');
+    const uploadBtn = document.getElementById('uploadBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const form = document.getElementById('batchUploadForm');
+    const progressSection = document.getElementById('progressSection');
+    
+    let selectedFiles = [];
+    let currentBatchId = null;
+    let statusInterval = null;
+    
+    dropZone.addEventListener('click', () => fileInput.click());
+    
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-primary');
+    });
+    
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-primary');
+    });
+    
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-primary');
+        handleFiles(e.dataTransfer.files);
+    });
+    
+    fileInput.addEventListener('change', (e) => {
+        handleFiles(e.target.files);
+    });
+    
+    function handleFiles(files) {
+        for (let file of files) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (['pdf', 'jpg', 'jpeg', 'png'].includes(ext)) {
+                if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                    selectedFiles.push(file);
+                }
+            }
+        }
+        updateFileList();
+    }
+    
+    function updateFileList() {
+        if (selectedFiles.length > 0) {
+            fileList.style.display = 'block';
+            clearBtn.style.display = 'inline-block';
+            uploadBtn.disabled = false;
+            fileCount.textContent = selectedFiles.length;
+            
+            fileListItems.innerHTML = selectedFiles.map((file, index) => `
+                <div class="d-flex justify-content-between align-items-center py-2 px-3 border-bottom border-secondary">
+                    <div>
+                        <i class="fas fa-file-${file.name.endsWith('.pdf') ? 'pdf text-danger' : 'image text-info'} me-2"></i>
+                        <span>${file.name}</span>
+                        <small class="text-muted ms-2">(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `).join('');
+        } else {
+            fileList.style.display = 'none';
+            clearBtn.style.display = 'none';
+            uploadBtn.disabled = true;
+        }
+    }
+    
+    window.removeFile = function(index) {
+        selectedFiles.splice(index, 1);
+        updateFileList();
+    };
+    
+    clearBtn.addEventListener('click', () => {
+        selectedFiles = [];
+        fileInput.value = '';
+        updateFileList();
+    });
+    
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        if (selectedFiles.length === 0) return;
+        
+        uploadBtn.disabled = true;
+        uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Enviando...';
+        
+        const formData = new FormData();
+        formData.append('csrf_token', document.querySelector('[name="csrf_token"]').value);
+        formData.append('collection_id', document.querySelector('[name="collection_id"]').value);
+        formData.append('supplier_id', document.querySelector('[name="supplier_id"]').value);
+        formData.append('stylist', document.querySelector('[name="stylist"]').value);
+        formData.append('price_range', document.querySelector('[name="price_range"]').value);
+        
+        for (let file of selectedFiles) {
+            formData.append('files', file);
+        }
+        
+        try {
+            const response = await fetch('{{ url_for("specifications.upload_batch_files") }}', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                currentBatchId = data.batch_id;
+                progressSection.style.display = 'block';
+                uploadBtn.innerHTML = '<i class="fas fa-check me-2"></i>Enviado!';
+                
+                startStatusPolling();
+            } else {
+                alert('Erro: ' + (data.error || 'Falha no upload'));
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Iniciar Upload';
+            }
+        } catch (error) {
+            alert('Erro de conexao: ' + error.message);
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload me-2"></i>Iniciar Upload';
+        }
+    });
+    
+    function startStatusPolling() {
+        updateStatus();
+        statusInterval = setInterval(updateStatus, 2000);
+    }
+    
+    async function updateStatus() {
+        if (!currentBatchId) return;
+        
+        try {
+            const response = await fetch(`/batch_status/${currentBatchId}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                document.getElementById('progressBar').style.width = data.progress_percent + '%';
+                document.getElementById('progressBar').textContent = data.progress_percent + '%';
+                
+                document.getElementById('badgePending').textContent = data.pending + ' Aguardando';
+                document.getElementById('badgeProcessing').textContent = data.processing + ' Processando';
+                document.getElementById('badgeCompleted').textContent = data.completed + ' Concluido';
+                document.getElementById('badgeErrors').textContent = data.errors + ' Erros';
+                
+                const specsList = document.getElementById('specsList');
+                specsList.innerHTML = data.specs.map(spec => `
+                    <div class="d-flex justify-content-between align-items-center py-2 px-3 border-bottom border-secondary">
+                        <div>
+                            <i class="fas fa-file me-2"></i>
+                            <span>${spec.filename}</span>
+                            ${spec.description ? `<small class="text-muted ms-2">(${spec.description})</small>` : ''}
+                        </div>
+                        <div>
+                            ${getStatusBadge(spec)}
+                            ${spec.status === 'error' ? `
+                                <button class="btn btn-sm btn-outline-warning ms-2" onclick="retrySpec(${spec.id})">
+                                    <i class="fas fa-redo"></i>
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                
+                if (data.is_complete) {
+                    clearInterval(statusInterval);
+                    document.getElementById('progressBar').classList.remove('progress-bar-animated');
+                    document.getElementById('completionMessage').style.display = 'block';
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar status:', error);
+        }
+    }
+    
+    function getStatusBadge(spec) {
+        const badges = {
+            'pending': `<span class="badge bg-secondary">${spec.stage_name}</span>`,
+            'processing': `<span class="badge bg-primary"><i class="fas fa-spinner fa-spin me-1"></i>${spec.stage_name}</span>`,
+            'completed': `<span class="badge bg-success"><i class="fas fa-check me-1"></i>Concluido</span>`,
+            'error': `<span class="badge bg-danger" title="${spec.error || 'Erro desconhecido'}"><i class="fas fa-exclamation-triangle me-1"></i>Erro</span>`
+        };
+        return badges[spec.status] || `<span class="badge bg-secondary">${spec.status}</span>`;
+    }
+    
+    window.retrySpec = async function(specId) {
+        try {
+            const response = await fetch(`/retry_spec/${specId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name="csrf_token"]').value
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                updateStatus();
+            } else {
+                alert('Erro: ' + data.error);
+            }
+        } catch (error) {
+            alert('Erro ao reprocessar: ' + error.message);
+        }
+    };
+});
+</script>
+{% endblock %}

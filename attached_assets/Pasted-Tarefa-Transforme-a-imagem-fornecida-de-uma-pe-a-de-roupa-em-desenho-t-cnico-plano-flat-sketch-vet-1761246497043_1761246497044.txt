@@ -1,0 +1,90 @@
+Tarefa
+Transforme a imagem fornecida de uma peça de roupa em desenho técnico plano (flat sketch) vetorial, com alta fidelidade ao caimento e aos detalhes construtivos, pronto para ficha técnica.
+
+Entradas
+
+Tipo da peça: {camisa / calça / jaqueta / vestido / etc.}
+
+Material principal e comportamento: {tecido, gramatura, drapeado/estrutura}
+
+Referência de medidas/proporções: {ex.: P: tórax 92 cm; comprimento 64 cm} (opcional, melhora a precisão)
+
+Detalhes obrigatórios: {lista de aviamentos, bolsos, pences, recortes, bordados, etiquetas, forro, intertelas}
+
+Vistas obrigatórias
+
+Frente e Costas alinhadas verticalmente (mesma escala).
+
+Incluir detalhes ampliados (1:2 ou 1:3) para: {gola/colarinho, punho, bolso, zíper, vista, barra, cós, passantes}.
+
+Se relevante: vista interna parcial para mostrar forro/limpeza de costura.
+
+Estilo visual e anotação
+
+Fundo 100% branco; sem corpo, cabide ou manequim.
+
+Traço preto contínuo; espessuras: contorno 0,75 pt; costuras 0,35 pt; pespontos tracejado curto (2 pt/1 pt).
+
+Padrões de linha:
+
+Contorno visível: contínuo.
+
+Costura interna: contínuo fino.
+
+Pesponto: tracejado.
+
+Dobra/virado: linha ponto-traço fino.
+
+Cinza neutro (10–30%) apenas para indicar sobreposição/volume/forro.
+
+Setas e chamadas (callouts) nomeando: tipo de fechamento, direção do abotoamento, abertura de zíper, sentido de pregas/franzidos.
+
+Símbolos: botão (círculo 2–4 mm), ilhós (anel), rebite (ponto sólido).
+
+Detalhes construtivos (incluir todos os aplicáveis)
+
+Golas/colarinho, punhos, barras, acabamentos (rebatido, vivo, overlock aparente/embutido).
+
+Recortes, pences, pregas, franzidos, dobras funcionais.
+
+Fechamentos: {zíper invisível/nylon/metal; botões; colchetes; amarrações} com comprimento e posição.
+
+Bolsos: tipo (faca, chapa, embutido), dimensões relativas, tampas, vivos.
+
+Cós/cintura: com/sem passantes, quantidade e posição.
+
+Etiquetas/branding: localização (interna/externa).
+
+Normalização da imagem
+
+Corrija perspectiva/distorções: alinhe o eixo central e espelhe para garantir simetria quando aplicável.
+
+Remova sombras/amarrações que não pertencem à construção.
+
+Saída (obrigatório)
+
+Arquivo vetorial: {SVG e PDF}; escala 1:1 quando houver medidas; unidades em cm.
+
+Camadas nomeadas: 01-Contorno, 02-Costuras, 03-Pespontos, 04-Aviamentos, 05-Sombras/Overlaps, 06-Anotações.
+
+Legenda com convenções de linha e símbolos.
+
+Título: “{Peça} – Flat técnico – {Frente/Costas}”.
+
+Critérios de aceitação
+
+Proporções consistentes com as medidas/referência.
+
+Todas as costuras e acabamentos identificáveis por tipo de linha.
+
+Frente/Costas em escala idêntica e perfeitamente centradas.
+
+Sem elementos fotográficos; visual limpo para ficha técnica.
+
+Não faça (negativo)
+
+Não incluir modelo/manequim/cabide.
+
+Não usar gradientes ou texturas realistas de tecido.
+
+Não estilizar com traço orgânico/artístico; mantenha técnico.
