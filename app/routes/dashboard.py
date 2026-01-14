@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session, request
 from app.extensions import db
-from app.models import User, Specification
+from app.models import User, Specification, FichaTecnica
 from app.utils.auth import login_required
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -23,6 +23,7 @@ def index():
     if user.is_admin:
         total_users = User.query.count()
         total_specs = Specification.query.count()
+        fichas = FichaTecnica.query.order_by(FichaTecnica.created_at.desc()).limit(100).all()
 
         query = Specification.query
 
@@ -58,6 +59,7 @@ def index():
                                total_users=total_users,
                                total_specs=total_specs,
                                recent_specs=recent_specs,
+                               fichas=fichas,
                                collections=collections,
                                suppliers=suppliers,
                                selected_collection=selected_collection,
@@ -66,6 +68,7 @@ def index():
                                search_query=search_query)
     else:
         query = Specification.query.filter_by(user_id=user.id)
+        fichas = FichaTecnica.query.filter_by(user_id=user.id).order_by(FichaTecnica.created_at.desc()).limit(100).all()
 
         if search_query:
             search_filter = f'%{search_query}%'
@@ -99,6 +102,7 @@ def index():
         return render_template('user_dashboard.html',
                                current_user=user,
                                specifications=user_specs,
+                               fichas=fichas,
                                collections=collections,
                                suppliers=suppliers,
                                selected_collection=selected_collection,

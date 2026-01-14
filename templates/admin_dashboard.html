@@ -688,6 +688,53 @@
                 <p>Fichas técnicas processadas aparecerão aqui</p>
             </div>
             {% endif %}
+            <header class="page-header" style="margin-top: 48px;">
+                <div class="header-top">
+                    <h2 class="page-title" style="font-size: 24px;">Planilhas Importadas</h2>
+                </div>
+                <p class="page-subtitle">Planilhas XLSX importadas para o sistema</p>
+            </header>
+
+            {% if fichas %}
+            <div class="products-grid">
+                {% for ficha in fichas %}
+                <div class="product-card">
+                    <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}" style="text-decoration: none; color: inherit;">
+                        <div class="product-image">
+                            <i class="fas fa-file-excel"></i>
+                        </div>
+                        <div class="product-info">
+                            <div class="product-name">
+                                {{ ficha.number_pi_order or ficha.source_filename or 'Planilha importada' }}
+                            </div>
+                            <div class="product-meta">
+                                {% if ficha.supplier_no %}
+                                <span class="badge badge-supplier">
+                                    <i class="fas fa-truck"></i> {{ ficha.supplier_no }}
+                                </span>
+                                {% endif %}
+                                {% if ficha.created_at %}
+                                <span class="badge badge-collection">
+                                    <i class="fas fa-calendar"></i> {{ ficha.created_at.strftime('%d/%m/%Y') }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-file-excel"></i>
+                <h3>Nenhuma planilha importada</h3>
+                <p>Importe um XLSX para visualizar aqui.</p>
+                <a href="{{ url_for('fichas.import_view') }}" class="btn-primary">
+                    <i class="fas fa-file-excel"></i>
+                    Importar Excel
+                </a>
+            </div>
+            {% endif %}
         </main>
     </div>
 

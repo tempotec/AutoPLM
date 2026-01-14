@@ -514,6 +514,10 @@
                 });
                 tableHeader.appendChild(th);
             });
+
+            const actionTh = document.createElement('th');
+            actionTh.textContent = 'Acoes';
+            tableHeader.appendChild(actionTh);
         }
 
         function renderRows(items) {
@@ -543,6 +547,16 @@
                     td.textContent = value === null || value === undefined ? '' : value;
                     tr.appendChild(td);
                 });
+
+                const tdAction = document.createElement('td');
+                const editLink = document.createElement('a');
+                editLink.href = `/fichas/${fichaId}/itens/${item.id}/editar`;
+                editLink.className = 'btn btn-ghost';
+                editLink.style.padding = '6px 10px';
+                editLink.style.fontSize = '12px';
+                editLink.innerHTML = '<i class="fas fa-edit"></i> Editar';
+                tdAction.appendChild(editLink);
+                tr.appendChild(tdAction);
                 tableBody.appendChild(tr);
             });
             const checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
