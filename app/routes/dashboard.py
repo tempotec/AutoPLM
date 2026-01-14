@@ -6,7 +6,7 @@ from app.utils.auth import login_required
 dashboard_bp = Blueprint('dashboard', __name__)
 
 
-@dashboard_bp.route('/dashboard')
+@dashboard_bp.route('/dashboard', strict_slashes=False)
 @login_required
 def index():
     user = User.query.get(session['user_id'])

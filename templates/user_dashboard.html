@@ -202,6 +202,12 @@
             margin-bottom: 8px;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .page-title {
             font-size: 32px;
             font-weight: 700;
@@ -226,6 +232,26 @@
 
         .btn-primary:hover {
             background-color: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background-color: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #334155;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: #374151;
         }
 
         .page-subtitle {
@@ -595,10 +621,16 @@
             <header class="page-header">
                 <div class="header-top">
                     <h1 class="page-title">Minhas Fichas Técnicas</h1>
-                    <a href="{{ url_for('specifications.upload') }}" class="btn-primary">
-                        <i class="fas fa-plus"></i>
-                        Nova Ficha Técnica
-                    </a>
+                    <div class="header-actions">
+                        <a href="{{ url_for('fichas.import_view') }}" class="btn-secondary">
+                            <i class="fas fa-file-excel"></i>
+                            Importar Excel
+                        </a>
+                        <a href="{{ url_for('specifications.upload') }}" class="btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Nova Ficha Técnica
+                        </a>
+                    </div>
                 </div>
                 <p class="page-subtitle">Visualize e gerencie todas as suas fichas técnicas de vestuário</p>
             </header>

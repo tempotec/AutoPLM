@@ -7,6 +7,7 @@ from app.routes.suppliers import suppliers_bp
 from app.routes.drawings import drawings_bp
 from app.routes.settings import settings_bp
 from app.routes.api import api_bp
+from app.routes.fichas import fichas_bp
 
 
 def register_blueprints(app):
@@ -19,3 +20,4 @@ def register_blueprints(app):
     app.register_blueprint(drawings_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(api_bp)
+    app.register_blueprint(fichas_bp)
