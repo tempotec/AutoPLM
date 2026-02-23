@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -385,6 +386,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
@@ -411,6 +413,10 @@
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
+                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
+                    <i class="fas fa-database"></i>
+                    <span>Banco OAZ</span>
+                </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Relatórios</span>
@@ -426,7 +432,7 @@
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
-                
+
                 <div class="user-profile">
                     <div class="user-avatar">
                         {{ current_user.username[0].upper() }}
@@ -449,7 +455,7 @@
                 </div>
 
                 <h1>{{ collection.name }}</h1>
-                
+
                 {% if collection.description %}
                 <p class="collection-description">{{ collection.description }}</p>
                 {% endif %}
@@ -465,7 +471,8 @@
                     </div>
                     <div class="stat-item">
                         <i class="fas fa-info-circle"></i>
-                        <span>{{ 'Em desenvolvimento' if collection.status == 'em_desenvolvimento' else 'Finalizada' }}</span>
+                        <span>{{ 'Em desenvolvimento' if collection.status == 'em_desenvolvimento' else 'Finalizada'
+                            }}</span>
                     </div>
                 </div>
             </div>
@@ -476,11 +483,11 @@
                 <a href="{{ url_for('specifications.view', id=spec.id) }}" class="product-card">
                     <div class="product-image">
                         {% if spec.pdf_thumbnail %}
-                            <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.description or 'Produto' }}">
+                        <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.description or 'Produto' }}">
                         {% elif spec.technical_drawing_url %}
-                            <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="Desenho Técnico">
+                        <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="Desenho Técnico">
                         {% else %}
-                            <i class="fas fa-image"></i>
+                        <i class="fas fa-image"></i>
                         {% endif %}
                     </div>
                     <div class="product-info">
@@ -490,16 +497,16 @@
                             <span class="badge badge-supplier">{{ spec.supplier }}</span>
                             {% endif %}
                             {% if spec.status == 'draft' %}
-                                    <span class="badge badge-draft">Rascunho</span>
-                                {% elif spec.status == 'in_development' %}
-                                    <span class="badge badge-development">Em Desenvolvimento</span>
-                                {% elif spec.status == 'approved' %}
-                                    <span class="badge badge-approved">Aprovado</span>
-                                {% elif spec.status == 'in_production' %}
-                                    <span class="badge badge-production">Em Produ????o</span>
-                                {% elif spec.status == 'completed' %}
-                                    <span class="badge badge-completed">Concluido</span>
-                                {% endif %}
+                            <span class="badge badge-draft">Rascunho</span>
+                            {% elif spec.status == 'in_development' %}
+                            <span class="badge badge-development">Em Desenvolvimento</span>
+                            {% elif spec.status == 'approved' %}
+                            <span class="badge badge-approved">Aprovado</span>
+                            {% elif spec.status == 'in_production' %}
+                            <span class="badge badge-production">Em Produ????o</span>
+                            {% elif spec.status == 'completed' %}
+                            <span class="badge badge-completed">Concluido</span>
+                            {% endif %}
                         </div>
                     </div>
                 </a>
@@ -519,4 +526,5 @@
         </main>
     </div>
 </body>
+
 </html>

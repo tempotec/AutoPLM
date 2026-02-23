@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -633,6 +634,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
@@ -659,6 +661,10 @@
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
+                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
+                    <i class="fas fa-database"></i>
+                    <span>Banco OAZ</span>
+                </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Relatórios</span>
@@ -674,7 +680,7 @@
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
-                
+
                 <div class="user-profile">
                     <div class="user-avatar">
                         {{ current_user.username[0].upper() }}
@@ -719,17 +725,19 @@
             <div class="collections-grid">
                 {% for collection in collections %}
                 <a href="{{ url_for('collections.view', id=collection.id) }}" class="collection-card">
-                    <button class="btn-edit-collection" onclick="event.preventDefault(); event.stopPropagation(); editCollection({{ collection.id }}, '{{ collection.name }}', '{{ collection.description|replace("'", "\\'") if collection.description else '' }}', '{{ collection.status }}', '{{ collection.cover_image or '' }}')">
+                    <button class="btn-edit-collection"
+                        onclick="event.preventDefault(); event.stopPropagation(); editCollection({{ collection.id }}, '{{ collection.name }}', '{{ collection.description|replace("'", "\\'") if collection.description else '' }}', '{{ collection.status }}', '{{ collection.cover_image or '' }}')">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn-delete-collection" onclick="event.preventDefault(); event.stopPropagation(); deleteCollection({{ collection.id }}, '{{ collection.name }}')">
+                    <button class="btn-delete-collection"
+                        onclick="event.preventDefault(); event.stopPropagation(); deleteCollection({{ collection.id }}, '{{ collection.name }}')">
                         <i class="fas fa-trash"></i>
                     </button>
                     <div class="collection-image {% if not collection.cover_image %}placeholder{% endif %}">
                         {% if collection.cover_image %}
-                            <img src="{{ url_for('static', filename=collection.cover_image) }}" alt="{{ collection.name }}">
+                        <img src="{{ url_for('static', filename=collection.cover_image) }}" alt="{{ collection.name }}">
                         {% else %}
-                            <i class="fas fa-layer-group"></i>
+                        <i class="fas fa-layer-group"></i>
                         {% endif %}
                     </div>
                     <div class="collection-info">
@@ -737,7 +745,8 @@
                         <div class="collection-stats">
                             <span class="collection-count">{{ collection.specifications|length }} peças</span>
                             <span class="collection-status status-{{ collection.status }}">
-                                {{ 'Em desenvolvimento' if collection.status == 'em_desenvolvimento' else 'Finalizada' }}
+                                {{ 'Em desenvolvimento' if collection.status == 'em_desenvolvimento' else 'Finalizada'
+                                }}
                             </span>
                         </div>
                     </div>
@@ -767,7 +776,7 @@
             </div>
             <form method="POST" action="{{ url_for('collections.create') }}" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
+
                 <div class="form-group">
                     <label class="form-label">Nome da Coleção</label>
                     <input type="text" name="name" class="form-input" placeholder="Ex: Primavera/Verão 2025" required>
@@ -788,7 +797,8 @@
 
                 <div class="file-upload-wrapper">
                     <label class="file-upload-label">Imagem de Capa (opcional)</label>
-                    <input type="file" name="cover_image" class="file-upload-input" accept="image/jpeg,image/jpg,image/png" onchange="previewImage(event, 'createPreview')">
+                    <input type="file" name="cover_image" class="file-upload-input"
+                        accept="image/jpeg,image/jpg,image/png" onchange="previewImage(event, 'createPreview')">
                     <img id="createPreview" class="file-preview" alt="Preview">
                 </div>
 
@@ -809,15 +819,17 @@
             </div>
             <form method="POST" id="editForm" enctype="multipart/form-data">
                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                
+
                 <div class="form-group">
                     <label class="form-label">Nome da Coleção</label>
-                    <input type="text" name="name" id="editName" class="form-input" placeholder="Ex: Primavera/Verão 2025" required>
+                    <input type="text" name="name" id="editName" class="form-input"
+                        placeholder="Ex: Primavera/Verão 2025" required>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Descrição</label>
-                    <textarea name="description" id="editDescription" class="form-textarea" placeholder="Descreva sua coleção..."></textarea>
+                    <textarea name="description" id="editDescription" class="form-textarea"
+                        placeholder="Descreva sua coleção..."></textarea>
                 </div>
 
                 <div class="form-group">
@@ -830,7 +842,8 @@
 
                 <div class="file-upload-wrapper">
                     <label class="file-upload-label">Imagem de Capa (deixe em branco para manter a atual)</label>
-                    <input type="file" name="cover_image" class="file-upload-input" accept="image/jpeg,image/jpg,image/png" onchange="previewImage(event, 'editPreview')">
+                    <input type="file" name="cover_image" class="file-upload-input"
+                        accept="image/jpeg,image/jpg,image/png" onchange="previewImage(event, 'editPreview')">
                     <img id="editPreview" class="file-preview" alt="Preview">
                 </div>
 
@@ -865,10 +878,10 @@
             document.getElementById('editName').value = name;
             document.getElementById('editDescription').value = description;
             document.getElementById('editStatus').value = status;
-            
+
             const editForm = document.getElementById('editForm');
             editForm.action = `/collection/${id}/edit`;
-            
+
             if (coverImage) {
                 const preview = document.getElementById('editPreview');
                 preview.src = `/static/${coverImage}`;
@@ -876,7 +889,7 @@
             } else {
                 document.getElementById('editPreview').classList.remove('active');
             }
-            
+
             openEditModal();
         }
 
@@ -885,14 +898,14 @@
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.action = `/collection/${id}/delete`;
-                
+
                 const csrfToken = document.querySelector('input[name="csrf_token"]').value;
                 const csrfInput = document.createElement('input');
                 csrfInput.type = 'hidden';
                 csrfInput.name = 'csrf_token';
                 csrfInput.value = csrfToken;
                 form.appendChild(csrfInput);
-                
+
                 document.body.appendChild(form);
                 form.submit();
             }
@@ -901,10 +914,10 @@
         function previewImage(event, previewId) {
             const file = event.target.files[0];
             const preview = document.getElementById(previewId);
-            
+
             if (file) {
                 const reader = new FileReader();
-                reader.onload = function(e) {
+                reader.onload = function (e) {
                     preview.src = e.target.result;
                     preview.classList.add('active');
                 };
@@ -915,23 +928,23 @@
         }
 
         // Close modals on outside click
-        document.getElementById('createModal').addEventListener('click', function(e) {
+        document.getElementById('createModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeModal();
             }
         });
 
-        document.getElementById('editModal').addEventListener('click', function(e) {
+        document.getElementById('editModal').addEventListener('click', function (e) {
             if (e.target === this) {
                 closeEditModal();
             }
         });
 
         // Search functionality
-        document.getElementById('searchInput').addEventListener('input', function(e) {
+        document.getElementById('searchInput').addEventListener('input', function (e) {
             const searchTerm = e.target.value.toLowerCase();
             const cards = document.querySelectorAll('.collection-card');
-            
+
             cards.forEach(card => {
                 const name = card.querySelector('.collection-name').textContent.toLowerCase();
                 if (name.includes(searchTerm)) {
@@ -943,4 +956,5 @@
         });
     </script>
 </body>
+
 </html>

@@ -9,6 +9,7 @@ from app.routes.settings import settings_bp
 from app.routes.api import api_bp
 from app.routes.fichas import fichas_bp
 from app.routes.fluxogama import fluxogama_bp
+from app.routes.oaz_banco import oaz_banco_bp
 
 
 def register_blueprints(app):
@@ -23,3 +24,4 @@ def register_blueprints(app):
     app.register_blueprint(api_bp)
     app.register_blueprint(fichas_bp)
     app.register_blueprint(fluxogama_bp)
+    app.register_blueprint(oaz_banco_bp)

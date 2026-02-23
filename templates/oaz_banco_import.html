@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Importar Banco de Dados OAZ - StyleFlow</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/toast.css') }}">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #0a0e1a;
+            color: #e5e7eb;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar (same as admin_dashboard) */
+        .sidebar {
+            width: 240px;
+            background-color: #0f1420;
+            padding: 24px 16px;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid #1e293b;
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 12px;
+            margin-bottom: 32px;
+        }
+
+        .logo img {
+            height: 32px;
+            width: auto;
+        }
+
+        .logo span {
+            font-size: 18px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .nav-menu {
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            color: #94a3b8;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-item:hover {
+            background-color: #1e293b;
+            color: #e5e7eb;
+        }
+
+        .nav-item.active {
+            background-color: #2563eb;
+            color: #fff;
+        }
+
+        .nav-item i {
+            width: 20px;
+            text-align: center;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-top: 1px solid #1e293b;
+            margin-top: 16px;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .user-role {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        /* Main */
+        .main-content {
+            flex: 1;
+            padding: 32px 40px;
+            margin-left: 240px;
+        }
+
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .page-subtitle {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 4px;
+        }
+
+        /* Cards */
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        /* Stats row */
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-box {
+            flex: 1;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-box .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .stat-box .label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0f1420;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .dropzone:hover,
+        .dropzone.drag-over {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .dropzone i {
+            font-size: 48px;
+            color: #475569;
+            margin-bottom: 16px;
+        }
+
+        .dropzone h3 {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .dropzone p {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .dropzone input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* File list */
+        .file-list {
+            margin-top: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #0f1420;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .file-item .file-icon {
+            color: #22c55e;
+            font-size: 20px;
+        }
+
+        .file-item .file-name {
+            flex: 1;
+            font-size: 14px;
+            color: #e5e7eb;
+        }
+
+        .file-item .file-size {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .file-item .remove-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-primary:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Progress table */
+        .progress-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .progress-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            border-bottom: 1px solid #334155;
+        }
+
+        .progress-table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-queued {
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        .badge-processing {
+            background: #854d0e;
+            color: #fbbf24;
+        }
+
+        .badge-done {
+            background: #065f46;
+            color: #34d399;
+        }
+
+        .badge-error {
+            background: #7f1d1d;
+            color: #f87171;
+        }
+
+        .badge-empty {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+
+        .badge-partial {
+            background: #78350f;
+            color: #fbbf24;
+        }
+
+        /* Summary */
+        .summary-bar {
+            display: flex;
+            gap: 24px;
+            padding: 16px 20px;
+            background: #065f46;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .summary-bar .item {
+            text-align: center;
+        }
+
+        .summary-bar .item .num {
+            font-size: 24px;
+            font-weight: 700;
+            color: #34d399;
+        }
+
+        .summary-bar .item .lbl {
+            font-size: 12px;
+            color: #a7f3d0;
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+                <span>StyleFlow</span>
+            </div>
+            <nav class="nav-menu">
+                <a href="{{ url_for('dashboard.index') }}" class="nav-item"><i
+                        class="fas fa-home"></i><span>Painel</span></a>
+                <a href="{{ url_for('collections.index') }}" class="nav-item"><i class="fas fa-folder"></i><span>Minhas
+                        Coleções</span></a>
+                <a href="{{ url_for('drawings.gallery') }}" class="nav-item"><i
+                        class="fas fa-drafting-compass"></i><span>Desenhos Técnicos</span></a>
+                <a href="{{ url_for('suppliers.index') }}" class="nav-item"><i
+                        class="fas fa-truck"></i><span>Fornecedores</span></a>
+                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item active"><i
+                        class="fas fa-database"></i><span>Banco OAZ</span></a>
+                <a href="#" class="nav-item"><i class="fas fa-chart-line"></i><span>Relatórios</span></a>
+            </nav>
+            <div style="margin-top: auto;">
+                <a href="{{ url_for('settings.index') }}" class="nav-item"><i
+                        class="fas fa-cog"></i><span>Configurações</span></a>
+                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;"><i
+                        class="fas fa-sign-out-alt"></i><span>Sair</span></a>
+                <div class="user-profile">
+                    <div class="user-avatar">{{ session.get('username', 'A')[0].upper() if session.get('username') else
+                        'A' }}</div>
+                    <div>
+                        <div class="user-name">Admin</div>
+                        <div class="user-role">Administrador</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main-content">
+            <header class="page-header">
+                <div class="header-top">
+                    <div>
+                        <h1 class="page-title"><i class="fas fa-database" style="color: #3b82f6;"></i> Banco de Dados
+                            OAZ</h1>
+                        <p class="page-subtitle">Importe XLSX do Fluxogama para popular o De/Para de WSIDs
+                            automaticamente.</p>
+                    </div>
+                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary"><i
+                            class="fas fa-arrow-left"></i> Voltar</a>
+                </div>
+            </header>
+
+            <!-- Current mapping stats -->
+            <div class="stats-row">
+                {% for key, label in field_options %}
+                <div class="stat-box">
+                    <div class="value">{{ mapping_counts.get(key, 0) }}</div>
+                    <div class="label">{{ label }} ({{ key }})</div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Upload Card -->
+            <div class="card" id="uploadCard">
+                <div class="card-title"><i class="fas fa-upload"></i> Importar Banco de Dados</div>
+
+                <div class="form-group">
+                    <label for="fieldKey">Tipo de Banco (field_key)</label>
+                    <select id="fieldKey" class="form-select">
+                        <option value="">-- Selecione o tipo --</option>
+                        {% for key, label in field_options %}
+                        <option value="{{ key }}">{{ label }} ({{ key }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="dropzone" id="dropzone">
+                    <input type="file" id="fileInput" multiple accept=".xlsx">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <h3>Arraste arquivos XLSX aqui</h3>
+                    <p>ou clique para selecionar • Múltiplos arquivos aceitos • Máx. 50MB cada</p>
+                </div>
+
+                <div class="file-list" id="fileList"></div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" id="btnImport" disabled>
+                        <i class="fas fa-play"></i> Importar em Lote
+                    </button>
+                    <button class="btn btn-secondary hidden" id="btnClear">
+                        <i class="fas fa-times"></i> Limpar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Card (hidden until import starts) -->
+            <div class="card hidden" id="progressCard">
+                <div class="card-title"><i class="fas fa-spinner fa-spin"></i> <span
+                        id="progressTitle">Processando...</span></div>
+
+                <table class="progress-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Arquivo</th>
+                            <th>Planilha</th>
+                            <th>Linhas</th>
+                            <th>Válidos</th>
+                            <th>Criados</th>
+                            <th>Atualizados</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="progressBody"></tbody>
+                </table>
+
+                <div class="summary-bar hidden" id="summaryBar">
+                    <div class="item">
+                        <div class="num" id="sumCreated">0</div>
+                        <div class="lbl">Criados</div>
+                    </div>
+                    <div class="item">
+                        <div class="num" id="sumUpdated">0</div>
+                        <div class="lbl">Atualizados</div>
+                    </div>
+                    <div class="item">
+                        <div class="num" id="sumTotal">0</div>
+                        <div class="lbl">Total</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
+    <script>
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const btnImport = document.getElementById('btnImport');
+        const btnClear = document.getElementById('btnClear');
+        const fieldKey = document.getElementById('fieldKey');
+        let selectedFiles = [];
+
+        // Drag & drop
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            addFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => addFiles(fileInput.files));
+
+        function addFiles(files) {
+            for (const f of files) {
+                if (!f.name.toLowerCase().endsWith('.xlsx')) continue;
+                if (selectedFiles.some(sf => sf.name === f.name)) continue;
+                selectedFiles.push(f);
+            }
+            renderFileList();
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((f, idx) => {
+                const size = (f.size / 1024).toFixed(1);
+                fileList.innerHTML += `
+                    <div class="file-item">
+                        <i class="fas fa-file-excel file-icon"></i>
+                        <span class="file-name">${f.name}</span>
+                        <span class="file-size">${size} KB</span>
+                        <button class="remove-btn" onclick="removeFile(${idx})"><i class="fas fa-times"></i></button>
+                    </div>`;
+            });
+            btnClear.classList.toggle('hidden', selectedFiles.length === 0);
+            updateImportBtn();
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            renderFileList();
+        }
+
+        btnClear.addEventListener('click', () => { selectedFiles = []; renderFileList(); });
+        fieldKey.addEventListener('change', updateImportBtn);
+
+        function updateImportBtn() {
+            btnImport.disabled = selectedFiles.length === 0 || !fieldKey.value;
+        }
+
+        // Import
+        btnImport.addEventListener('click', async () => {
+            if (!fieldKey.value || selectedFiles.length === 0) return;
+            btnImport.disabled = true;
+
+            const formData = new FormData();
+            formData.append('field_key', fieldKey.value);
+            selectedFiles.forEach(f => formData.append('files[]', f));
+
+            try {
+                const resp = await fetch('/api/oaz/banco/import', { method: 'POST', body: formData });
+                const data = await resp.json();
+                if (!data.success) {
+                    if (typeof showToast === 'function') showToast(data.error, 'error');
+                    else alert(data.error);
+                    btnImport.disabled = false;
+                    return;
+                }
+                startPolling(data.job_id);
+            } catch (err) {
+                if (typeof showToast === 'function') showToast('Erro de rede: ' + err.message, 'error');
+                else alert('Erro: ' + err.message);
+                btnImport.disabled = false;
+            }
+        });
+
+        function startPolling(jobId) {
+            document.getElementById('uploadCard').classList.add('hidden');
+            const card = document.getElementById('progressCard');
+            card.classList.remove('hidden');
+
+            const poll = async () => {
+                try {
+                    const resp = await fetch(`/api/oaz/banco/import/status/${jobId}`);
+                    const data = await resp.json();
+                    if (!data.success) return;
+
+                    updateProgress(data);
+
+                    if (data.status === 'done') {
+                        document.getElementById('progressTitle').innerHTML = '<i class="fas fa-check-circle" style="color:#34d399"></i> Importação concluída!';
+                        document.querySelector('#progressCard .card-title i')?.remove();
+                        document.getElementById('summaryBar').classList.remove('hidden');
+                        document.getElementById('sumCreated').textContent = data.total_created;
+                        document.getElementById('sumUpdated').textContent = data.total_updated;
+                        document.getElementById('sumTotal').textContent = data.total_created + data.total_updated;
+                        return;
+                    }
+                    setTimeout(poll, 1000);
+                } catch { setTimeout(poll, 2000); }
+            };
+            poll();
+        }
+
+        function updateProgress(data) {
+            const tbody = document.getElementById('progressBody');
+            let html = '';
+            (data.files || []).forEach((f, i) => {
+                const statusBadge = {
+                    queued: '<span class="badge badge-queued">Aguardando</span>',
+                    processing: '<span class="badge badge-processing">Processando</span>',
+                    done: '<span class="badge badge-done">Concluído</span>',
+                    error: '<span class="badge badge-error">Erro</span>',
+                    empty: '<span class="badge badge-empty">Vazio</span>',
+                    partial: '<span class="badge badge-partial">Parcial</span>',
+                    pending: '<span class="badge badge-processing">Importando</span>',
+                }[f.status] || `<span class="badge badge-queued">${f.status}</span>`;
+
+                const isActive = data.status === 'processing' && i === data.current_file_index;
+                const rowStyle = isActive ? 'background: rgba(59,130,246,0.08);' : '';
+
+                html += `<tr style="${rowStyle}">
+                    <td>${i + 1}</td>
+                    <td>${f.filename || ''}</td>
+                    <td>${f.sheet_name || '-'}</td>
+                    <td>${f.total_rows ?? '-'}</td>
+                    <td>${f.valid_items ?? '-'}</td>
+                    <td>${f.created ?? '-'}</td>
+                    <td>${f.updated ?? '-'}</td>
+                    <td>${statusBadge}${f.error ? `<br><small style="color:#f87171">${f.error}</small>` : ''}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+    </script>
+</body>
+
+</html>

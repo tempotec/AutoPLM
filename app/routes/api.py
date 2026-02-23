@@ -479,7 +479,11 @@ def oaz_mapping():
         {"mappings": [{"field_key": "uno.10", "text_value": "ACESSÓRIOS", "wsid_value": "9283"}, ...]}
     """
     if request.method == 'GET':
-        maps = OazValueMap.query.order_by(OazValueMap.field_key).all()
+        query = OazValueMap.query
+        fk_filter = request.args.get('field_key', '').strip()
+        if fk_filter:
+            query = query.filter_by(field_key=fk_filter)
+        maps = query.order_by(OazValueMap.field_key).all()
         return jsonify({
             'success': True,
             'mappings': [m.to_dict() for m in maps],

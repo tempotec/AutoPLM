@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -307,7 +308,8 @@
             background-color: #1f2937;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px 12px;
             border-bottom: 1px solid #1f2937;
             color: #cbd5f5;
@@ -331,6 +333,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <aside class="sidebar">
@@ -355,6 +358,10 @@
                 <a href="{{ url_for('suppliers.index') }}" class="nav-item">
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
+                </a>
+                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
+                    <i class="fas fa-database"></i>
+                    <span>Banco OAZ</span>
                 </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-chart-line"></i>
@@ -583,4 +590,5 @@
         });
     </script>
 </body>
+
 </html>

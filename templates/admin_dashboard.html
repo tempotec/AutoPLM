@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -486,6 +487,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
@@ -512,6 +514,10 @@
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
+                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
+                    <i class="fas fa-database"></i>
+                    <span>Banco OAZ</span>
+                </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Relatórios</span>
@@ -527,7 +533,7 @@
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
-                
+
                 <div class="user-profile">
                     <div class="user-avatar">
                         {{ current_user.username[0].upper() }}
@@ -556,14 +562,14 @@
 
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="flash-message success">
-                            <i class="fas fa-check-circle"></i>
-                            <span>{{ message }}</span>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="flash-message success">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+            {% endif %}
             {% endwith %}
 
             <!-- Stats -->
@@ -584,9 +590,10 @@
             <div class="controls-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar por nome do produto, código ou coleção..." oninput="filterProducts()">
+                    <input type="text" id="searchInput" placeholder="Buscar por nome do produto, código ou coleção..."
+                        oninput="filterProducts()">
                 </div>
-                
+
                 {% if collections %}
                 <select class="filter-select" id="collectionFilter" onchange="filterProducts()">
                     <option value="">Todas as Coleções</option>
@@ -595,7 +602,7 @@
                     {% endfor %}
                 </select>
                 {% endif %}
-                
+
                 {% if suppliers %}
                 <select class="filter-select" id="supplierFilter" onchange="filterProducts()">
                     <option value="">Todos os Fornecedores</option>
@@ -604,34 +611,41 @@
                     {% endfor %}
                 </select>
                 {% endif %}
-                
+
                 <select class="filter-select" id="statusFilter" onchange="filterProducts()">
                     <option value="">Todos os Status</option>
                     <option value="draft">Rascunho</option>
                     <option value="in_development">Em Desenvolvimento</option>
                     <option value="approved">Aprovado</option>
                     <option value="in_production">Em Produção</option>
-                                    <option value="completed">Concluido</option>
-</select>
+                    <option value="completed">Concluido</option>
+                </select>
             </div>
 
             <!-- Products Grid -->
             {% if recent_specs %}
             <div class="products-grid" id="productsGrid">
                 {% for spec in recent_specs %}
-                <div class="product-card" data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}" data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}" data-user="{{ spec.user.username }}">
-                    <a href="{{ url_for('specifications.view', id=spec.id) }}" style="text-decoration: none; color: inherit;">
+                <div class="product-card" data-collection="{{ spec.collection or '' }}"
+                    data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}"
+                    data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}"
+                    data-user="{{ spec.user.username }}">
+                    <a href="{{ url_for('specifications.view', id=spec.id) }}"
+                        style="text-decoration: none; color: inherit;">
                         <div class="product-image">
                             {% if spec.pdf_thumbnail %}
-                                <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
+                            <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}"
+                                onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
                             {% elif spec.technical_drawing_url %}
-                                <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
+                            <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="{{ spec.pdf_filename }}"
+                                onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
                             {% else %}
-                                <i class="fas fa-file-pdf"></i>
+                            <i class="fas fa-file-pdf"></i>
                             {% endif %}
                         </div>
                         <div class="product-info">
-                            <div class="product-name">{{ spec.pdf_filename[:30] }}{% if spec.pdf_filename|length > 30 %}...{% endif %}</div>
+                            <div class="product-name">{{ spec.pdf_filename[:30] }}{% if spec.pdf_filename|length > 30
+                                %}...{% endif %}</div>
                             <div class="product-meta">
                                 <span class="badge badge-user">
                                     <i class="fas fa-user"></i> {{ spec.user.username }}
@@ -648,27 +662,28 @@
                                 {% endif %}
                                 {% if spec.is_imported %}
                                 <span class="badge badge-imported">
-                                    <i class="fas fa-box-open"></i> Importado{% if spec.import_category %} - {{ spec.import_category|capitalize }}{% endif %}
+                                    <i class="fas fa-box-open"></i> Importado{% if spec.import_category %} - {{
+                                    spec.import_category|capitalize }}{% endif %}
                                 </span>
                                 {% endif %}
                                 {% if spec.status == 'draft' %}
                                 <span class="badge badge-draft">Rascunho</span>
-                            {% elif spec.status == 'in_development' %}
+                                {% elif spec.status == 'in_development' %}
                                 <span class="badge badge-development">Em Desenvolvimento</span>
-                            {% elif spec.status == 'approved' %}
+                                {% elif spec.status == 'approved' %}
                                 <span class="badge badge-approved">Aprovado</span>
-                            {% elif spec.status == 'in_production' %}
+                                {% elif spec.status == 'in_production' %}
                                 <span class="badge badge-production">Em Produ????o</span>
-                            {% elif spec.status == 'completed' %}
+                                {% elif spec.status == 'completed' %}
                                 <span class="badge badge-completed">Concluido</span>
-                            {% endif %}
-                                
+                                {% endif %}
+
                                 {% if spec.processing_status == 'completed' %}
-                                    <span class="badge badge-completed">Completo</span>
+                                <span class="badge badge-completed">Completo</span>
                                 {% elif spec.processing_status == 'processing' %}
-                                    <span class="badge badge-processing">Processando</span>
+                                <span class="badge badge-processing">Processando</span>
                                 {% elif spec.processing_status == 'error' %}
-                                    <span class="badge badge-error">Erro</span>
+                                <span class="badge badge-error">Erro</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -699,7 +714,8 @@
             <div class="products-grid">
                 {% for ficha in fichas %}
                 <div class="product-card">
-                    <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}" style="text-decoration: none; color: inherit;">
+                    <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}"
+                        style="text-decoration: none; color: inherit;">
                         <div class="product-image">
                             <i class="fas fa-file-excel"></i>
                         </div>
@@ -744,9 +760,9 @@
             const collectionFilter = document.getElementById('collectionFilter') ? document.getElementById('collectionFilter').value : '';
             const supplierFilter = document.getElementById('supplierFilter') ? document.getElementById('supplierFilter').value : '';
             const statusFilter = document.getElementById('statusFilter').value;
-            
+
             const cards = document.querySelectorAll('.product-card');
-            
+
             cards.forEach(card => {
                 const name = card.dataset.name.toLowerCase();
                 const ref = card.dataset.ref.toLowerCase();
@@ -754,12 +770,12 @@
                 const collection = card.dataset.collection;
                 const supplier = card.dataset.supplier;
                 const status = card.dataset.status;
-                
+
                 const matchesSearch = name.includes(searchTerm) || ref.includes(searchTerm) || collection.toLowerCase().includes(searchTerm) || user.includes(searchTerm);
                 const matchesCollection = !collectionFilter || collection === collectionFilter;
                 const matchesSupplier = !supplierFilter || supplier === supplierFilter;
                 const matchesStatus = !statusFilter || status === statusFilter;
-                
+
                 if (matchesSearch && matchesCollection && matchesSupplier && matchesStatus) {
                     card.style.display = '';
                 } else {
@@ -769,4 +785,5 @@
         }
     </script>
 </body>
+
 </html>

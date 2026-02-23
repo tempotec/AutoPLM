@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -452,6 +453,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -477,6 +479,10 @@
                 <i class="fas fa-truck"></i>
                 <span>Fornecedores</span>
             </a>
+            <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
+                <i class="fas fa-database"></i>
+                <span>Banco OAZ</span>
+            </a>
             <a href="#" class="nav-item">
                 <i class="fas fa-chart-line"></i>
                 <span>Relatórios</span>
@@ -492,7 +498,7 @@
                 <i class="fas fa-sign-out-alt"></i>
                 <span>Sair</span>
             </a>
-            
+
             <div class="user-profile">
                 <div class="user-avatar">
                     {{ current_user.username[0].upper() }}
@@ -516,11 +522,8 @@
                 <form method="GET" action="{{ url_for('drawings.gallery') }}">
                     <div class="search-box">
                         <i class="fas fa-search search-icon"></i>
-                        <input type="text" 
-                               name="search" 
-                               class="search-input" 
-                               placeholder="Buscar por nome ou REF..." 
-                               value="{{ search }}">
+                        <input type="text" name="search" class="search-input" placeholder="Buscar por nome ou REF..."
+                            value="{{ search }}">
                     </div>
                 </form>
             </div>
@@ -529,11 +532,12 @@
         <!-- Filters -->
         <form method="GET" action="{{ url_for('drawings.gallery') }}" class="filters">
             <input type="hidden" name="search" value="{{ search }}">
-            
+
             <select name="collection" class="filter-select">
                 <option value="">Todas as Coleções</option>
                 {% for collection in collections %}
-                <option value="{{ collection.id }}" {% if selected_collection == collection.id|string %}selected{% endif %}>
+                <option value="{{ collection.id }}" {% if selected_collection==collection.id|string %}selected{% endif
+                    %}>
                     {{ collection.name }}
                 </option>
                 {% endfor %}
@@ -542,7 +546,7 @@
             <select name="supplier" class="filter-select">
                 <option value="">Todos os Fornecedores</option>
                 {% for supplier in suppliers %}
-                <option value="{{ supplier }}" {% if selected_supplier == supplier %}selected{% endif %}>
+                <option value="{{ supplier }}" {% if selected_supplier==supplier %}selected{% endif %}>
                     {{ supplier }}
                 </option>
                 {% endfor %}
@@ -565,16 +569,21 @@
         <div class="gallery-grid">
             {% for spec in specifications %}
             <div class="drawing-card">
-                <div class="card-image" {% if spec.technical_drawing_url %}onclick="openDrawingModal('{{ url_for('drawings.view_drawing', id=spec.id) }}', '{{ spec.product_name or spec.description or 'Sem nome' }}', '{{ spec.id }}')" style="cursor: pointer;"{% endif %}>
+                <div class="card-image" {% if spec.technical_drawing_url
+                    %}onclick="openDrawingModal('{{ url_for('drawings.view_drawing', id=spec.id) }}', '{{ spec.product_name or spec.description or 'Sem nome' }}', '{{ spec.id }}')"
+                    style="cursor: pointer;" {% endif %}>
                     {% if spec.processing_status == 'processing' %}
-                        <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
-                            <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #60a5fa;"></i>
-                            <div style="margin-top: 12px; font-size: 14px; color: #94a3b8;">Processando desenho técnico...</div>
+                    <div
+                        style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%;">
+                        <i class="fas fa-spinner fa-spin" style="font-size: 48px; color: #60a5fa;"></i>
+                        <div style="margin-top: 12px; font-size: 14px; color: #94a3b8;">Processando desenho técnico...
                         </div>
+                    </div>
                     {% elif spec.technical_drawing_url %}
-                        <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="{{ spec.product_name or spec.description }}">
+                    <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}"
+                        alt="{{ spec.product_name or spec.description }}">
                     {% else %}
-                        <i class="fas fa-image" style="font-size: 48px; color: #cbd5e1;"></i>
+                    <i class="fas fa-image" style="font-size: 48px; color: #cbd5e1;"></i>
                     {% endif %}
                 </div>
                 <div class="card-content">
@@ -604,28 +613,29 @@
         {% if pagination.pages > 1 %}
         <div class="pagination">
             <!-- Previous Button -->
-            <a href="{{ url_for('technical_drawings', page=pagination.prev_num, search=search, collection=selected_collection, supplier=selected_supplier) if pagination.has_prev else '#' }}" 
-               class="pagination-btn {{ 'disabled' if not pagination.has_prev else '' }}">
+            <a href="{{ url_for('technical_drawings', page=pagination.prev_num, search=search, collection=selected_collection, supplier=selected_supplier) if pagination.has_prev else '#' }}"
+                class="pagination-btn {{ 'disabled' if not pagination.has_prev else '' }}">
                 <i class="fas fa-chevron-left"></i>
             </a>
 
             <!-- Page Numbers -->
             {% for page_num in range(1, pagination.pages + 1) %}
-                {% if page_num == 1 or page_num == pagination.pages or (page_num >= pagination.page - 2 and page_num <= pagination.page + 2) %}
-                    <a href="{{ url_for('technical_drawings', page=page_num, search=search, collection=selected_collection, supplier=selected_supplier) }}" 
-                       class="pagination-btn {{ 'active' if page_num == pagination.page else '' }}">
-                        {{ page_num }}
-                    </a>
+            {% if page_num == 1 or page_num == pagination.pages or (page_num >= pagination.page - 2 and page_num <=
+                pagination.page + 2) %} <a
+                href="{{ url_for('technical_drawings', page=page_num, search=search, collection=selected_collection, supplier=selected_supplier) }}"
+                class="pagination-btn {{ 'active' if page_num == pagination.page else '' }}">
+                {{ page_num }}
+                </a>
                 {% elif page_num == pagination.page - 3 or page_num == pagination.page + 3 %}
-                    <span class="pagination-dots">...</span>
+                <span class="pagination-dots">...</span>
                 {% endif %}
-            {% endfor %}
+                {% endfor %}
 
-            <!-- Next Button -->
-            <a href="{{ url_for('technical_drawings', page=pagination.next_num, search=search, collection=selected_collection, supplier=selected_supplier) if pagination.has_next else '#' }}" 
-               class="pagination-btn {{ 'disabled' if not pagination.has_next else '' }}">
-                <i class="fas fa-chevron-right"></i>
-            </a>
+                <!-- Next Button -->
+                <a href="{{ url_for('technical_drawings', page=pagination.next_num, search=search, collection=selected_collection, supplier=selected_supplier) if pagination.has_next else '#' }}"
+                    class="pagination-btn {{ 'disabled' if not pagination.has_next else '' }}">
+                    <i class="fas fa-chevron-right"></i>
+                </a>
         </div>
         {% endif %}
 
@@ -682,8 +692,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         .modal-close {
@@ -725,6 +740,7 @@
                 transform: scale(0.8);
                 opacity: 0;
             }
+
             to {
                 transform: scale(1);
                 opacity: 1;
@@ -800,11 +816,11 @@
             const modalImage = document.getElementById('modalImage');
             const modalTitle = document.getElementById('modalTitle');
             const modalDetailsBtn = document.getElementById('modalDetailsBtn');
-            
+
             modalImage.src = imageUrl;
             modalTitle.textContent = title;
             modalDetailsBtn.href = `/specification/${specId}`;
-            
+
             modal.classList.add('active');
             document.body.style.overflow = 'hidden'; // Prevent background scrolling
         }
@@ -816,11 +832,12 @@
         }
 
         // Close modal with ESC key
-        document.addEventListener('keydown', function(event) {
+        document.addEventListener('keydown', function (event) {
             if (event.key === 'Escape') {
                 closeDrawingModal();
             }
         });
     </script>
 </body>
+
 </html>

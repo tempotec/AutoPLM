@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -570,7 +571,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .loading-content h3 {
@@ -773,6 +776,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
@@ -803,6 +807,10 @@
                     <i class="fas fa-truck"></i>
                     <span>Fornecedores</span>
                 </a>
+                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
+                    <i class="fas fa-database"></i>
+                    <span>Banco OAZ</span>
+                </a>
                 <a href="#" class="nav-item">
                     <i class="fas fa-chart-line"></i>
                     <span>Relatórios</span>
@@ -818,7 +826,7 @@
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
-                
+
                 <div class="user-profile">
                     <div class="user-avatar">
                         {{ current_user.username[0].upper() }}
@@ -841,20 +849,20 @@
 
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="flash-message success">
-                            <i class="fas fa-check-circle"></i>
-                            <span>{{ message }}</span>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="flash-message success">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+            {% endif %}
             {% endwith %}
 
             <!-- Upload Form -->
             <form method="POST" enctype="multipart/form-data" id="upload-form">
                 {{ form.hidden_tag() }}
-                
+
                 <!-- Collection, Supplier and Stylist Fields -->
                 <div class="content-card">
                     <div class="card-header">
@@ -869,7 +877,7 @@
                             {{ form.collection_id(class="form-control") }}
                             <small class="form-hint">Selecione uma coleção existente (opcional)</small>
                         </div>
-                        
+
                         <div class="form-field">
                             <label for="supplier_id" class="form-label">
                                 <i class="fas fa-industry"></i>Fornecedor
@@ -877,7 +885,7 @@
                             {{ form.supplier_id(class="form-control") }}
                             <small class="form-hint">Selecione o fornecedor (opcional)</small>
                         </div>
-                        
+
                         <div class="form-field">
                             <label for="stylist" class="form-label">
                                 <i class="fas fa-user"></i>Estilista
@@ -885,7 +893,7 @@
                             {{ form.stylist(class="form-control", readonly=True) }}
                             <small class="form-hint">Preenchido automaticamente</small>
                         </div>
-                        
+
                         <div class="form-field">
                             <label for="price_range" class="form-label">
                                 <i class="fas fa-tag"></i>Faixa de preço
@@ -900,7 +908,8 @@
                             </label>
                             <div class="toggle-row">
                                 {{ form.is_imported(class="switch-input", id="is_imported") }}
-                                <span style="color: #94a3b8; font-size: 12px;">Ative para exigir categoria de importação.</span>
+                                <span style="color: #94a3b8; font-size: 12px;">Ative para exigir categoria de
+                                    importação.</span>
                             </div>
                         </div>
 
@@ -911,11 +920,11 @@
                             {{ form.import_category(class="form-control", id="import_category") }}
                             <div class="text-danger" id="import-category-error" style="display: none;"></div>
                             {% if form.import_category.errors %}
-                                <div class="text-danger">
-                                    {% for error in form.import_category.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
+                            <div class="text-danger">
+                                {% for error in form.import_category.errors %}
+                                {{ error }}
+                                {% endfor %}
+                            </div>
                             {% endif %}
                         </div>
                     </div>
@@ -927,33 +936,39 @@
                         <div class="card-title">Arquivos</div>
                         <div class="card-subtitle">Arraste e solte ou selecione arquivos PDF/JPG/PNG.</div>
                     </div>
-                    <div class="upload-section" id="upload-area" role="button" tabindex="0" onclick="document.getElementById('pdf-input').click()">
+                    <div class="upload-section" id="upload-area" role="button" tabindex="0"
+                        onclick="document.getElementById('pdf-input').click()">
                         <i class="fas fa-cloud-upload-alt upload-icon"></i>
                         <h3>Arraste e solte seus arquivos aqui</h3>
                         <p>ou clique para navegar</p>
-                        <p style="font-size: 12px; color: #64748b; margin-top: -12px;">Formatos suportados: PDF, JPG, PNG (multiplos arquivos)</p>
-                        {{ form.pdf_file(id="pdf-input", accept=".pdf,.jpg,.jpeg,.png", style="display: none;", multiple=True) }}
-                        <button type="button" class="btn-upload" onclick="event.stopPropagation(); document.getElementById('pdf-input').click()">
+                        <p style="font-size: 12px; color: #64748b; margin-top: -12px;">Formatos suportados: PDF, JPG,
+                            PNG (multiplos arquivos)</p>
+                        {{ form.pdf_file(id="pdf-input", accept=".pdf,.jpg,.jpeg,.png", style="display: none;",
+                        multiple=True) }}
+                        <button type="button" class="btn-upload"
+                            onclick="event.stopPropagation(); document.getElementById('pdf-input').click()">
                             <i class="fas fa-folder-open"></i> Selecionar arquivos
                         </button>
-                        
+
                         {% if form.pdf_file.errors %}
-                            <div class="text-danger" style="margin-top: 12px;">
-                                {% for error in form.pdf_file.errors %}
-                                    {{ error }}
-                                {% endfor %}
-                            </div>
+                        <div class="text-danger" style="margin-top: 12px;">
+                            {% for error in form.pdf_file.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </div>
                         {% endif %}
                     </div>
                     <div id="files-error" class="text-danger" style="display: none;"></div>
-                    
+
                     <div id="files-list" style="display: none; margin-top: 16px;">
                         <div style="background: #1e293b; border-radius: 8px; padding: 16px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                 <span style="font-weight: 600; color: #e5e7eb;">
                                     <i class="fas fa-files"></i> Arquivos selecionados: <span id="files-count">0</span>
                                 </span>
-                                <button type="button" onclick="clearFiles()" style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">
+                                <button type="button" onclick="clearFiles()"
+                                    style="background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 12px;">
                                     <i class="fas fa-times"></i> Limpar
                                 </button>
                             </div>
@@ -961,7 +976,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Info Box -->
                 <div class="info-box">
                     <div class="info-box-title">
@@ -978,7 +993,7 @@
                         <li>Design e Estilo</li>
                     </ul>
                 </div>
-                
+
                 <!-- Form Actions -->
                 <div class="form-actions">
                     <a href="{{ url_for('dashboard.index') }}" class="btn-secondary">
@@ -1000,14 +1015,14 @@
                         <span id="processing-stats-text">0 de 0 completos</span>
                     </div>
                 </div>
-                
+
                 <div class="overall-progress">
                     <div class="overall-progress-bar" id="overall-progress-bar"></div>
                 </div>
-                
+
                 <div class="processing-files-list" id="processing-files-list">
                 </div>
-                
+
                 <div style="margin-top: 16px; text-align: center;">
                     <a href="{{ url_for('dashboard.index') }}" class="btn-dashboard" id="btn-go-dashboard">
                         <i class="fas fa-check-circle"></i>
@@ -1044,7 +1059,7 @@
         const filesList = document.getElementById('files-list');
         const filesItems = document.getElementById('files-items');
         const filesCount = document.getElementById('files-count');
-        
+
         const stageLabels = {
             'pending': 'Aguardando...',
             'uploading': 'Enviando...',
@@ -1206,10 +1221,10 @@
             const list = document.getElementById('processing-files-list');
             area.style.display = 'block';
             list.innerHTML = '';
-            
+
             uploadedFiles = [];
             processingState = {};
-            
+
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
                 const isPdf = file.type === 'application/pdf';
@@ -1218,7 +1233,7 @@
                     type: isPdf ? 'pdf' : 'image'
                 });
                 processingState[file.name] = { status: 'uploading', stage: 'pending' };
-                
+
                 const item = document.createElement('div');
                 item.className = 'processing-file-item';
                 item.id = 'proc-file-' + i;
@@ -1236,19 +1251,19 @@
                 `;
                 list.appendChild(item);
             }
-            
+
             updateOverallProgress(0, files.length);
         }
 
         function updateFileStatus(index, status, stage, specId) {
             const statusEl = document.getElementById('status-' + index);
             const badgeEl = document.getElementById('badge-' + index);
-            
+
             if (!statusEl || !badgeEl) return;
-            
+
             const stageText = stageLabels[stage] || stageLabels[status] || stage;
             statusEl.textContent = stageText;
-            
+
             if (status === 'completed') {
                 badgeEl.innerHTML = '<span class="processing-file-badge completed"><i class="fas fa-check"></i> Pronto</span>';
             } else if (status === 'error') {
@@ -1264,7 +1279,7 @@
             const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
             document.getElementById('overall-progress-bar').style.width = percent + '%';
             document.getElementById('processing-stats-text').textContent = completed + ' de ' + total + ' completos';
-            
+
             if (completed >= total && total > 0) {
                 document.getElementById('processing-spinner').style.display = 'none';
                 document.getElementById('processing-title-text').textContent = 'Processamento concluído!';
@@ -1272,7 +1287,7 @@
             }
         }
 
-        formEl.addEventListener('submit', function(e) {
+        formEl.addEventListener('submit', function (e) {
             e.preventDefault();
 
             if (!validateForm()) {
@@ -1285,7 +1300,7 @@
         function pollSingleSpecVisual(specId, filename) {
             let pollCount = 0;
             const maxPolls = 300;
-            
+
             function checkStatus() {
                 fetch('/api/spec_status/' + specId)
                     .then(response => response.json())
@@ -1293,9 +1308,9 @@
                         pollCount++;
                         const status = data.status || 'processing';
                         const stage = data.processing_stage || 'processing';
-                        
+
                         updateFileStatus(0, status, stage, specId);
-                        
+
                         if (status === 'completed') {
                             updateOverallProgress(1, 1);
                             Toast.success('Arquivo processado com sucesso!');
@@ -1313,7 +1328,7 @@
                         }
                     });
             }
-            
+
             setTimeout(checkStatus, 1500);
         }
 
@@ -1322,7 +1337,7 @@
             const maxPolls = 300;
             const specIdToIndex = {};
             const filenameToIndex = {};
-            
+
             if (specs && Array.isArray(specs)) {
                 specs.forEach((spec) => {
                     const idx = spec.index !== undefined ? spec.index : specs.indexOf(spec);
@@ -1332,13 +1347,13 @@
                     }
                 });
             }
-            
+
             uploadedFiles.forEach((file, idx) => {
                 if (!Object.values(filenameToIndex).includes(idx)) {
                     filenameToIndex[file.name] = idx;
                 }
             });
-            
+
             function checkStatus() {
                 fetch('/batch_status/' + batchId)
                     .then(response => response.json())
@@ -1347,7 +1362,7 @@
                         const completed = data.completed || 0;
                         const total = data.total || uploadedFiles.length;
                         const errors = data.errors || 0;
-                        
+
                         if (data.specs && Array.isArray(data.specs)) {
                             data.specs.forEach(spec => {
                                 let idx = specIdToIndex[spec.id];
@@ -1359,9 +1374,9 @@
                                 }
                             });
                         }
-                        
+
                         updateOverallProgress(completed + errors, total);
-                        
+
                         if (completed + errors >= total) {
                             if (errors > 0) {
                                 Toast.warning('Lote concluído: ' + completed + ' processados, ' + errors + ' com erro');
@@ -1379,7 +1394,7 @@
                         }
                     });
             }
-            
+
             setTimeout(checkStatus, 1500);
         }
 
@@ -1392,7 +1407,7 @@
             renderFilesList();
             validateForm();
         }
-        
+
         function clearFiles() {
             selectedFiles = [];
             syncFilesToInput();
@@ -1400,11 +1415,11 @@
             validateForm();
         }
 
-        fileInput.addEventListener('change', function(e) {
+        fileInput.addEventListener('change', function (e) {
             updateFileDisplay(e.target.files);
         });
 
-        filesItems.addEventListener('click', function(e) {
+        filesItems.addEventListener('click', function (e) {
             const button = e.target.closest('button[data-index]');
             if (!button) {
                 return;
@@ -1421,42 +1436,42 @@
             validateForm();
         });
 
-        importToggle.addEventListener('change', function() {
+        importToggle.addEventListener('change', function () {
             // Toggle controls visibility and resets category when disabled.
             syncImportCategoryVisibility();
             validateForm();
         });
 
-        importCategorySelect.addEventListener('change', function() {
+        importCategorySelect.addEventListener('change', function () {
             validateForm();
         });
 
         const uploadArea = document.getElementById('upload-area');
 
-        uploadArea.addEventListener('dragover', function(e) {
+        uploadArea.addEventListener('dragover', function (e) {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
 
-        uploadArea.addEventListener('dragenter', function(e) {
+        uploadArea.addEventListener('dragenter', function (e) {
             e.preventDefault();
             uploadArea.classList.add('dragover');
         });
 
-        uploadArea.addEventListener('dragleave', function(e) {
+        uploadArea.addEventListener('dragleave', function (e) {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
         });
 
-        uploadArea.addEventListener('drop', function(e) {
+        uploadArea.addEventListener('drop', function (e) {
             e.preventDefault();
             uploadArea.classList.remove('dragover');
-            
+
             const files = e.dataTransfer.files;
             updateFileDisplay(files, true);
         });
 
-        uploadArea.addEventListener('keydown', function(e) {
+        uploadArea.addEventListener('keydown', function (e) {
             if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();
                 fileInput.click();
@@ -1468,4 +1483,5 @@
         validateForm();
     </script>
 </body>
+
 </html>
