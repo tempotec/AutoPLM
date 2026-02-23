@@ -1,0 +1,107 @@
+=== COLUMNS META ===
+  idx=0  src=[]  name=[col_0]
+  idx=1  src=[IMG. REF]  name=[img_ref]
+  idx=2  src=[ITEM NO.
+(REF. SUPPLIER)]  name=[item_no_ref_supplier]
+  idx=3  src=[MATERIAL (COMPOSITION/
+PERCENTAGE)]  name=[material_composition_percentage]
+  idx=4  src=[COLOR]  name=[color]
+  idx=5  src=[Portuguese Description]  name=[description_item]
+  idx=6  src=[DESCRIPTION ITEM]  name=[description_item_2]
+  idx=7  src=[NCM]  name=[ncm]
+  idx=8  src=[CHANGES BY OAZ]  name=[changes_by_oaz]
+  idx=9  src=[OAZ REFERENCE]  name=[oaz_reference]
+  idx=10  src=[CARE INSTRUCTIONS]  name=[care_instructions]
+  idx=11  src=[LABEL]  name=[label]
+  idx=12  src=[LENGTH (cm)]  name=[length_cm]
+  idx=13  src=[WIDTH (cm)]  name=[width_cm]
+  idx=14  src=[HEIGHT (cm)]  name=[height_cm]
+  idx=15  src=[DIAMETER (cm)]  name=[diameter_cm]
+  idx=16  src=[UNIT NET WEIGHT 
+(kg)]  name=[unit_net_weight_kg]
+  idx=17  src=[MOQ]  name=[moq]
+  idx=18  src=[ORDER QTY]  name=[oaz_qty]
+  idx=19  src=[INNER PACKING (pcs)]  name=[inner_packing_pcs]
+  idx=20  src=[OUTER PACKING (pcs)]  name=[outer_packing_pcs]
+  idx=21  src=[CBM]  name=[cbm]
+  idx=22  src=[PACKING]  name=[packing]
+  idx=23  src=[UNIT PRICE ($)]  name=[unit_price]
+  idx=24  src=[TOTAL AMOUNT ($)]  name=[total_amount]
+  idx=25  src=[PREÇO (R$)]  name=[preco_r]
+  idx=26  src=[ATACADO]  name=[atacado]
+  idx=27  src=[FAMILIA]  name=[familia]
+  idx=28  src=[ENTRADA]  name=[entrada]
+  idx=29  src=[LINHA]  name=[linha]
+  idx=30  src=[GRUPO]  name=[grupo]
+  idx=31  src=[SUB-GRUPO]  name=[sub_grupo]
+  idx=32  src=[NOME
+(DESC.PRODUTO)]  name=[nome_desc_produto]
+  idx=33  src=[COR SISTEMA]  name=[cor_sistema]
+  idx=34  src=[MATERIAL
+(OBS. LINX)]  name=[material_obs_ns]
+  idx=35  src=[OBS]  name=[obs]
+  idx=36  src=[SAMPLES QTY]  name=[pp_samples_qty]
+  idx=37  src=[REPEAT/RECOMPRA]  name=[repeat_recompra]
+
+=== FIRST ITEM RAW_ROW KEYS ===
+  [col_0] = (vazio)
+  [IMG. REF] = (vazio)
+  [ITEM NO.
+(REF. SUPPLIER)] = VA-0155-M
+  [MATERIAL (COMPOSITION/
+PERCENTAGE)] = new bone china
+  [COLOR] = CMYK print, with rim
+  [Portuguese Description] = Kit com 3 pratos de porcelana com aproximandamente
+  [DESCRIPTION ITEM] = 3 PCS PLATE SET
+15,5 CM
+  [NCM] = 6911.10.10
+  [CHANGES BY OAZ] = OUR EXCLUSIVE DESIGN WITH GIFT BOX
+  [OAZ REFERENCE] = 01.03.25.367.006.00
+  [CARE INSTRUCTIONS] = (vazio)
+  [LABEL] = (vazio)
+  [LENGTH (cm)] = 15.5
+  [WIDTH (cm)] = 15.5
+  [HEIGHT (cm)] = 1.8
+  [DIAMETER (cm)] = 15.5
+  [UNIT NET WEIGHT 
+(kg)] = 0.14
+  [MOQ] = 600
+  [ORDER QTY] = 408
+  [INNER PACKING (pcs)] = (vazio)
+  [OUTER PACKING (pcs)] = 24
+  [CBM] = (vazio)
+  [PACKING] = GIFT BOX with gold foil stamping
+  [UNIT PRICE ($)] = 2.35
+  [TOTAL AMOUNT ($)] = 958.8000000000001
+  [PREÇO (R$)] = 168
+  [ATACADO] = (vazio)
+  [FAMILIA] = (vazio)
+  [ENTRADA] = (vazio)
+  [LINHA] = HOME
+  [GRUPO] = MESA
+  [SUB-GRUPO] = ACESSÓRIOS DE MESA
+  [NOME
+(DESC.PRODUTO)] = KIT DE PRATOS DE PÃO DE PORCELANA
+  [COR SISTEMA] = (vazio)
+  [MATERIAL
+(OBS. LINX)] = PORCELANA NEW BONE CHINA
+  [OBS] = (vazio)
+  [SAMPLES QTY] = (vazio)
+  [REPEAT/RECOMPRA] = (vazio)
+
+=== HEADER_RAW ===
+  row 0: [(1, 'PROFORMA INVOICE')]
+  row 1: [(1, 'NUMBER PI ( ORDER)'), (2, 'CC00'), (3, '090'), (4, 'SUPPLIER NO.'), (6, 'NO251176')]
+  row 2: [(1, 'BUYER & IMPORTER')]
+  row 3: [(1, 'OAZ COMERCIAL LTDA')]
+  row 4: [(1, 'Rua Porto Alegre, 307 - CEP: 29.175-706\xa0')]
+  row 5: [(1, 'CNPJ: 16.945.787/0047-87')]
+  row 6: [(1, 'MANUFACTURER & EXPORTER'), (9, 'ORDER INFORMATION')]
+  row 7: [(1, 'NAME COMPANY:'), (2, 'SHENZHEN VANA HOUSEHOLD PRODUCTS CO.,LTD'), (9, 'ORDER DATE:'), (10, '2025-09-04 00:00:00')]
+  row 8: [(1, 'ADRESS:'), (2, 'RM#1806, BLOCK A, HUAYI BUILDING , NO. 9'), (9, 'PRODUCTION TIME:'), (10, '70DAYS AFTER CONFIRMING SAMPLES AND RECE')]
+  row 9: [(1, 'CITY:'), (2, 'SHENZHEN'), (9, 'SHIPMENT DATE:'), (10, '2025-11-13 00:00:00')]
+  row 10: [(1, 'STATE/ PROVINCE:'), (2, 'GUANGDONG'), (9, 'TERMS OF PAYMENT:'), (10, 'TT 30% DEPOSIT AND BALANCE AGAINST BL CO')]
+  row 11: [(1, 'COUNTRY:'), (2, 'CHINA'), (9, 'INCOTERM:'), (10, 'FOB')]
+  row 12: [(1, 'TEL/ FAX:'), (2, '0086-755-28710075'), (9, 'SHIPMENT PORT:'), (10, 'YANTIAN, CHINA')]
+  row 13: [(1, 'CONTACT NAME:'), (2, 'NOLEEN CHEN'), (9, 'DESTINATION PORT:'), (10, 'VITORIA/ES')]
+  row 14: [(1, 'E-MAIL:'), (2, 'NOLEEN@VANACERAMIC.COM')]

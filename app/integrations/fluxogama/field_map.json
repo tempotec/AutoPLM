@@ -1,0 +1,216 @@
+{
+  "_meta": {
+    "version": "1.1",
+    "description": "Mapeamento de campos Fluxogama (uno.X) para campos do sistema OAZ (FichaTecnicaItem + FichaTecnica header). Edite este JSON para ajustar mapeamento sem alterar código.",
+    "updated": "2026-02-09"
+  },
+  "top_level": {
+    "referencia": {
+      "template": "{oaz_reference}",
+      "max_len": 100,
+      "required": true,
+      "truncate_policy": "error",
+      "label": "Referência"
+    },
+    "colecao": {
+      "model_field": "colecao",
+      "raw_row_keys": [
+        "colecao",
+        "coleção",
+        "collection",
+        "Coleção",
+        "Colecao",
+        "COLECAO",
+        "COLEÇÃO",
+        "Collection"
+      ],
+      "max_len": 250,
+      "required": true,
+      "truncate_policy": "error",
+      "label": "Coleção"
+    },
+    "ws_id": {
+      "computed": "ws_id",
+      "label": "ID externo (OAZ)"
+    },
+    "cores": {
+      "computed": "cores",
+      "label": "Cores (array [{cor, variante}])"
+    }
+  },
+  "uno_fields": {
+    "uno.1": {
+      "model_field": "nome_desc_produto",
+      "max_len": 80,
+      "required": true,
+      "truncate_policy": "error",
+      "label": "Descrição título peça"
+    },
+    "uno.2": {
+      "model_field": "obs",
+      "max_len": 80,
+      "truncate_policy": "truncate",
+      "label": "Observações (curto)"
+    },
+    "uno.3": {
+      "model_field": "description_item",
+      "max_len": 80,
+      "truncate_policy": "truncate",
+      "label": "Descrição curta"
+    },
+    "uno.5": {
+      "model_field": null,
+      "raw_row_keys": [
+        "data_entrega_piloto",
+        "dt_entrega_piloto",
+        "Data Entrega Piloto"
+      ],
+      "type": "date",
+      "label": "Data Entrega Piloto"
+    },
+    "uno.7": {
+      "computed": "integration_status",
+      "label": "Status Integração"
+    },
+    "uno.8": {
+      "model_field": null,
+      "header_field": "manufacturer_exporter",
+      "type": "db",
+      "normalize": {
+        "ORDER INFORMATION": "ORDER INFORMATION"
+      },
+      "label": "Fornecedor"
+    },
+    "uno.9": {
+      "model_field": null,
+      "header_field": "country",
+      "type": "db",
+      "normalize": {
+        "CHINA": "China",
+        "INDIA": "India",
+        "VIETNAM": "Vietnam",
+        "BRASIL": "Brasil",
+        "BRAZIL": "Brasil",
+        "INDONESIA": "Indonesia",
+        "TURKEY": "Turkey",
+        "TURQUIA": "Turkey"
+      },
+      "label": "Origem"
+    },
+    "uno.11": {
+      "model_field": "grupo",
+      "type": "db",
+      "label": "Grupo"
+    },
+    "uno.12": {
+      "model_field": "sub_grupo",
+      "type": "db",
+      "label": "Sub Grupo"
+    },
+    "uno.16": {
+      "model_field": "item_no_ref_supplier",
+      "label": "Ref Fornecedor"
+    },
+    "uno.18": {
+      "model_field": "linha",
+      "type": "db",
+      "label": "Linha"
+    },
+    "uno.19": {
+      "model_field": "entrada",
+      "type": "db",
+      "label": "Entrada"
+    },
+    "uno.21": {
+      "model_field": null,
+      "header_field": "incoterm",
+      "type": "db",
+      "normalize": {
+        "FOB": "FOB",
+        "CIF": "CIF",
+        "EXW": "EXW",
+        "DDP": "DDP",
+        "CFR": "CFR"
+      },
+      "label": "Incoterm"
+    },
+    "uno.23": {
+      "model_field": "material_composition_percentage",
+      "label": "Composição"
+    },
+    "uno.24": {
+      "model_field": null,
+      "raw_row_keys": [
+        "material_principal",
+        "material",
+        "Material Principal",
+        "MATERIAL PRINCIPAL"
+      ],
+      "type": "db",
+      "label": "Material Principal"
+    },
+    "uno.25": {
+      "model_field": null,
+      "raw_row_keys": [
+        "tam_piloto",
+        "tamanho_piloto",
+        "Tam. Piloto",
+        "TAM. PILOTO"
+      ],
+      "label": "Tam. Piloto"
+    },
+    "uno.50": {
+      "model_field": "ncm",
+      "type": "db",
+      "label": "NCM"
+    },
+    "uno.54": {
+      "model_field": null,
+      "raw_row_keys": [
+        "envio_etiqueta",
+        "Envio de Etiqueta",
+        "ENVIO DE ETIQUETA"
+      ],
+      "type": "date",
+      "label": "Envio de Etiqueta"
+    },
+    "uno.74": {
+      "model_field": null,
+      "default": "Varejo e Atacado",
+      "type": "db",
+      "label": "Canal"
+    },
+    "uno.309": {
+      "model_field": "length_cm",
+      "type": "numeric",
+      "label": "Comp cm"
+    },
+    "uno.310": {
+      "model_field": "width_cm",
+      "type": "numeric",
+      "label": "Larg cm"
+    },
+    "uno.311": {
+      "model_field": "height_cm",
+      "type": "numeric",
+      "label": "Altura cm"
+    },
+    "uno.313": {
+      "model_field": "unit_net_weight_kg",
+      "type": "numeric",
+      "label": "Peso líquido unitário"
+    },
+    "uno.386": {
+      "model_field": "description_item",
+      "max_len": 4000,
+      "truncate_policy": "truncate",
+      "label": "Descrição do Site (texto longo)"
+    },
+    "uno.443": {
+      "model_field": "obs",
+      "max_len": 4000,
+      "truncate_policy": "truncate",
+      "label": "Observações (texto longo)"
+    }
+  }
+}

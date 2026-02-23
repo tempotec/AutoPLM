@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -424,23 +425,23 @@
             background-color: #7f1d1d;
             color: #f87171;
         }
-        
+
         /* Price Range Badges */
         .badge-price-p1 {
             background-color: #065f46;
             color: #6ee7b7;
         }
-        
+
         .badge-price-p2 {
             background-color: #1e40af;
             color: #93c5fd;
         }
-        
+
         .badge-price-p3 {
             background-color: #7c2d12;
             color: #fdba74;
         }
-        
+
         .badge-price-p4 {
             background-color: #7e22ce;
             color: #d8b4fe;
@@ -559,8 +560,212 @@
             background-color: #1e40af;
             color: #60a5fa;
         }
+
+        /* Flux Selection & Modal */
+        .flux-toolbar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .flux-toolbar label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: #94a3b8;
+            cursor: pointer;
+        }
+
+        .flux-toolbar label input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .btn-flux {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s;
+        }
+
+        .btn-flux:hover:not(:disabled) {
+            background: linear-gradient(135deg, #6d28d9, #5b21b6);
+        }
+
+        .btn-flux:disabled {
+            background: #1e293b;
+            color: #475569;
+            cursor: not-allowed;
+        }
+
+        .selection-counter {
+            font-size: 13px;
+            color: #a78bfa;
+            font-weight: 500;
+        }
+
+        .selection-counter.hidden {
+            display: none;
+        }
+
+        .ficha-card-select {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            z-index: 10;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: #7c3aed;
+        }
+
+        .ficha-card-wrapper {
+            position: relative;
+        }
+
+        .ficha-card-wrapper.selected {
+            outline: 2px solid #7c3aed;
+            border-radius: 12px;
+        }
+
+        /* Modal */
+        .flux-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flux-modal-overlay.active {
+            display: flex;
+        }
+
+        .flux-modal {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            width: 500px;
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .flux-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .flux-modal-header i {
+            font-size: 24px;
+            color: #a78bfa;
+        }
+
+        .flux-modal-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+
+        .flux-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 24px;
+        }
+
+        .flux-modal-count {
+            font-size: 15px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .flux-modal-count strong {
+            color: #a78bfa;
+        }
+
+        .flux-item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 220px;
+            overflow-y: auto;
+            background: #0f172a;
+            border-radius: 8px;
+            border: 1px solid #1f2937;
+        }
+
+        .flux-item-list li {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .flux-item-list li:last-child {
+            border-bottom: none;
+        }
+
+        .flux-item-list .item-ref {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+
+        .flux-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        .flux-result-ok {
+            color: #34d399;
+        }
+
+        .flux-result-fail {
+            color: #f87171;
+        }
+
+        .flux-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #334155;
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: fluxSpin 0.6s linear infinite;
+        }
+
+        @keyframes fluxSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <!-- Sidebar -->
@@ -602,7 +807,7 @@
                     <i class="fas fa-sign-out-alt"></i>
                     <span>Sair</span>
                 </a>
-                
+
                 <div class="user-profile">
                     <div class="user-avatar">
                         {{ current_user.username[0].upper() }}
@@ -637,23 +842,24 @@
 
             <!-- Flash Messages -->
             {% with messages = get_flashed_messages() %}
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="flash-message success">
-                            <i class="fas fa-check-circle"></i>
-                            <span>{{ message }}</span>
-                        </div>
-                    {% endfor %}
-                {% endif %}
+            {% if messages %}
+            {% for message in messages %}
+            <div class="flash-message success">
+                <i class="fas fa-check-circle"></i>
+                <span>{{ message }}</span>
+            </div>
+            {% endfor %}
+            {% endif %}
             {% endwith %}
 
             <!-- Search and Filters -->
             <div class="controls-bar">
                 <div class="search-box">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar por nome do produto, código ou coleção..." oninput="filterProducts()">
+                    <input type="text" id="searchInput" placeholder="Buscar por nome do produto, código ou coleção..."
+                        oninput="filterProducts()">
                 </div>
-                
+
                 {% if collections %}
                 <select class="filter-select" id="collectionFilter" onchange="filterProducts()">
                     <option value="">Todas as Coleções</option>
@@ -662,7 +868,7 @@
                     {% endfor %}
                 </select>
                 {% endif %}
-                
+
                 {% if suppliers %}
                 <select class="filter-select" id="supplierFilter" onchange="filterProducts()">
                     <option value="">Todos os Fornecedores</option>
@@ -671,16 +877,16 @@
                     {% endfor %}
                 </select>
                 {% endif %}
-                
+
                 <select class="filter-select" id="statusFilter" onchange="filterProducts()">
                     <option value="">Todos os Status</option>
                     <option value="draft">Rascunho</option>
                     <option value="in_development">Em Desenvolvimento</option>
                     <option value="approved">Aprovado</option>
                     <option value="in_production">Em Produção</option>
-                                    <option value="completed">Concluido</option>
-</select>
-                
+                    <option value="completed">Concluido</option>
+                </select>
+
                 <select class="filter-select" id="priceRangeFilter" onchange="filterProducts()">
                     <option value="">Todas as Faixas</option>
                     <option value="P1">P1</option>
@@ -692,76 +898,107 @@
 
             <!-- Products Grid -->
             {% if specifications %}
+            <!-- Spec Flux Toolbar -->
+            <div class="flux-toolbar">
+                <label>
+                    <input type="checkbox" id="specSelectAll">
+                    Selecionar todas
+                </label>
+                <button class="btn-flux" id="btnSendFluxSpec" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                    Enviar para o Flux
+                </button>
+                <span class="selection-counter hidden" id="specSelectionCounter"></span>
+            </div>
             <div class="products-grid" id="productsGrid">
                 {% for spec in specifications %}
-                <div class="product-card" data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}" data-price-range="{{ spec.price_range or '' }}" data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}">
-                    <a href="{{ url_for('specifications.view', id=spec.id) }}" style="text-decoration: none; color: inherit;">
-                        <div class="product-image">
-                            {% if spec.pdf_thumbnail %}
-                                <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
-                            {% elif spec.technical_drawing_url %}
-                                <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="{{ spec.pdf_filename }}" onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
-                            {% else %}
+                <div class="ficha-card-wrapper" data-spec-id="{{ spec.id }}"
+                    data-spec-name="{{ spec.pdf_filename[:40] }}" data-collection="{{ spec.collection or '' }}"
+                    data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}"
+                    data-price-range="{{ spec.price_range or '' }}" data-name="{{ spec.pdf_filename }}"
+                    data-ref="{{ spec.ref_souq or '' }}">
+                    <input type="checkbox" class="ficha-card-select spec-card-select" data-spec-id="{{ spec.id }}">
+                    <div class="product-card" data-collection="{{ spec.collection or '' }}"
+                        data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}"
+                        data-price-range="{{ spec.price_range or '' }}" data-name="{{ spec.pdf_filename }}"
+                        data-ref="{{ spec.ref_souq or '' }}">
+                        <a href="{{ url_for('specifications.view', id=spec.id) }}"
+                            style="text-decoration: none; color: inherit;">
+                            <div class="product-image">
+                                {% if spec.pdf_thumbnail %}
+                                <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
+                                {% elif spec.technical_drawing_url %}
+                                <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}"
+                                    alt="{{ spec.pdf_filename }}"
+                                    onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
+                                {% else %}
                                 <i class="fas fa-file-pdf"></i>
-                            {% endif %}
-                        </div>
-                        <div class="product-info">
-                            <div class="product-name">{{ spec.pdf_filename[:30] }}{% if spec.pdf_filename|length > 30 %}...{% endif %}</div>
-                            <div class="product-meta">
-                                {% if spec.collection %}
-                                <span class="badge badge-collection">
-                                    <i class="fas fa-folder"></i> {{ spec.collection }}
-                                </span>
                                 {% endif %}
-                                {% if spec.supplier %}
-                                <span class="badge badge-supplier">
-                                    <i class="fas fa-truck"></i> {{ spec.supplier }}
-                                </span>
-                                {% endif %}
-                                {% if spec.is_imported %}
-                                <span class="badge badge-imported">
-                                    <i class="fas fa-box-open"></i> Importado{% if spec.import_category %} - {{ spec.import_category|capitalize }}{% endif %}
-                                </span>
-                                {% endif %}
-                                {% if spec.status == 'draft' %}
+                            </div>
+                            <div class="product-info">
+                                <div class="product-name">{{ spec.pdf_filename[:30] }}{% if spec.pdf_filename|length >
+                                    30
+                                    %}...{% endif %}</div>
+                                <div class="product-meta">
+                                    {% if spec.collection %}
+                                    <span class="badge badge-collection">
+                                        <i class="fas fa-folder"></i> {{ spec.collection }}
+                                    </span>
+                                    {% endif %}
+                                    {% if spec.supplier %}
+                                    <span class="badge badge-supplier">
+                                        <i class="fas fa-truck"></i> {{ spec.supplier }}
+                                    </span>
+                                    {% endif %}
+                                    {% if spec.is_imported %}
+                                    <span class="badge badge-imported">
+                                        <i class="fas fa-box-open"></i> Importado{% if spec.import_category %} - {{
+                                        spec.import_category|capitalize }}{% endif %}
+                                    </span>
+                                    {% endif %}
+                                    {% if spec.status == 'draft' %}
                                     <span class="badge badge-draft">Rascunho</span>
-                                {% elif spec.status == 'in_development' %}
+                                    {% elif spec.status == 'in_development' %}
                                     <span class="badge badge-development">Em Desenvolvimento</span>
-                                {% elif spec.status == 'approved' %}
+                                    {% elif spec.status == 'approved' %}
                                     <span class="badge badge-approved">Aprovado</span>
-                                {% elif spec.status == 'in_production' %}
+                                    {% elif spec.status == 'in_production' %}
                                     <span class="badge badge-production">Em Produ????o</span>
-                                {% elif spec.status == 'completed' %}
+                                    {% elif spec.status == 'completed' %}
                                     <span class="badge badge-completed">Concluido</span>
-                                {% endif %}
-                                
-                                {% if spec.processing_status == 'completed' %}
+                                    {% endif %}
+
+                                    {% if spec.processing_status == 'completed' %}
                                     <span class="badge badge-completed">Completo</span>
-                                {% elif spec.processing_status == 'processing' %}
+                                    {% elif spec.processing_status == 'processing' %}
                                     <span class="badge badge-processing">Processando</span>
-                                {% elif spec.processing_status == 'error' %}
+                                    {% elif spec.processing_status == 'error' %}
                                     <span class="badge badge-error">Erro</span>
-                                {% endif %}
-                                
-                                {% if spec.price_range %}
+                                    {% endif %}
+
+                                    {% if spec.price_range %}
                                     <span class="badge badge-price-{{ spec.price_range.lower() }}">
                                         <i class="fas fa-tag"></i> {{ spec.price_range }}
                                     </span>
-                                {% endif %}
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                    </a>
-                    <div class="product-actions">
-                        <a href="{{ url_for('specifications.edit', id=spec.id) }}" class="btn-action">
-                            <i class="fas fa-edit"></i> Editar
                         </a>
-                        <button class="btn-action btn-danger" onclick="if(confirm('Tem certeza que deseja excluir esta ficha?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
-                            <i class="fas fa-trash"></i> Excluir
-                        </button>
+                        <div class="product-actions">
+                            <a href="{{ url_for('specifications.edit', id=spec.id) }}" class="btn-action">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <button class="btn-action btn-danger"
+                                onclick="if(confirm('Tem certeza que deseja excluir esta ficha?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
+                                <i class="fas fa-trash"></i> Excluir
+                            </button>
+                        </div>
+                        <form id="delete-form-{{ spec.id }}" method="POST"
+                            action="{{ url_for('specifications.delete', id=spec.id) }}" style="display: none;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        </form>
                     </div>
-                    <form id="delete-form-{{ spec.id }}" method="POST" action="{{ url_for('specifications.delete', id=spec.id) }}" style="display: none;">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    </form>
                 </div>
                 {% endfor %}
             </div>
@@ -784,31 +1021,48 @@
             </header>
 
             {% if fichas %}
-            <div class="products-grid">
+            <!-- Flux Toolbar -->
+            <div class="flux-toolbar">
+                <label>
+                    <input type="checkbox" id="fluxSelectAll">
+                    Selecionar todas
+                </label>
+                <button class="btn-flux" id="btnSendFlux" disabled>
+                    <i class="fas fa-paper-plane"></i>
+                    Enviar para o Flux
+                </button>
+                <span class="selection-counter hidden" id="selectionCounter"></span>
+            </div>
+            <div class="products-grid" id="fichasGrid">
                 {% for ficha in fichas %}
-                <div class="product-card">
-                    <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}" style="text-decoration: none; color: inherit;">
-                        <div class="product-image">
-                            <i class="fas fa-file-excel"></i>
-                        </div>
-                        <div class="product-info">
-                            <div class="product-name">
-                                {{ ficha.number_pi_order or ficha.source_filename or 'Planilha importada' }}
+                <div class="ficha-card-wrapper" data-ficha-id="{{ ficha.id }}"
+                    data-ficha-name="{{ ficha.number_pi_order or ficha.source_filename or 'Planilha' }}">
+                    <input type="checkbox" class="ficha-card-select" data-ficha-id="{{ ficha.id }}">
+                    <div class="product-card">
+                        <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}"
+                            style="text-decoration: none; color: inherit;">
+                            <div class="product-image">
+                                <i class="fas fa-file-excel"></i>
                             </div>
-                            <div class="product-meta">
-                                {% if ficha.supplier_no %}
-                                <span class="badge badge-supplier">
-                                    <i class="fas fa-truck"></i> {{ ficha.supplier_no }}
-                                </span>
-                                {% endif %}
-                                {% if ficha.created_at %}
-                                <span class="badge badge-collection">
-                                    <i class="fas fa-calendar"></i> {{ ficha.created_at.strftime('%d/%m/%Y') }}
-                                </span>
-                                {% endif %}
+                            <div class="product-info">
+                                <div class="product-name">
+                                    {{ ficha.number_pi_order or ficha.source_filename or 'Planilha importada' }}
+                                </div>
+                                <div class="product-meta">
+                                    {% if ficha.supplier_no %}
+                                    <span class="badge badge-supplier">
+                                        <i class="fas fa-truck"></i> {{ ficha.supplier_no }}
+                                    </span>
+                                    {% endif %}
+                                    {% if ficha.created_at %}
+                                    <span class="badge badge-collection">
+                                        <i class="fas fa-calendar"></i> {{ ficha.created_at.strftime('%d/%m/%Y') }}
+                                    </span>
+                                    {% endif %}
+                                </div>
                             </div>
-                        </div>
-                    </a>
+                        </a>
+                    </div>
                 </div>
                 {% endfor %}
             </div>
@@ -826,6 +1080,26 @@
         </main>
     </div>
 
+    <!-- Flux Confirmation Modal -->
+    <div class="flux-modal-overlay" id="fluxModal">
+        <div class="flux-modal">
+            <div class="flux-modal-header">
+                <i class="fas fa-paper-plane"></i>
+                <h2>Enviar para o Flux</h2>
+            </div>
+            <div class="flux-modal-body" id="fluxModalBody"></div>
+            <div class="flux-modal-footer">
+                <button class="btn-secondary" id="btnFluxCancel"
+                    style="padding:10px 18px;border-radius:8px;border:1px solid #334155;background:#1f2937;color:#e5e7eb;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn-flux" id="btnFluxConfirm">
+                    <i class="fas fa-check"></i> Confirmar envio
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function filterProducts() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
@@ -833,30 +1107,387 @@
             const supplierFilter = document.getElementById('supplierFilter') ? document.getElementById('supplierFilter').value : '';
             const statusFilter = document.getElementById('statusFilter').value;
             const priceRangeFilter = document.getElementById('priceRangeFilter').value;
-            
+
             const cards = document.querySelectorAll('.product-card');
-            
+
             cards.forEach(card => {
-                const name = card.dataset.name.toLowerCase();
-                const ref = card.dataset.ref.toLowerCase();
-                const collection = card.dataset.collection;
-                const supplier = card.dataset.supplier;
-                const status = card.dataset.status;
-                const priceRange = card.dataset.priceRange;
-                
+                const name = (card.dataset.name || '').toLowerCase();
+                const ref = (card.dataset.ref || '').toLowerCase();
+                const collection = card.dataset.collection || '';
+                const supplier = card.dataset.supplier || '';
+                const status = card.dataset.status || '';
+                const priceRange = card.dataset.priceRange || '';
+
                 const matchesSearch = name.includes(searchTerm) || ref.includes(searchTerm) || collection.toLowerCase().includes(searchTerm);
                 const matchesCollection = !collectionFilter || collection === collectionFilter;
                 const matchesSupplier = !supplierFilter || supplier === supplierFilter;
                 const matchesStatus = !statusFilter || status === statusFilter;
                 const matchesPriceRange = !priceRangeFilter || priceRange === priceRangeFilter;
-                
+
+                // Hide wrapper if card is wrapped, otherwise hide card directly
+                const target = card.closest('.ficha-card-wrapper') || card;
                 if (matchesSearch && matchesCollection && matchesSupplier && matchesStatus && matchesPriceRange) {
-                    card.style.display = '';
+                    target.style.display = '';
                 } else {
-                    card.style.display = 'none';
+                    target.style.display = 'none';
                 }
             });
         }
+
+        // ─── Flux Selection & Send ───
+        const selectedFichaIds = new Set();
+        const btnSendFlux = document.getElementById('btnSendFlux');
+        const selectionCounter = document.getElementById('selectionCounter');
+        const fluxSelectAll = document.getElementById('fluxSelectAll');
+        const fluxModal = document.getElementById('fluxModal');
+        const fluxModalBody = document.getElementById('fluxModalBody');
+        const btnFluxCancel = document.getElementById('btnFluxCancel');
+        const btnFluxConfirm = document.getElementById('btnFluxConfirm');
+
+        function updateFluxState() {
+            const has = selectedFichaIds.size > 0;
+            if (btnSendFlux) btnSendFlux.disabled = !has;
+            if (selectionCounter) {
+                if (has) {
+                    selectionCounter.classList.remove('hidden');
+                    selectionCounter.textContent = selectedFichaIds.size === 1
+                        ? '1 ficha selecionada'
+                        : `${selectedFichaIds.size} fichas selecionadas`;
+                } else {
+                    selectionCounter.classList.add('hidden');
+                }
+            }
+            // Update card outlines
+            document.querySelectorAll('.ficha-card-wrapper').forEach(w => {
+                const id = parseInt(w.dataset.fichaId, 10);
+                w.classList.toggle('selected', selectedFichaIds.has(id));
+            });
+        }
+
+        // Individual checkboxes
+        document.querySelectorAll('.ficha-card-select').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                e.stopPropagation();
+                const id = parseInt(cb.dataset.fichaId, 10);
+                if (cb.checked) {
+                    selectedFichaIds.add(id);
+                } else {
+                    selectedFichaIds.delete(id);
+                }
+                updateFluxState();
+                // Update select-all checkbox
+                if (fluxSelectAll) {
+                    const allCbs = document.querySelectorAll('.ficha-card-select');
+                    fluxSelectAll.checked = allCbs.length > 0 && Array.from(allCbs).every(c => c.checked);
+                }
+            });
+        });
+
+        // Select all
+        if (fluxSelectAll) {
+            fluxSelectAll.addEventListener('change', () => {
+                document.querySelectorAll('.ficha-card-select').forEach(cb => {
+                    cb.checked = fluxSelectAll.checked;
+                    const id = parseInt(cb.dataset.fichaId, 10);
+                    if (fluxSelectAll.checked) {
+                        selectedFichaIds.add(id);
+                    } else {
+                        selectedFichaIds.delete(id);
+                    }
+                });
+                updateFluxState();
+            });
+        }
+
+        // Open modal
+        if (btnSendFlux) {
+            btnSendFlux.addEventListener('click', () => {
+                if (!selectedFichaIds.size) return;
+                const count = selectedFichaIds.size;
+
+                let listHtml = '<ul class="flux-item-list">';
+                document.querySelectorAll('.ficha-card-wrapper').forEach(w => {
+                    const id = parseInt(w.dataset.fichaId, 10);
+                    if (selectedFichaIds.has(id)) {
+                        const name = w.dataset.fichaName || `Ficha #${id}`;
+                        listHtml += `<li><i class="fas fa-file-excel" style="color:#34d399;"></i> <span class="item-ref">${name}</span></li>`;
+                    }
+                });
+                listHtml += '</ul>';
+
+                fluxModalBody.innerHTML = `
+                    <p class="flux-modal-count">
+                        Você está prestes a enviar todos os itens de
+                        <strong>${count}</strong> ${count === 1 ? 'ficha' : 'fichas'}
+                        para o Fluxogama.
+                    </p>
+                    ${listHtml}
+                `;
+
+                btnFluxConfirm.disabled = false;
+                btnFluxConfirm.style.display = '';
+                btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
+                btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+                fluxModal.classList.add('active');
+            });
+        }
+
+        // Cancel
+        if (btnFluxCancel) {
+            btnFluxCancel.addEventListener('click', () => {
+                fluxModal.classList.remove('active');
+            });
+        }
+        if (fluxModal) {
+            fluxModal.addEventListener('click', (e) => {
+                if (e.target === fluxModal) fluxModal.classList.remove('active');
+            });
+        }
+
+        // Confirm send
+        if (btnFluxConfirm) {
+            btnFluxConfirm.addEventListener('click', async () => {
+                btnFluxConfirm.disabled = true;
+                btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
+                btnFluxCancel.style.display = 'none';
+
+                const fichaIds = Array.from(selectedFichaIds);
+                let allResults = [];
+                let totalSuccess = 0;
+                let totalError = 0;
+
+                for (const fichaId of fichaIds) {
+                    try {
+                        // First, get items for this ficha
+                        const itemsResp = await fetch(`/api/fichas/${fichaId}/itens?per_page=999`, { credentials: 'same-origin' });
+                        const itemsData = await itemsResp.json();
+                        if (!itemsData.success || !itemsData.items || itemsData.items.length === 0) {
+                            allResults.push({ fichaId, ok: false, message: 'Sem itens ou erro ao carregar.' });
+                            totalError++;
+                            continue;
+                        }
+
+                        const itemIds = itemsData.items.map(it => it.id);
+
+                        // Send batch
+                        const sendResp = await fetch('/api/fluxogama/send-batch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ficha_id: fichaId, item_ids: itemIds }),
+                            credentials: 'same-origin',
+                        });
+                        const sendData = await sendResp.json();
+
+                        if (sendData.results) {
+                            const successes = sendData.results.filter(r => r.ok).length;
+                            const errors = sendData.results.filter(r => !r.ok).length;
+                            totalSuccess += successes;
+                            totalError += errors;
+                            allResults.push({
+                                fichaId,
+                                ok: errors === 0,
+                                message: errors === 0
+                                    ? `${successes} itens enviados com sucesso.`
+                                    : `${successes} OK, ${errors} com erro.`,
+                                details: sendData.results,
+                            });
+                        } else {
+                            allResults.push({ fichaId, ok: false, message: sendData.error || 'Erro desconhecido.' });
+                            totalError++;
+                        }
+                    } catch (err) {
+                        allResults.push({ fichaId, ok: false, message: `Erro de conexão: ${err.message}` });
+                        totalError++;
+                    }
+                }
+
+                // Show results
+                let html = '';
+                if (totalError === 0) {
+                    html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> Todos os itens enviados com sucesso! (${totalSuccess} itens)</p>`;
+                } else {
+                    html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${totalSuccess} item(ns) enviados.</p>`;
+                    html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${totalError} com erro.</p>`;
+                }
+
+                html += '<ul class="flux-item-list" style="margin-top:12px;">';
+                allResults.forEach(r => {
+                    const wrapper = document.querySelector(`.ficha-card-wrapper[data-ficha-id="${r.fichaId}"]`);
+                    const name = wrapper ? wrapper.dataset.fichaName : `Ficha #${r.fichaId}`;
+                    const icon = r.ok
+                        ? '<i class="fas fa-check" style="color:#34d399"></i>'
+                        : '<i class="fas fa-times" style="color:#f87171"></i>';
+                    html += `<li>${icon} <span class="item-ref">${name}</span> <span>${r.message}</span></li>`;
+                });
+                html += '</ul>';
+
+                fluxModalBody.innerHTML = html;
+                btnFluxConfirm.style.display = 'none';
+                btnFluxCancel.style.display = '';
+                btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
+
+                // Clear only successful fichas from selection
+                allResults.forEach(r => {
+                    if (r.ok) {
+                        selectedFichaIds.delete(r.fichaId);
+                        const cb = document.querySelector(`.ficha-card-select[data-ficha-id="${r.fichaId}"]`);
+                        if (cb) cb.checked = false;
+                    }
+                });
+                if (fluxSelectAll) fluxSelectAll.checked = false;
+                updateFluxState();
+            });
+        }
+
+        // ─── Spec Selection & Send ───
+        const selectedSpecIds = new Set();
+        const btnSendFluxSpec = document.getElementById('btnSendFluxSpec');
+        const specSelectionCounter = document.getElementById('specSelectionCounter');
+        const specSelectAll = document.getElementById('specSelectAll');
+
+        function updateSpecFluxState() {
+            const has = selectedSpecIds.size > 0;
+            if (btnSendFluxSpec) btnSendFluxSpec.disabled = !has;
+            if (specSelectionCounter) {
+                if (has) {
+                    specSelectionCounter.classList.remove('hidden');
+                    specSelectionCounter.textContent = selectedSpecIds.size === 1
+                        ? '1 ficha selecionada'
+                        : `${selectedSpecIds.size} fichas selecionadas`;
+                } else {
+                    specSelectionCounter.classList.add('hidden');
+                }
+            }
+            document.querySelectorAll('.ficha-card-wrapper[data-spec-id]').forEach(w => {
+                const id = parseInt(w.dataset.specId, 10);
+                w.classList.toggle('selected', selectedSpecIds.has(id));
+            });
+        }
+
+        // Spec individual checkboxes
+        document.querySelectorAll('.spec-card-select').forEach(cb => {
+            cb.addEventListener('change', (e) => {
+                e.stopPropagation();
+                const id = parseInt(cb.dataset.specId, 10);
+                if (cb.checked) selectedSpecIds.add(id);
+                else selectedSpecIds.delete(id);
+                updateSpecFluxState();
+                if (specSelectAll) {
+                    const allCbs = document.querySelectorAll('.spec-card-select');
+                    specSelectAll.checked = allCbs.length > 0 && Array.from(allCbs).every(c => c.checked);
+                }
+            });
+        });
+
+        // Spec select all
+        if (specSelectAll) {
+            specSelectAll.addEventListener('change', () => {
+                document.querySelectorAll('.spec-card-select').forEach(cb => {
+                    cb.checked = specSelectAll.checked;
+                    const id = parseInt(cb.dataset.specId, 10);
+                    if (specSelectAll.checked) selectedSpecIds.add(id);
+                    else selectedSpecIds.delete(id);
+                });
+                updateSpecFluxState();
+            });
+        }
+
+        // Spec send button → open modal
+        if (btnSendFluxSpec) {
+            btnSendFluxSpec.addEventListener('click', () => {
+                if (!selectedSpecIds.size) return;
+                const count = selectedSpecIds.size;
+
+                let listHtml = '<ul class="flux-item-list">';
+                document.querySelectorAll('.ficha-card-wrapper[data-spec-id]').forEach(w => {
+                    const id = parseInt(w.dataset.specId, 10);
+                    if (selectedSpecIds.has(id)) {
+                        const name = w.dataset.specName || `Spec #${id}`;
+                        listHtml += `<li><i class="fas fa-file-pdf" style="color:#60a5fa;"></i> <span class="item-ref">${name}</span></li>`;
+                    }
+                });
+                listHtml += '</ul>';
+
+                fluxModalBody.innerHTML = `
+                    <p class="flux-modal-count">
+                        Você está prestes a enviar
+                        <strong>${count}</strong> ${count === 1 ? 'ficha técnica' : 'fichas técnicas'}
+                        para o Fluxogama.
+                    </p>
+                    ${listHtml}
+                `;
+
+                // Rebind confirm to spec send
+                btnFluxConfirm.disabled = false;
+                btnFluxConfirm.style.display = '';
+                btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
+                btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+                btnFluxConfirm.onclick = sendSpecBatch;
+                fluxModal.classList.add('active');
+            });
+        }
+
+        async function sendSpecBatch() {
+            btnFluxConfirm.disabled = true;
+            btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
+            btnFluxCancel.style.display = 'none';
+
+            const specIds = Array.from(selectedSpecIds);
+            try {
+                const resp = await fetch('/api/fluxogama/send-batch-specs', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ spec_ids: specIds }),
+                    credentials: 'same-origin',
+                });
+                const data = await resp.json();
+
+                let html = '';
+                if (data.results) {
+                    const ok = data.results.filter(r => r.ok).length;
+                    const fail = data.results.filter(r => !r.ok).length;
+                    if (fail === 0) {
+                        html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> Todas as ${ok} fichas enviadas com sucesso!</p>`;
+                    } else {
+                        html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${ok} enviada(s).</p>`;
+                        html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${fail} com erro.</p>`;
+                    }
+
+                    html += '<ul class="flux-item-list" style="margin-top:12px;">';
+                    data.results.forEach(r => {
+                        const wrapper = document.querySelector(`.ficha-card-wrapper[data-spec-id="${r.spec_id}"]`);
+                        const name = wrapper ? wrapper.dataset.specName : `Spec #${r.spec_id}`;
+                        const icon = r.ok
+                            ? '<i class="fas fa-check" style="color:#34d399"></i>'
+                            : '<i class="fas fa-times" style="color:#f87171"></i>';
+                        html += `<li>${icon} <span class="item-ref">${name}</span> <span>${r.message}</span></li>`;
+                    });
+                    html += '</ul>';
+
+                    // Clear only successes
+                    data.results.forEach(r => {
+                        if (r.ok) {
+                            selectedSpecIds.delete(r.spec_id);
+                            const cb = document.querySelector(`.spec-card-select[data-spec-id="${r.spec_id}"]`);
+                            if (cb) cb.checked = false;
+                        }
+                    });
+                } else {
+                    html = `<p class="flux-result-fail"><i class="fas fa-times-circle"></i> ${data.error || 'Erro desconhecido.'}</p>`;
+                }
+
+                fluxModalBody.innerHTML = html;
+            } catch (err) {
+                fluxModalBody.innerHTML = `<p class="flux-result-fail"><i class="fas fa-times-circle"></i> Erro de conexão: ${err.message}</p>`;
+            }
+
+            btnFluxConfirm.style.display = 'none';
+            btnFluxCancel.style.display = '';
+            btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
+            if (specSelectAll) specSelectAll.checked = false;
+            updateSpecFluxState();
+        }
     </script>
 </body>
+
 </html>

@@ -84,6 +84,9 @@ COLUMN_MAP = {
     'obs': 'obs',
     'samples_qty': 'pp_samples_qty',
     'repeat_recompra': 'repeat_recompra',
+    'colecao': 'colecao',
+    'colecao_': 'colecao',
+    'collection': 'colecao',
 }
 
 NUMERIC_FIELDS = {

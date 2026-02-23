@@ -1,13 +1,19 @@
 import io
 import json
 import csv
+import time
 import uuid
 from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, session, request, send_file
 from app.extensions import csrf, db
-from app.models import User, Specification, FichaTecnica, FichaTecnicaItem
+from app.models import User, Specification, FichaTecnica, FichaTecnicaItem, OazValueMap
 from app.utils.auth import login_required
 from app.utils.excel_parser import parse_excel, HEADER_FIELD_MAP
+from app.integrations.oaz.client import OazClient, OazConfigError, compute_payload_hash
+from app.integrations.oaz.mapper import (
+    build_oaz_payload, get_oaz_map_lookup, normalize_text, FIELD_MAP, DB_FIELDS,
+)
+from app.integrations.oaz.validator import validate_oaz_payload
 import logging
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
@@ -437,3 +443,331 @@ def get_spec_status(spec_id):
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# OAZ Integration Endpoints
+# ═══════════════════════════════════════════════════════════════════════
+
+@api_bp.route('/oaz/health', methods=['GET'])
+@login_required
+def oaz_health():
+    """GET /api/oaz/health — Test OAZ connectivity and fetch schema."""
+    try:
+        client = OazClient()
+        schema = client.get_schema()
+        return jsonify({
+            'success': True,
+            'schema_keys': len(schema) if isinstance(schema, dict) else 0,
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
+        })
+    except OazConfigError as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Erro de conexão: {str(e)}'}), 502
+
+
+@api_bp.route('/oaz/mapping', methods=['GET', 'POST'])
+@login_required
+@csrf.exempt
+def oaz_mapping():
+    """
+    GET  /api/oaz/mapping — List all WSID mappings.
+    POST /api/oaz/mapping — Bulk upsert WSID mappings.
+
+    POST body:
+        {"mappings": [{"field_key": "uno.10", "text_value": "ACESSÓRIOS", "wsid_value": "9283"}, ...]}
+    """
+    if request.method == 'GET':
+        maps = OazValueMap.query.order_by(OazValueMap.field_key).all()
+        return jsonify({
+            'success': True,
+            'mappings': [m.to_dict() for m in maps],
+            'total': len(maps),
+        })
+
+    # POST: bulk upsert
+    data = request.get_json(silent=True) or {}
+    mappings = data.get('mappings', [])
+    if not mappings:
+        return jsonify({'success': False, 'error': 'Lista de mappings vazia'}), 400
+
+    created = 0
+    updated = 0
+    errors = []
+
+    for i, m in enumerate(mappings):
+        fk = m.get('field_key', '').strip()
+        tv = m.get('text_value', '').strip()
+        wv = m.get('wsid_value', '').strip()
+
+        if not fk or not tv or not wv:
+            errors.append(f'Mapping #{i}: campos obrigatórios faltando')
+            continue
+
+        text_norm = normalize_text(tv)
+
+        existing = OazValueMap.query.filter_by(
+            field_key=fk, text_norm=text_norm
+        ).first()
+
+        if existing:
+            existing.wsid_value = wv
+            existing.text_value = tv
+            existing.updated_at = datetime.utcnow()
+            updated += 1
+        else:
+            db.session.add(OazValueMap(
+                field_key=fk,
+                text_value=tv,
+                text_norm=text_norm,
+                wsid_value=wv,
+            ))
+            created += 1
+
+    db.session.commit()
+    return jsonify({
+        'success': True,
+        'created': created,
+        'updated': updated,
+        'errors': errors,
+    })
+
+
+@api_bp.route('/fichas/<int:ficha_id>/oaz/preview', methods=['GET'])
+@login_required
+def oaz_preview(ficha_id):
+    """GET /api/fichas/<id>/oaz/preview — Preview OAZ payload for all items."""
+    user = User.query.get(session.get('user_id'))
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessao invalida'}), 401
+
+    ficha = FichaTecnica.query.get_or_404(ficha_id)
+    if not _ensure_user_access(user, ficha):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    items = FichaTecnicaItem.query.filter_by(ficha_id=ficha.id).all()
+    if not items:
+        return jsonify({'success': False, 'error': 'Nenhum item nesta ficha'}), 404
+
+    oaz_map = get_oaz_map_lookup(db.session)
+
+    results = []
+    total_errors = 0
+    total_warnings = 0
+
+    for item in items:
+        result = build_oaz_payload(ficha, item, oaz_map)
+        validation = validate_oaz_payload(result['payload'])
+
+        total_errors += len(validation['errors'])
+        total_warnings += len(validation['warnings'])
+
+        # Clean internal fields from payload for display
+        display_payload = {
+            k: v for k, v in result['payload'].items() if not k.startswith('_')
+        }
+
+        results.append({
+            'item_id': item.id,
+            'item_ref': item.item_no_ref_supplier,
+            'oaz_reference': item.oaz_reference,
+            'payload': display_payload,
+            'valid': validation['ok'],
+            'errors': validation['errors'],
+            'warnings': validation['warnings'],
+            'fallbacks': result.get('fallbacks', []),
+            'current_status': item.oaz_status,
+            'payload_hash': compute_payload_hash(result['payload']),
+        })
+
+    return jsonify({
+        'success': True,
+        'ficha_id': ficha.id,
+        'total_items': len(results),
+        'total_errors': total_errors,
+        'total_warnings': total_warnings,
+        'ready_to_push': total_errors == 0,
+        'items': results,
+    })
+
+
+@api_bp.route('/fichas/<int:ficha_id>/oaz/push', methods=['POST'])
+@login_required
+@csrf.exempt
+def oaz_push(ficha_id):
+    """
+    POST /api/fichas/<id>/oaz/push — Push items to OAZ.
+
+    Body JSON:
+        {
+            "dry_run": bool (default false),
+            "force": bool (default false — skip idempotency check),
+            "item_ids": [int, ...] (optional — push only specific items)
+        }
+    """
+    user = User.query.get(session.get('user_id'))
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessao invalida'}), 401
+
+    ficha = FichaTecnica.query.get_or_404(ficha_id)
+    if not _ensure_user_access(user, ficha):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    data = request.get_json(silent=True) or {}
+    dry_run = data.get('dry_run', False)
+    force = data.get('force', False)
+    item_ids = data.get('item_ids')
+
+    query = FichaTecnicaItem.query.filter_by(ficha_id=ficha.id)
+    if item_ids:
+        query = query.filter(FichaTecnicaItem.id.in_(item_ids))
+    items = query.all()
+
+    if not items:
+        return jsonify({'success': False, 'error': 'Nenhum item encontrado'}), 404
+
+    oaz_map = get_oaz_map_lookup(db.session)
+
+    # Initialize client (will raise OazConfigError if not configured)
+    try:
+        client = OazClient()
+    except OazConfigError as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+    results = []
+    batch_delay = 0.1  # 100ms between pushes
+
+    for i, item in enumerate(items):
+        result = build_oaz_payload(ficha, item, oaz_map)
+        validation = validate_oaz_payload(result['payload'])
+        payload_hash = compute_payload_hash(result['payload'])
+
+        # Clean payload (remove internal metadata)
+        clean_payload = {
+            k: v for k, v in result['payload'].items() if not k.startswith('_')
+        }
+
+        # Validation gate
+        if not validation['ok']:
+            item.oaz_status = 'ERROR'
+            item.oaz_last_error = json.dumps(validation['errors'], ensure_ascii=False)
+            db.session.commit()
+            results.append({
+                'item_id': item.id,
+                'status': 'VALIDATION_ERROR',
+                'errors': validation['errors'],
+            })
+            continue
+
+        # Idempotency check
+        if (
+            not force
+            and item.oaz_status == 'SENT'
+            and item.oaz_payload_hash == payload_hash
+        ):
+            results.append({
+                'item_id': item.id,
+                'status': 'SKIPPED_IDEMPOTENT',
+                'message': 'Payload identico ao último envio.',
+            })
+            continue
+
+        # Dry run
+        if dry_run:
+            results.append({
+                'item_id': item.id,
+                'status': 'DRY_RUN',
+                'payload': clean_payload,
+                'payload_hash': payload_hash,
+            })
+            continue
+
+        # ── Actual push ────────────────────────────────────────────────
+        try:
+            response = client.push_modelo(clean_payload)
+            item.oaz_status = 'SENT'
+            item.oaz_pushed_at = datetime.utcnow()
+            item.oaz_payload_hash = payload_hash
+            item.oaz_last_error = None
+            item.oaz_last_response = json.dumps(response, ensure_ascii=False, default=str)[:2000]
+            item.oaz_remote_id = str(response.get('id', response.get('ws_id', '')))
+            db.session.commit()
+
+            results.append({
+                'item_id': item.id,
+                'status': 'SENT',
+                'response': response,
+            })
+        except Exception as e:
+            item.oaz_status = 'ERROR'
+            item.oaz_last_error = str(e)[:2000]
+            db.session.commit()
+
+            results.append({
+                'item_id': item.id,
+                'status': 'ERROR',
+                'error': str(e),
+            })
+
+        # Batch delay between items
+        if i < len(items) - 1:
+            time.sleep(batch_delay)
+
+    sent = sum(1 for r in results if r['status'] == 'SENT')
+    skipped = sum(1 for r in results if r['status'] == 'SKIPPED_IDEMPOTENT')
+    failed = sum(1 for r in results if r['status'] in ('ERROR', 'VALIDATION_ERROR'))
+    dry = sum(1 for r in results if r['status'] == 'DRY_RUN')
+
+    return jsonify({
+        'success': True,
+        'ficha_id': ficha.id,
+        'dry_run': dry_run,
+        'summary': {
+            'total': len(results),
+            'sent': sent,
+            'skipped_idempotent': skipped,
+            'failed': failed,
+            'dry_run': dry,
+        },
+        'items': results,
+    })
+
+
+@api_bp.route('/fichas/<int:ficha_id>/oaz/status', methods=['GET'])
+@login_required
+def oaz_status(ficha_id):
+    """GET /api/fichas/<id>/oaz/status — Current OAZ status for all items."""
+    user = User.query.get(session.get('user_id'))
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessao invalida'}), 401
+
+    ficha = FichaTecnica.query.get_or_404(ficha_id)
+    if not _ensure_user_access(user, ficha):
+        return jsonify({'success': False, 'error': 'Acesso negado'}), 403
+
+    items = FichaTecnicaItem.query.filter_by(ficha_id=ficha.id).all()
+
+    statuses = []
+    counts = {'PENDING': 0, 'SENT': 0, 'ERROR': 0, 'NONE': 0}
+
+    for item in items:
+        status = item.oaz_status or 'NONE'
+        counts[status] = counts.get(status, 0) + 1
+        statuses.append({
+            'item_id': item.id,
+            'item_ref': item.item_no_ref_supplier,
+            'oaz_status': status,
+            'oaz_pushed_at': item.oaz_pushed_at.isoformat() if item.oaz_pushed_at else None,
+            'oaz_remote_id': item.oaz_remote_id,
+            'oaz_last_error': item.oaz_last_error,
+            'oaz_payload_hash': item.oaz_payload_hash,
+        })
+
+    return jsonify({
+        'success': True,
+        'ficha_id': ficha.id,
+        'total': len(statuses),
+        'counts': counts,
+        'items': statuses,
+    })

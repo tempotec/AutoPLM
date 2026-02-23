@@ -6,20 +6,15 @@ RPA_MONITOR_ENABLED = False
 rpa_log = None
 
 
-def init_rpa_monitor(rpa_id, host, port, region, transport):
+def init_rpa_monitor(rpa_id=None, host=None, port=None, region=None, transport=None):
     global RPA_MONITOR_ENABLED, rpa_log
     try:
-        from rpa_monitor_client import setup_rpa_monitor, rpa_log as _rpa_log
-        setup_rpa_monitor(
-            rpa_id=rpa_id,
-            host=host,
-            port=port,
-            region=region,
-            transport=transport,
-        )
+        from rpa_monitor_client import auto_setup_rpa_monitor, rpa_log as _rpa_log
+        # Usa auto_setup que lê direto das variáveis de ambiente
+        auto_setup_rpa_monitor()
         rpa_log = _rpa_log
         RPA_MONITOR_ENABLED = True
-        print(f"RPA Monitor connected: {rpa_id} -> {host}")
+        print(f"RPA Monitor connected successfully")
         return True
     except ImportError:
         print("WARNING: rpa_monitor_client not installed, monitoring disabled")

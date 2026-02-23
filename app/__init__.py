@@ -79,23 +79,13 @@ def create_app(config_name=None):
     
     init_openai(app.config.get('OPENAI_API_KEY'))
     
-    # RPA Monitor temporariamente desabilitado - pacote rpa_monitor_client com problema de conexao
-    # Para reativar, descomente o bloco abaixo e corrija o pacote rpa_monitor_client
-    # rpa_host = app.config.get('RPA_MONITOR_HOST', '')
-    # if app.config.get('RPA_MONITOR_ID') and rpa_host:
-    #     try:
-    #         host_parts = rpa_host.replace('ws://', '').replace('wss://', '').split(':')
-    #         host = host_parts[0]
-    #         port = int(host_parts[1]) if len(host_parts) > 1 else 443
-    #         init_rpa_monitor(
-    #             rpa_id=app.config['RPA_MONITOR_ID'],
-    #             host=host,
-    #             port=port,
-    #             region=app.config.get('RPA_MONITOR_REGION', 'default'),
-    #             transport=app.config.get('RPA_MONITOR_TRANSPORT', 'ws')
-    #         )
-    #     except Exception as e:
-    #         print(f"RPA Monitor initialization skipped: {e}")
+    # RPA Monitor initialization
+    rpa_host = app.config.get('RPA_MONITOR_HOST', '')
+    if app.config.get('RPA_MONITOR_ID') and rpa_host:
+        try:
+            init_rpa_monitor()
+        except Exception as e:
+            print(f"RPA Monitor initialization skipped: {e}")
     
     register_blueprints(app)
     

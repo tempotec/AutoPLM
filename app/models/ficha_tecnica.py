@@ -106,6 +106,20 @@ class FichaTecnicaItem(db.Model):
     obs = db.Column(db.String(500))
     pp_samples_qty = db.Column(db.Float)
     repeat_recompra = db.Column(db.String(255))
+    colecao = db.Column(db.String(255))
+
+    # Fluxogama integration tracking
+    fluxogama_status = db.Column(db.String(50))  # 'pending', 'sent', 'error'
+    fluxogama_sent_at = db.Column(db.DateTime)
+    fluxogama_response = db.Column(db.Text)  # JSON snippet of last response
+
+    # OAZ integration tracking (/remessa/modelo)
+    oaz_status = db.Column(db.String(50))       # PENDING, SENT, ERROR
+    oaz_pushed_at = db.Column(db.DateTime)
+    oaz_remote_id = db.Column(db.String(255))   # ID returned by OAZ
+    oaz_last_error = db.Column(db.Text)
+    oaz_payload_hash = db.Column(db.String(64)) # SHA-256 for idempotency
+    oaz_last_response = db.Column(db.Text)      # JSON summary from OAZ
 
     raw_row = db.Column(db.Text)
 

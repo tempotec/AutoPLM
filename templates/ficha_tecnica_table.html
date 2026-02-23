@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -298,7 +299,8 @@
             background-color: #1f2937;
         }
 
-        th, td {
+        th,
+        td {
             padding: 10px 12px;
             border-bottom: 1px solid #1f2937;
             color: #cbd5f5;
@@ -341,8 +343,174 @@
             width: 14px;
             height: 14px;
         }
+
+        /* Flux button */
+        .btn-flux {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+        }
+
+        .btn-flux:hover:not(:disabled) {
+            background: linear-gradient(135deg, #6d28d9, #5b21b6);
+        }
+
+        .btn-flux:disabled {
+            background: #1e293b;
+            color: #475569;
+            cursor: not-allowed;
+        }
+
+        .selection-counter {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #a78bfa;
+            font-weight: 500;
+            padding: 0 8px;
+        }
+
+        .selection-counter.hidden {
+            display: none;
+        }
+
+        /* Modal overlay */
+        .flux-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flux-modal-overlay.active {
+            display: flex;
+        }
+
+        .flux-modal {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            width: 480px;
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .flux-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .flux-modal-header i {
+            font-size: 24px;
+            color: #a78bfa;
+        }
+
+        .flux-modal-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+
+        .flux-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 24px;
+        }
+
+        .flux-modal-count {
+            font-size: 15px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .flux-modal-count strong {
+            color: #a78bfa;
+        }
+
+        .flux-item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #0f172a;
+            border-radius: 8px;
+            border: 1px solid #1f2937;
+        }
+
+        .flux-item-list li {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            gap: 8px;
+        }
+
+        .flux-item-list li:last-child {
+            border-bottom: none;
+        }
+
+        .flux-item-list .item-ref {
+            color: #e2e8f0;
+            font-weight: 600;
+            min-width: 100px;
+        }
+
+        .flux-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Result states */
+        .flux-result-ok {
+            color: #34d399;
+        }
+
+        .flux-result-fail {
+            color: #f87171;
+        }
+
+        .flux-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            color: #a78bfa;
+            font-size: 14px;
+        }
+
+        .flux-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #334155;
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: fluxSpin 0.6s linear infinite;
+        }
+
+        @keyframes fluxSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <aside class="sidebar">
@@ -403,10 +571,16 @@
                         <h1 class="page-title">Itens da Ficha Tecnica</h1>
                         <p class="page-subtitle">Gerencie os itens importados do Excel.</p>
                     </div>
-                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i>
-                        Voltar
-                    </a>
+                    <div class="action-group">
+                        <button class="btn btn-danger" id="btnDeleteFicha" title="Excluir esta ficha inteira">
+                            <i class="fas fa-trash-alt"></i>
+                            Excluir Ficha
+                        </button>
+                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Voltar
+                        </a>
+                    </div>
                 </div>
             </header>
 
@@ -440,6 +614,11 @@
                             <i class="fas fa-broom"></i>
                             Limpar tudo
                         </button>
+                        <button class="btn btn-flux" id="btnSendFlux" disabled>
+                            <i class="fas fa-paper-plane"></i>
+                            Enviar para o Flux
+                        </button>
+                        <span class="selection-counter hidden" id="selectionCounter">0 itens selecionados</span>
                     </div>
                     <div class="action-group">
                         <button class="btn btn-primary" id="btnExport">
@@ -465,6 +644,27 @@
         </main>
     </div>
 
+    <!-- Flux Confirmation Modal -->
+    <div class="flux-modal-overlay" id="fluxModal">
+        <div class="flux-modal">
+            <div class="flux-modal-header">
+                <i class="fas fa-paper-plane"></i>
+                <h2>Enviar para o Flux</h2>
+            </div>
+            <div class="flux-modal-body" id="fluxModalBody">
+                <!-- Populated by JS -->
+            </div>
+            <div class="flux-modal-footer" id="fluxModalFooter">
+                <button class="btn btn-secondary" id="btnFluxCancel">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button class="btn btn-flux" id="btnFluxConfirm">
+                    <i class="fas fa-check"></i> Confirmar envio
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const fichaId = {{ ficha.id }};
         const searchInput = document.getElementById('searchInput');
@@ -476,6 +676,12 @@
         const btnBulkDelete = document.getElementById('btnBulkDelete');
         const btnClearAll = document.getElementById('btnClearAll');
         const btnExport = document.getElementById('btnExport');
+        const btnSendFlux = document.getElementById('btnSendFlux');
+        const selectionCounter = document.getElementById('selectionCounter');
+        const fluxModal = document.getElementById('fluxModal');
+        const fluxModalBody = document.getElementById('fluxModalBody');
+        const btnFluxCancel = document.getElementById('btnFluxCancel');
+        const btnFluxConfirm = document.getElementById('btnFluxConfirm');
         const statusLine = document.getElementById('statusLine');
         const tableHeader = document.getElementById('tableHeader');
         const tableBody = document.getElementById('tableBody');
@@ -565,7 +771,17 @@
         }
 
         function updateBulkState() {
-            btnBulkDelete.disabled = selectedIds.size === 0;
+            const hasSelection = selectedIds.size > 0;
+            btnBulkDelete.disabled = !hasSelection;
+            btnSendFlux.disabled = !hasSelection;
+            if (hasSelection) {
+                selectionCounter.classList.remove('hidden');
+                selectionCounter.textContent = selectedIds.size === 1
+                    ? '1 item selecionado'
+                    : `${selectedIds.size} itens selecionados`;
+            } else {
+                selectionCounter.classList.add('hidden');
+            }
         }
 
         async function loadColumns() {
@@ -691,6 +907,147 @@
             window.location.href = `/api/fichas/${fichaId}/itens?${params.toString()}`;
         });
 
+        // ─── Flux Send Flow ───
+
+        // Cache item data for modal display
+        let currentItemsCache = [];
+
+        // Patch renderRows to also cache items for the modal
+        const _origRenderRows = renderRows;
+        renderRows = function (items) {
+            currentItemsCache = items;
+            _origRenderRows(items);
+        };
+
+        btnSendFlux.addEventListener('click', () => {
+            if (!selectedIds.size) return;
+            showFluxConfirmation();
+        });
+
+        function showFluxConfirmation() {
+            const count = selectedIds.size;
+            const selectedItems = currentItemsCache.filter(it => selectedIds.has(it.id));
+
+            let listHtml = '';
+            if (selectedItems.length > 0) {
+                const items = selectedItems.slice(0, 30);
+                listHtml = '<ul class="flux-item-list">';
+                items.forEach(it => {
+                    const ref = it.oaz_reference || it.item_no_ref_supplier || `#${it.id}`;
+                    const desc = it.nome_desc_produto || it.description_item || '';
+                    listHtml += `<li><span class="item-ref">${ref}</span><span>${desc}</span></li>`;
+                });
+                if (selectedItems.length > 30) {
+                    listHtml += `<li style="color:#64748b;">…e mais ${selectedItems.length - 30} itens</li>`;
+                }
+                listHtml += '</ul>';
+            }
+
+            fluxModalBody.innerHTML = `
+                <p class="flux-modal-count">
+                    Você está prestes a enviar <strong>${count}</strong>
+                    ${count === 1 ? 'item' : 'itens'} desta ficha para o Fluxogama.
+                </p>
+                ${listHtml}
+            `;
+
+            btnFluxConfirm.disabled = false;
+            btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
+            btnFluxCancel.style.display = '';
+            fluxModal.classList.add('active');
+        }
+
+        btnFluxCancel.addEventListener('click', () => {
+            fluxModal.classList.remove('active');
+        });
+
+        // Close on overlay click
+        fluxModal.addEventListener('click', (e) => {
+            if (e.target === fluxModal) fluxModal.classList.remove('active');
+        });
+
+        btnFluxConfirm.addEventListener('click', async () => {
+            btnFluxConfirm.disabled = true;
+            btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
+            btnFluxCancel.style.display = 'none';
+
+            try {
+                const resp = await fetch('/api/fluxogama/send-batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ficha_id: fichaId,
+                        item_ids: Array.from(selectedIds),
+                    }),
+                    credentials: 'same-origin',
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok && !data.results) {
+                    showFluxResult(null, data.error || 'Erro ao enviar.');
+                    return;
+                }
+
+                showFluxResult(data, null);
+
+                // Clear only IDs that succeeded; keep failures selected for retry
+                if (data.results) {
+                    data.results.forEach(r => {
+                        if (r.ok) selectedIds.delete(r.item_id);
+                    });
+                    updateBulkState();
+                    // Update checkbox visuals in the table
+                    tableBody.querySelectorAll('input[type="checkbox"]').forEach(box => {
+                        const id = parseInt(box.dataset.id, 10);
+                        box.checked = selectedIds.has(id);
+                    });
+                    selectAll.checked = false;
+                }
+
+                loadItems();
+            } catch (err) {
+                showFluxResult(null, `Erro de conexão: ${err.message}`);
+            }
+        });
+
+        function showFluxResult(data, errorMsg) {
+            let html = '';
+            if (errorMsg) {
+                html = `<p class="flux-result-fail"><i class="fas fa-exclamation-triangle"></i> ${errorMsg}</p>`;
+            } else if (data) {
+                const { success_count, error_count, results } = data;
+                if (error_count === 0) {
+                    html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> ${success_count} ${success_count === 1 ? 'item enviado' : 'itens enviados'} com sucesso!</p>`;
+                } else {
+                    html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${success_count} enviado(s) com sucesso.</p>`;
+                    html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${error_count} com erro.</p>`;
+                }
+                // Show per-item details
+                if (results && results.length > 0) {
+                    html += '<ul class="flux-item-list" style="margin-top:12px;">';
+                    results.forEach(r => {
+                        const icon = r.ok ? '<i class="fas fa-check" style="color:#34d399"></i>' : '<i class="fas fa-times" style="color:#f87171"></i>';
+                        html += `<li>${icon} <span class="item-ref">Item #${r.item_id}</span><span>${r.message}</span></li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                // Status line update
+                if (error_count === 0) {
+                    setStatus(`Envio concluído: ${success_count} itens enviados ao Flux.`, 'success');
+                } else {
+                    setStatus(`Envio parcial: ${success_count} OK, ${error_count} com erro.`, 'error');
+                }
+            }
+
+            fluxModalBody.innerHTML = html;
+            btnFluxConfirm.disabled = true;
+            btnFluxConfirm.style.display = 'none';
+            btnFluxCancel.style.display = '';
+            btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
+        }
+
         prevPage.addEventListener('click', () => {
             if (currentPage > 1) {
                 currentPage -= 1;
@@ -706,7 +1063,29 @@
             }
         });
 
+        // ─── Delete entire ficha ───
+        document.getElementById('btnDeleteFicha').addEventListener('click', async () => {
+            if (!confirm('⚠️ Tem certeza que deseja EXCLUIR esta ficha inteira e todos os seus itens? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            try {
+                const resp = await fetch(`/api/fichas/${fichaId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin',
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = '{{ url_for("dashboard.index") }}';
+                } else {
+                    alert(data.error || 'Erro ao excluir ficha.');
+                }
+            } catch (err) {
+                alert('Erro de conexão: ' + err.message);
+            }
+        });
+
         loadColumns();
     </script>
 </body>
+
 </html>
