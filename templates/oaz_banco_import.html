@@ -25,7 +25,7 @@
             min-height: 100vh;
         }
 
-        /* Sidebar (same as admin_dashboard) */
+        /* Sidebar */
         .sidebar {
             width: 240px;
             background-color: #0f1420;
@@ -164,6 +164,9 @@
             font-weight: 600;
             color: #fff;
             margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         /* Stats row */
@@ -171,10 +174,12 @@
             display: flex;
             gap: 16px;
             margin-bottom: 24px;
+            flex-wrap: wrap;
         }
 
         .stat-box {
             flex: 1;
+            min-width: 120px;
             background: #1e293b;
             border-radius: 10px;
             padding: 20px;
@@ -326,6 +331,15 @@
             cursor: not-allowed;
         }
 
+        .btn-success {
+            background: #059669;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
         .btn-secondary {
             background: #334155;
             color: #e5e7eb;
@@ -341,12 +355,14 @@
             margin-top: 20px;
         }
 
-        /* Progress table */
+        /* Preview table */
+        .preview-table,
         .progress-table {
             width: 100%;
             border-collapse: collapse;
         }
 
+        .preview-table th,
         .progress-table th {
             text-align: left;
             padding: 10px 16px;
@@ -357,12 +373,66 @@
             border-bottom: 1px solid #334155;
         }
 
+        .preview-table td,
         .progress-table td {
             padding: 12px 16px;
             font-size: 14px;
             border-bottom: 1px solid #1e293b;
         }
 
+        /* Preview stats */
+        .preview-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .preview-stat {
+            flex: 1;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .preview-stat.valid {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .preview-stat.invalid {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .preview-stat.total {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .preview-stat .num {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .preview-stat.valid .num {
+            color: #34d399;
+        }
+
+        .preview-stat.invalid .num {
+            color: #f87171;
+        }
+
+        .preview-stat.total .num {
+            color: #60a5fa;
+        }
+
+        .preview-stat .lbl {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Badges */
         .badge {
             padding: 4px 10px;
             border-radius: 6px;
@@ -400,7 +470,7 @@
             color: #fbbf24;
         }
 
-        /* Summary */
+        /* Summary bar */
         .summary-bar {
             display: flex;
             gap: 24px;
@@ -423,6 +493,56 @@
         .summary-bar .item .lbl {
             font-size: 12px;
             color: #a7f3d0;
+        }
+
+        /* Admin badge */
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #f87171;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* File results in preview */
+        .file-results {
+            margin-bottom: 16px;
+        }
+
+        .file-result-item {
+            padding: 12px 16px;
+            background: #0f1420;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-result-item .fname {
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .file-result-item .fmeta {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .wsid-col {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: #fbbf24;
+        }
+
+        .text-muted {
+            color: #64748b;
         }
 
         /* Hidden */
@@ -462,7 +582,7 @@
                     <div class="user-avatar">{{ session.get('username', 'A')[0].upper() if session.get('username') else
                         'A' }}</div>
                     <div>
-                        <div class="user-name">Admin</div>
+                        <div class="user-name">{{ session.get('username', 'Admin') }}</div>
                         <div class="user-role">Administrador</div>
                     </div>
                 </div>
@@ -476,8 +596,9 @@
                     <div>
                         <h1 class="page-title"><i class="fas fa-database" style="color: #3b82f6;"></i> Banco de Dados
                             OAZ</h1>
-                        <p class="page-subtitle">Importe XLSX do Fluxogama para popular o De/Para de WSIDs
-                            automaticamente.</p>
+                        <p class="page-subtitle">Importe XLSX do Fluxogama para popular o De/Para de WSIDs.
+                            <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin Only</span>
+                        </p>
                     </div>
                     <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary"><i
                             class="fas fa-arrow-left"></i> Voltar</a>
@@ -494,7 +615,7 @@
                 {% endfor %}
             </div>
 
-            <!-- Upload Card -->
+            <!-- ═══ Step 1: Upload Card ═══ -->
             <div class="card" id="uploadCard">
                 <div class="card-title"><i class="fas fa-upload"></i> Importar Banco de Dados</div>
 
@@ -518,8 +639,8 @@
                 <div class="file-list" id="fileList"></div>
 
                 <div class="btn-group">
-                    <button class="btn btn-primary" id="btnImport" disabled>
-                        <i class="fas fa-play"></i> Importar em Lote
+                    <button class="btn btn-primary" id="btnPreview" disabled>
+                        <i class="fas fa-search"></i> Preview
                     </button>
                     <button class="btn btn-secondary hidden" id="btnClear">
                         <i class="fas fa-times"></i> Limpar
@@ -527,10 +648,61 @@
                 </div>
             </div>
 
-            <!-- Progress Card (hidden until import starts) -->
+            <!-- ═══ Step 2: Preview Card ═══ -->
+            <div class="card hidden" id="previewCard">
+                <div class="card-title"><i class="fas fa-eye"></i> Preview da Importação</div>
+
+                <!-- Preview stats -->
+                <div class="preview-stats">
+                    <div class="preview-stat total">
+                        <div class="num" id="pvTotal">0</div>
+                        <div class="lbl">Total de Linhas</div>
+                    </div>
+                    <div class="preview-stat valid">
+                        <div class="num" id="pvValid">0</div>
+                        <div class="lbl">Válidas</div>
+                    </div>
+                    <div class="preview-stat invalid">
+                        <div class="num" id="pvInvalid">0</div>
+                        <div class="lbl">Inválidas</div>
+                    </div>
+                </div>
+
+                <!-- Per-file results -->
+                <div class="file-results" id="pvFiles"></div>
+
+                <!-- Example rows -->
+                <div style="margin-top: 16px;">
+                    <h4 style="color: #94a3b8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase;">
+                        Exemplos (primeiras 10 linhas válidas)</h4>
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Descrição</th>
+                                <th>text_norm</th>
+                                <th>WSID</th>
+                                <th>Arquivo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pvExamples"></tbody>
+                    </table>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-success" id="btnConfirm">
+                        <i class="fas fa-check"></i> Confirmar Importação
+                    </button>
+                    <button class="btn btn-secondary" id="btnBackToUpload">
+                        <i class="fas fa-arrow-left"></i> Voltar
+                    </button>
+                </div>
+            </div>
+
+            <!-- ═══ Step 3: Progress Card ═══ -->
             <div class="card hidden" id="progressCard">
                 <div class="card-title"><i class="fas fa-spinner fa-spin"></i> <span
-                        id="progressTitle">Processando...</span></div>
+                        id="progressTitle">Importando...</span></div>
 
                 <table class="progress-table">
                     <thead>
@@ -562,21 +734,32 @@
                         <div class="lbl">Total</div>
                     </div>
                 </div>
+
+                <div class="btn-group hidden" id="doneActions">
+                    <button class="btn btn-primary" onclick="location.reload()">
+                        <i class="fas fa-redo"></i> Nova Importação
+                    </button>
+                </div>
             </div>
         </main>
     </div>
 
     <script src="{{ url_for('static', filename='js/toast.js') }}"></script>
     <script>
+        // ── DOM refs ────────────────────────────────────────────────
         const dropzone = document.getElementById('dropzone');
         const fileInput = document.getElementById('fileInput');
         const fileList = document.getElementById('fileList');
-        const btnImport = document.getElementById('btnImport');
+        const btnPreview = document.getElementById('btnPreview');
         const btnClear = document.getElementById('btnClear');
+        const btnConfirm = document.getElementById('btnConfirm');
+        const btnBackToUpload = document.getElementById('btnBackToUpload');
         const fieldKey = document.getElementById('fieldKey');
-        let selectedFiles = [];
 
-        // Drag & drop
+        let selectedFiles = [];
+        let previewToken = null;
+
+        // ── Step 1: File Upload ─────────────────────────────────────
         dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
         dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
         dropzone.addEventListener('drop', e => {
@@ -608,7 +791,7 @@
                     </div>`;
             });
             btnClear.classList.toggle('hidden', selectedFiles.length === 0);
-            updateImportBtn();
+            updatePreviewBtn();
         }
 
         function removeFile(idx) {
@@ -617,58 +800,147 @@
         }
 
         btnClear.addEventListener('click', () => { selectedFiles = []; renderFileList(); });
-        fieldKey.addEventListener('change', updateImportBtn);
+        fieldKey.addEventListener('change', updatePreviewBtn);
 
-        function updateImportBtn() {
-            btnImport.disabled = selectedFiles.length === 0 || !fieldKey.value;
+        function updatePreviewBtn() {
+            btnPreview.disabled = selectedFiles.length === 0 || !fieldKey.value;
         }
 
-        // Import
-        btnImport.addEventListener('click', async () => {
+        // ── Step 2: Preview ─────────────────────────────────────────
+        btnPreview.addEventListener('click', async () => {
             if (!fieldKey.value || selectedFiles.length === 0) return;
-            btnImport.disabled = true;
+            btnPreview.disabled = true;
+            btnPreview.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
 
             const formData = new FormData();
             formData.append('field_key', fieldKey.value);
             selectedFiles.forEach(f => formData.append('files[]', f));
 
             try {
-                const resp = await fetch('/api/oaz/banco/import', { method: 'POST', body: formData });
+                const resp = await fetch('/api/admin/bancos/preview', { method: 'POST', body: formData });
                 const data = await resp.json();
+
                 if (!data.success) {
-                    if (typeof showToast === 'function') showToast(data.error, 'error');
-                    else alert(data.error);
-                    btnImport.disabled = false;
+                    toast(data.error, 'error');
+                    btnPreview.disabled = false;
+                    btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
                     return;
                 }
-                startPolling(data.job_id);
+
+                previewToken = data.token;
+                showPreview(data);
             } catch (err) {
-                if (typeof showToast === 'function') showToast('Erro de rede: ' + err.message, 'error');
-                else alert('Erro: ' + err.message);
-                btnImport.disabled = false;
+                toast('Erro de rede: ' + err.message, 'error');
+                btnPreview.disabled = false;
+                btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
             }
         });
 
-        function startPolling(jobId) {
+        function showPreview(data) {
             document.getElementById('uploadCard').classList.add('hidden');
+            document.getElementById('previewCard').classList.remove('hidden');
+
+            // Stats
+            document.getElementById('pvTotal').textContent = data.total_rows;
+            document.getElementById('pvValid').textContent = data.total_valid;
+            document.getElementById('pvInvalid').textContent = data.total_invalid;
+
+            // Per-file results
+            const pvFiles = document.getElementById('pvFiles');
+            pvFiles.innerHTML = '';
+            (data.files || []).forEach(f => {
+                pvFiles.innerHTML += `
+                    <div class="file-result-item">
+                        <div>
+                            <div class="fname"><i class="fas fa-file-excel" style="color:#22c55e;margin-right:8px"></i>${f.filename}</div>
+                            <div class="fmeta">Planilha: ${f.sheet_name || '-'} · ${f.total_rows} linhas · ${f.valid_items} válidas · ${f.skipped_invalid || 0} inválidas</div>
+                        </div>
+                        ${f.error ? `<span class="badge badge-error">${f.error}</span>` : '<span class="badge badge-done">OK</span>'}
+                    </div>`;
+            });
+
+            // Example rows
+            const tbody = document.getElementById('pvExamples');
+            tbody.innerHTML = '';
+            (data.examples_valid || []).forEach((ex, i) => {
+                tbody.innerHTML += `<tr>
+                    <td>${i + 1}</td>
+                    <td>${esc(ex.descricao)}</td>
+                    <td class="text-muted">${esc(ex.text_norm)}</td>
+                    <td class="wsid-col">${esc(ex.wsid)}</td>
+                    <td class="text-muted">${esc(ex.source)}</td>
+                </tr>`;
+            });
+
+            if (!data.examples_valid || data.examples_valid.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b">Nenhum item válido encontrado</td></tr>';
+                btnConfirm.disabled = true;
+            } else {
+                btnConfirm.disabled = false;
+            }
+        }
+
+        btnBackToUpload.addEventListener('click', () => {
+            document.getElementById('previewCard').classList.add('hidden');
+            document.getElementById('uploadCard').classList.remove('hidden');
+            btnPreview.disabled = false;
+            btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
+            previewToken = null;
+        });
+
+        // ── Step 3: Confirm ─────────────────────────────────────────
+        btnConfirm.addEventListener('click', async () => {
+            if (!previewToken) return;
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando...';
+
+            try {
+                const resp = await fetch('/api/admin/bancos/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: previewToken }),
+                });
+                const data = await resp.json();
+
+                if (!data.success) {
+                    toast(data.error, 'error');
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar Importação';
+                    return;
+                }
+
+                document.getElementById('previewCard').classList.add('hidden');
+                startPolling(data.job_id);
+            } catch (err) {
+                toast('Erro: ' + err.message, 'error');
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar Importação';
+            }
+        });
+
+        // ── Polling ─────────────────────────────────────────────────
+        function startPolling(jobId) {
             const card = document.getElementById('progressCard');
             card.classList.remove('hidden');
 
             const poll = async () => {
                 try {
-                    const resp = await fetch(`/api/oaz/banco/import/status/${jobId}`);
+                    const resp = await fetch(`/api/admin/bancos/status/${jobId}`);
                     const data = await resp.json();
                     if (!data.success) return;
 
                     updateProgress(data);
 
                     if (data.status === 'done') {
-                        document.getElementById('progressTitle').innerHTML = '<i class="fas fa-check-circle" style="color:#34d399"></i> Importação concluída!';
-                        document.querySelector('#progressCard .card-title i')?.remove();
+                        document.getElementById('progressTitle').innerHTML =
+                            '<i class="fas fa-check-circle" style="color:#34d399"></i> Importação concluída!';
+                        const spinner = document.querySelector('#progressCard .card-title .fa-spinner');
+                        if (spinner) spinner.remove();
                         document.getElementById('summaryBar').classList.remove('hidden');
                         document.getElementById('sumCreated').textContent = data.total_created;
                         document.getElementById('sumUpdated').textContent = data.total_updated;
                         document.getElementById('sumTotal').textContent = data.total_created + data.total_updated;
+                        document.getElementById('doneActions').classList.remove('hidden');
                         return;
                     }
                     setTimeout(poll, 1000);
@@ -688,7 +960,6 @@
                     error: '<span class="badge badge-error">Erro</span>',
                     empty: '<span class="badge badge-empty">Vazio</span>',
                     partial: '<span class="badge badge-partial">Parcial</span>',
-                    pending: '<span class="badge badge-processing">Importando</span>',
                 }[f.status] || `<span class="badge badge-queued">${f.status}</span>`;
 
                 const isActive = data.status === 'processing' && i === data.current_file_index;
@@ -706,6 +977,19 @@
                 </tr>`;
             });
             tbody.innerHTML = html;
+        }
+
+        // ── Utils ───────────────────────────────────────────────────
+        function esc(s) {
+            if (!s) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function toast(msg, type) {
+            if (typeof showToast === 'function') showToast(msg, type);
+            else alert(msg);
         }
     </script>
 </body>

@@ -11,6 +11,7 @@ class OazValueMap(db.Model):
     text_value = db.Column(db.String(255), nullable=False)  # original text
     text_norm = db.Column(db.String(255), nullable=False)   # normalized (upper, no accents)
     wsid_value = db.Column(db.String(100), nullable=False)  # OAZ WSID
+    source_name = db.Column(db.String(255), nullable=True)  # origin XLSX filename
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
