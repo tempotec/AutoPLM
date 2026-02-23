@@ -618,16 +618,11 @@
             <!-- ═══ Step 1: Upload Card ═══ -->
             <div class="card" id="uploadCard">
                 <div class="card-title"><i class="fas fa-upload"></i> Importar Banco de Dados</div>
-
-                <div class="form-group">
-                    <label for="fieldKey">Tipo de Banco (field_key)</label>
-                    <select id="fieldKey" class="form-select">
-                        <option value="">-- Selecione o tipo --</option>
-                        {% for key, label in field_options %}
-                        <option value="{{ key }}">{{ label }} ({{ key }})</option>
-                        {% endfor %}
-                    </select>
-                </div>
+                <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">
+                    <i class="fas fa-magic" style="color:#60a5fa"></i>
+                    O tipo de banco (field_key) é detectado automaticamente pelo nome do arquivo.
+                    Arraste vários arquivos de uma vez.
+                </p>
 
                 <div class="dropzone" id="dropzone">
                     <input type="file" id="fileInput" multiple accept=".xlsx">
@@ -671,10 +666,11 @@
                 <!-- Per-file results -->
                 <div class="file-results" id="pvFiles"></div>
 
-                <!-- Example rows -->
+                <!-- Example rows: valid -->
                 <div style="margin-top: 16px;">
                     <h4 style="color: #94a3b8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase;">
-                        Exemplos (primeiras 10 linhas válidas)</h4>
+                        <i class="fas fa-check-circle" style="color:#34d399"></i> Exemplos válidos (até 10)
+                    </h4>
                     <table class="preview-table">
                         <thead>
                             <tr>
@@ -686,6 +682,25 @@
                             </tr>
                         </thead>
                         <tbody id="pvExamples"></tbody>
+                    </table>
+                </div>
+
+                <!-- Example rows: invalid -->
+                <div style="margin-top: 16px;" id="pvInvalidSection" class="hidden">
+                    <h4 style="color: #94a3b8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase;">
+                        <i class="fas fa-exclamation-triangle" style="color:#f87171"></i> Exemplos inválidos (até 10)
+                    </h4>
+                    <table class="preview-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Descrição</th>
+                                <th>WSID</th>
+                                <th>Motivo</th>
+                                <th>Arquivo</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pvInvalidExamples"></tbody>
                     </table>
                 </div>
 
@@ -709,7 +724,7 @@
                         <tr>
                             <th>#</th>
                             <th>Arquivo</th>
-                            <th>Planilha</th>
+                            <th>Tipo</th>
                             <th>Linhas</th>
                             <th>Válidos</th>
                             <th>Criados</th>
@@ -754,10 +769,17 @@
         const btnClear = document.getElementById('btnClear');
         const btnConfirm = document.getElementById('btnConfirm');
         const btnBackToUpload = document.getElementById('btnBackToUpload');
-        const fieldKey = document.getElementById('fieldKey');
+
+        // Field key options for manual override dropdowns
+        const FIELD_OPTIONS = [
+            {% for key, label in field_options %}
+        { key: '{{ key }}', label: '{{ label }}' },
+        {% endfor %}
+        ];
 
         let selectedFiles = [];
         let previewToken = null;
+        let previewData = null;  // store for overrides
 
         // ── Step 1: File Upload ─────────────────────────────────────
         dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
@@ -791,7 +813,7 @@
                     </div>`;
             });
             btnClear.classList.toggle('hidden', selectedFiles.length === 0);
-            updatePreviewBtn();
+            btnPreview.disabled = selectedFiles.length === 0;
         }
 
         function removeFile(idx) {
@@ -800,20 +822,14 @@
         }
 
         btnClear.addEventListener('click', () => { selectedFiles = []; renderFileList(); });
-        fieldKey.addEventListener('change', updatePreviewBtn);
-
-        function updatePreviewBtn() {
-            btnPreview.disabled = selectedFiles.length === 0 || !fieldKey.value;
-        }
 
         // ── Step 2: Preview ─────────────────────────────────────────
         btnPreview.addEventListener('click', async () => {
-            if (!fieldKey.value || selectedFiles.length === 0) return;
+            if (selectedFiles.length === 0) return;
             btnPreview.disabled = true;
             btnPreview.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
 
             const formData = new FormData();
-            formData.append('field_key', fieldKey.value);
             selectedFiles.forEach(f => formData.append('files[]', f));
 
             try {
@@ -828,6 +844,7 @@
                 }
 
                 previewToken = data.token;
+                previewData = data;
                 showPreview(data);
             } catch (err) {
                 toast('Erro de rede: ' + err.message, 'error');
@@ -835,6 +852,14 @@
                 btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
             }
         });
+
+        function buildOverrideSelect(filename) {
+            let opts = '<option value="">-- Selecione --</option>';
+            FIELD_OPTIONS.forEach(o => {
+                opts += `<option value="${o.key}">${o.label} (${o.key})</option>`;
+            });
+            return `<select class="form-select" style="font-size:12px;padding:4px 8px;background:#0f1420;color:#e2e8f0;border:1px solid #f87171;border-radius:6px;max-width:220px" data-override-for="${esc(filename)}">${opts}</select>`;
+        }
 
         function showPreview(data) {
             document.getElementById('uploadCard').classList.add('hidden');
@@ -845,21 +870,46 @@
             document.getElementById('pvValid').textContent = data.total_valid;
             document.getElementById('pvInvalid').textContent = data.total_invalid;
 
-            // Per-file results
+            // Per-file results with auto-detect info
             const pvFiles = document.getElementById('pvFiles');
             pvFiles.innerHTML = '';
+            let hasUndetected = false;
             (data.files || []).forEach(f => {
+                // Build detected columns string
+                const dc = f.detected_columns || {};
+                const cols = [];
+                if (dc.wsid) cols.push(`WSID → "${dc.wsid}"`);
+                if (dc.codigo) cols.push(`Código → "${dc.codigo}"`);
+                if (dc.descricao) cols.push(`Descrição → "${dc.descricao}"`);
+                if (dc.status) cols.push(`Status → "${dc.status}"`);
+                const colsStr = cols.length ? cols.join(' · ') : '';
+
+                // Field key detection badge
+                let fkBadge;
+                if (f.field_key) {
+                    const src = f.detect_source === 'filename' ? 'nome do arquivo' : (f.detect_source === 'sheet_name' ? 'aba da planilha' : 'override');
+                    fkBadge = `<span class="badge badge-done" style="font-size:11px">${f.field_key} — ${f.field_key_label}</span>
+                               <span style="font-size:10px;color:#94a3b8;margin-left:4px">(via ${src})</span>`;
+                } else {
+                    hasUndetected = true;
+                    fkBadge = `<span class="badge badge-error" style="font-size:11px">Não detectado</span>
+                               <span style="margin-left:8px">${buildOverrideSelect(f.filename)}</span>`;
+                }
+
                 pvFiles.innerHTML += `
-                    <div class="file-result-item">
-                        <div>
+                    <div class="file-result-item" style="flex-wrap:wrap;gap:8px">
+                        <div style="flex:1;min-width:200px">
                             <div class="fname"><i class="fas fa-file-excel" style="color:#22c55e;margin-right:8px"></i>${f.filename}</div>
                             <div class="fmeta">Planilha: ${f.sheet_name || '-'} · ${f.total_rows} linhas · ${f.valid_items} válidas · ${f.skipped_invalid || 0} inválidas</div>
+                            ${colsStr ? `<div class="fmeta" style="margin-top:4px;color:#60a5fa"><i class="fas fa-columns" style="margin-right:4px"></i>${colsStr}</div>` : ''}
                         </div>
-                        ${f.error ? `<span class="badge badge-error">${f.error}</span>` : '<span class="badge badge-done">OK</span>'}
+                        <div style="display:flex;align-items:center;gap:8px">
+                            ${fkBadge}
+                        </div>
                     </div>`;
             });
 
-            // Example rows
+            // Valid example rows
             const tbody = document.getElementById('pvExamples');
             tbody.innerHTML = '';
             (data.examples_valid || []).forEach((ex, i) => {
@@ -874,9 +924,28 @@
 
             if (!data.examples_valid || data.examples_valid.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b">Nenhum item válido encontrado</td></tr>';
-                btnConfirm.disabled = true;
+            }
+
+            // Enable confirm only if there are importable files
+            btnConfirm.disabled = !(data.total_importable > 0);
+
+            // Invalid example rows
+            const invSection = document.getElementById('pvInvalidSection');
+            const invBody = document.getElementById('pvInvalidExamples');
+            invBody.innerHTML = '';
+            if (data.examples_invalid && data.examples_invalid.length > 0) {
+                invSection.classList.remove('hidden');
+                data.examples_invalid.forEach((ex, i) => {
+                    invBody.innerHTML += `<tr>
+                        <td>${i + 1}</td>
+                        <td>${esc(ex.descricao) || '<em style="color:#64748b">vazio</em>'}</td>
+                        <td class="wsid-col">${esc(ex.wsid) || '<em style="color:#64748b">vazio</em>'}</td>
+                        <td style="color:#f87171">${esc(ex.reason)}</td>
+                        <td class="text-muted">${esc(ex.source)}</td>
+                    </tr>`;
+                });
             } else {
-                btnConfirm.disabled = false;
+                invSection.classList.add('hidden');
             }
         }
 
@@ -886,6 +955,7 @@
             btnPreview.disabled = false;
             btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
             previewToken = null;
+            previewData = null;
         });
 
         // ── Step 3: Confirm ─────────────────────────────────────────
@@ -894,11 +964,17 @@
             btnConfirm.disabled = true;
             btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando...';
 
+            // Collect overrides from manual selectors
+            const overrides = {};
+            document.querySelectorAll('[data-override-for]').forEach(sel => {
+                if (sel.value) overrides[sel.dataset.overrideFor] = sel.value;
+            });
+
             try {
                 const resp = await fetch('/api/admin/bancos/confirm', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ token: previewToken }),
+                    body: JSON.stringify({ token: previewToken, overrides }),
                 });
                 const data = await resp.json();
 
@@ -968,7 +1044,7 @@
                 html += `<tr style="${rowStyle}">
                     <td>${i + 1}</td>
                     <td>${f.filename || ''}</td>
-                    <td>${f.sheet_name || '-'}</td>
+                    <td><span style="color:#60a5fa;font-size:12px">${f.field_key || '?'}</span> <span style="color:#94a3b8;font-size:11px">${f.field_key_label || ''}</span></td>
                     <td>${f.total_rows ?? '-'}</td>
                     <td>${f.valid_items ?? '-'}</td>
                     <td>${f.created ?? '-'}</td>

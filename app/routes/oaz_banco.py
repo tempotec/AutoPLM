@@ -1,13 +1,13 @@
 """
 OAZ Banco de Dados import routes (admin-only).
 
-Provides admin-only XLSX upload with preview/confirm workflow
-to populate oaz_value_map with WSIDs from Fluxogama database exports.
+Provides admin-only XLSX upload with auto-detect field_key + preview/confirm
+workflow to populate oaz_value_map with WSIDs from Fluxogama database exports.
 
 Flow:
   1. GET  /admin/bancos               → render import page
-  2. POST /api/admin/bancos/preview    → parse without saving, return stats + token
-  3. POST /api/admin/bancos/confirm    → upsert cached data into DB
+  2. POST /api/admin/bancos/preview   → auto-detect field_key per file, parse, return stats + token
+  3. POST /api/admin/bancos/confirm   → upsert cached data into DB (per-file field_key)
   4. GET  /api/admin/bancos/status/<id>→ poll background job progress
 """
 import threading
@@ -15,7 +15,7 @@ import uuid
 import unicodedata
 import re
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, jsonify
+from flask import Blueprint, render_template, request, jsonify, session
 from app.extensions import csrf, db
 from app.utils.auth import admin_required
 from app.utils.banco_parser import parse_banco_xlsx
@@ -25,13 +25,13 @@ oaz_banco_bp = Blueprint('oaz_banco', __name__)
 
 # ── Thread-safe stores ───────────────────────────────────────────────
 _lock = threading.Lock()
-_PREVIEW_CACHE = {}          # {token: {field_key, items, files_info, created_at}}
+_PREVIEW_CACHE = {}          # {token: {files, admin_id, created_at}}
 _IMPORT_JOBS = {}            # {job_id: {status, files, ...}}
 _PREVIEW_TTL = timedelta(minutes=30)
 _JOB_TTL = timedelta(hours=1)
 _MAX_CONCURRENT_JOBS = 3
 
-# ── Field key options ────────────────────────────────────────────────
+# ── Field key options (used for overrides + stats display) ───────────
 FIELD_KEY_OPTIONS = [
     ('uno.10', 'Categoria de Produto'),
     ('uno.11', 'Grupo'),
@@ -41,6 +41,44 @@ FIELD_KEY_OPTIONS = [
     ('uno.24', 'Material Principal'),
     ('uno.50', 'NCM'),
 ]
+
+_VALID_FIELD_KEYS = {k for k, _ in FIELD_KEY_OPTIONS}
+_FIELD_KEY_LABELS = {k: lbl for k, lbl in FIELD_KEY_OPTIONS}
+
+# ── Auto-detect mapping ─────────────────────────────────────────────
+# Each entry: (alias_string, field_key).
+# Sorted by length descending at runtime so longest match wins.
+_AUTO_DETECT_ALIASES = [
+    # uno.10 - Categoria de Produto
+    ('categoria de produto',    'uno.10'),
+    ('categoria produto',       'uno.10'),
+    ('categoria',               'uno.10'),
+    # uno.11 - Grupo
+    ('grupo',                   'uno.11'),
+    # uno.12 - Sub Grupo
+    ('sub grupo',               'uno.12'),
+    ('subgrupo',                'uno.12'),
+    ('sub-grupo',               'uno.12'),
+    # uno.15 - Grade / Tamanho
+    ('grade tamanho',           'uno.15'),
+    ('grade de tamanho',        'uno.15'),
+    ('tamanho',                 'uno.15'),
+    ('grade',                   'uno.15'),
+    # uno.18 - Linha
+    ('linha',                   'uno.18'),
+    # uno.24 - Material Principal
+    ('materiais principais',    'uno.24'),
+    ('mateirais principais',    'uno.24'),  # common typo
+    ('material principal',      'uno.24'),
+    ('materiais',               'uno.24'),
+    ('material',                'uno.24'),
+    # uno.50 - NCM
+    ('ncm',                     'uno.50'),
+]
+
+# Sort by alias length descending so longest match wins (more specific first)
+_AUTO_DETECT_ALIASES.sort(key=lambda x: len(x[0]), reverse=True)
+
 
 # ── Helpers ──────────────────────────────────────────────────────────
 
@@ -52,6 +90,51 @@ def _normalize_text(text):
     ascii_text = ''.join(c for c in nfkd if not unicodedata.combining(c))
     ascii_text = re.sub(r'\s+', ' ', ascii_text).strip().upper()
     return ascii_text
+
+
+def _normalize_for_detect(text):
+    """Lowercase, strip accents, replace _/- with spaces, collapse."""
+    if not text:
+        return ''
+    nfkd = unicodedata.normalize('NFKD', str(text))
+    ascii_text = ''.join(c for c in nfkd if not unicodedata.combining(c))
+    ascii_text = ascii_text.lower()
+    # Replace common separators with space
+    ascii_text = re.sub(r'[_\-–—/\\]+', ' ', ascii_text)
+    ascii_text = re.sub(r'\s+', ' ', ascii_text).strip()
+    # Remove "banco de dados" and "banco" prefix
+    ascii_text = re.sub(r'^banco\s*(de\s*dados)?\s*', '', ascii_text).strip()
+    # Remove trailing "banco de dados"
+    ascii_text = re.sub(r'\s*banco\s*(de\s*dados)?\s*$', '', ascii_text).strip()
+    return ascii_text
+
+
+def detect_field_key(filename, sheet_name=''):
+    """
+    Auto-detect field_key from filename/sheet name.
+
+    Priority: filename → sheet_name → None.
+    Uses contains-matching with longest-match-wins.
+
+    Returns: (field_key, source) or (None, None)
+        source = 'filename' | 'sheet_name'
+    """
+    # Try filename first (strip extension)
+    base = filename.rsplit('.', 1)[0] if '.' in filename else filename
+    norm_filename = _normalize_for_detect(base)
+
+    for alias, fk in _AUTO_DETECT_ALIASES:
+        if alias in norm_filename:
+            return fk, 'filename'
+
+    # Try sheet name
+    if sheet_name:
+        norm_sheet = _normalize_for_detect(sheet_name)
+        for alias, fk in _AUTO_DETECT_ALIASES:
+            if alias in norm_sheet:
+                return fk, 'sheet_name'
+
+    return None, None
 
 
 def _prune_previews():
@@ -112,7 +195,7 @@ def _batch_upsert(field_key, items, source_name=None, batch_size=500):
                         (field_key, text_value, text_norm, wsid_value, source_name, created_at, updated_at)
                     VALUES
                         (:field_key, :text_value, :text_norm, :wsid_value, :source_name, NOW(), NOW())
-                    ON CONFLICT ON CONSTRAINT uq_oaz_map_field_text
+                    ON CONFLICT (field_key, text_norm)
                     DO UPDATE SET
                         text_value = EXCLUDED.text_value,
                         wsid_value = EXCLUDED.wsid_value,
@@ -141,8 +224,8 @@ def _batch_upsert(field_key, items, source_name=None, batch_size=500):
     return created, updated, errors
 
 
-def _process_confirm_job(app, job_id, field_key, all_items, files_info):
-    """Background thread: upsert all items from a confirmed preview."""
+def _process_confirm_job(app, job_id, files_data):
+    """Background thread: upsert items from confirmed preview (per-file field_key)."""
     with app.app_context():
         with _lock:
             job = _IMPORT_JOBS.get(job_id)
@@ -154,12 +237,10 @@ def _process_confirm_job(app, job_id, field_key, all_items, files_info):
         total_created = 0
         total_updated = 0
 
-        # Group items by source file for per-file tracking
-        for idx, fi in enumerate(files_info):
-            filename = fi['filename']
-            start = fi.get('items_start', 0)
-            end = fi.get('items_end', 0)
-            file_items = all_items[start:end]
+        for idx, fd in enumerate(files_data):
+            filename = fd['filename']
+            field_key = fd['field_key']
+            file_items = fd['items']
 
             with _lock:
                 job['current_file_index'] = idx
@@ -213,26 +294,20 @@ def import_view():
 @csrf.exempt
 def preview():
     """
-    Parse uploaded XLSX files without saving. Returns stats + preview token.
+    Parse uploaded XLSX files without saving. Auto-detects field_key per file.
+    Accepts optional per-file overrides via form data.
 
     Form data:
-        field_key: str (e.g. "uno.12")
         files[]: one or more XLSX files
+        override_<filename>: optional field_key override for a specific file
     """
-    field_key = request.form.get('field_key', '').strip()
-    valid_keys = {k for k, _ in FIELD_KEY_OPTIONS}
-
-    if field_key not in valid_keys:
-        return jsonify(success=False, error=f'field_key inválido: {field_key}'), 400
-
     files = request.files.getlist('files[]')
     if not files:
         files = request.files.getlist('files')
     if not files:
         return jsonify(success=False, error='Nenhum arquivo enviado.'), 400
 
-    all_items = []
-    files_info = []
+    files_result = []
     total_valid = 0
     total_invalid = 0
     total_rows = 0
@@ -252,6 +327,23 @@ def preview():
 
         result = parse_banco_xlsx(file_bytes)
 
+        # Check for override first
+        override_key = request.form.get(f'override_{f.filename}', '').strip()
+
+        # Auto-detect field_key
+        detected_key, detect_source = detect_field_key(
+            f.filename, result.get('sheet_name', '')
+        )
+
+        # Use override if valid, else detected
+        if override_key and override_key in _VALID_FIELD_KEYS:
+            final_key = override_key
+            detect_source = 'override'
+        elif detected_key:
+            final_key = detected_key
+        else:
+            final_key = None
+
         fi = {
             'filename': f.filename,
             'sheet_name': result.get('sheet_name', ''),
@@ -259,56 +351,89 @@ def preview():
             'skipped_inactive': result.get('skipped_inactive', 0),
             'skipped_invalid': result.get('skipped_invalid', 0),
             'valid_items': len(result.get('items', [])),
+            'detected_columns': result.get('detected_columns', {}),
+            'field_key': final_key,
+            'field_key_label': _FIELD_KEY_LABELS.get(final_key, '?') if final_key else None,
+            'detect_source': detect_source,
             'error': result.get('error'),
-            'items_start': len(all_items),  # index into all_items
+            'items': result.get('items', []) if result['success'] else [],
         }
 
-        if result['success']:
+        if not final_key and result['success']:
+            fi['error'] = 'Tipo de banco não identificado. Use o seletor manual.'
+
+        if result['success'] and final_key:
             valid_items = result['items']
             invalid_count = result.get('skipped_invalid', 0)
-
-            all_items.extend(valid_items)
             total_valid += len(valid_items)
             total_invalid += invalid_count
             total_rows += result.get('total_rows', 0)
 
-            # Collect examples (up to 10 total)
+            # Collect valid examples (up to 10 total)
             for item in valid_items[:max(0, 10 - len(examples_valid))]:
                 examples_valid.append({
                     'descricao': item['descricao'],
                     'wsid': item['wsid'],
                     'text_norm': _normalize_text(item['descricao']),
+                    'field_key': final_key,
                     'source': f.filename,
                 })
+
+            # Collect invalid examples with reasons (up to 10 total)
+            for inv in result.get('invalid_examples', []):
+                if len(examples_invalid) < 10:
+                    examples_invalid.append({
+                        'descricao': inv.get('descricao', ''),
+                        'wsid': inv.get('wsid', ''),
+                        'reason': inv.get('reason', 'Desconhecido'),
+                        'source': f.filename,
+                    })
         else:
             total_rows += result.get('total_rows', 0)
 
-        fi['items_end'] = len(all_items)
-        files_info.append(fi)
+        files_result.append(fi)
 
-    if not files_info:
+    if not files_result:
         return jsonify(success=False, error='Nenhum arquivo válido.'), 400
 
-    # Generate token and cache parsed data
+    # Count how many files have valid items + detected field_key
+    importable = [fr for fr in files_result if fr['field_key'] and fr['items']]
+
+    # Generate token bound to current admin
+    admin_id = session.get('user_id')
     token = str(uuid.uuid4())[:12]
     with _lock:
         _prune_previews()
         _PREVIEW_CACHE[token] = {
-            'field_key': field_key,
-            'items': all_items,
-            'files_info': files_info,
+            'files': [{
+                'filename': fr['filename'],
+                'field_key': fr['field_key'],
+                'items': fr['items'],
+                'sheet_name': fr['sheet_name'],
+                'total_rows': fr['total_rows'],
+                'valid_items': fr['valid_items'],
+            } for fr in importable],
+            'admin_id': admin_id,
             'created_at': datetime.utcnow(),
         }
+
+    # Strip items from response (don't send all rows to browser)
+    files_response = []
+    for fr in files_result:
+        resp = {k: v for k, v in fr.items() if k != 'items'}
+        resp['valid_items'] = len(fr['items']) if fr['items'] else fr.get('valid_items', 0)
+        files_response.append(resp)
 
     return jsonify(
         success=True,
         token=token,
-        field_key=field_key,
         total_rows=total_rows,
         total_valid=total_valid,
         total_invalid=total_invalid,
-        files=files_info,
+        total_importable=len(importable),
+        files=files_response,
         examples_valid=examples_valid[:10],
+        examples_invalid=examples_invalid[:10],
     )
 
 
@@ -318,15 +443,19 @@ def preview():
 def confirm():
     """
     Confirm a previewed import. Starts background upsert job.
+    Supports per-file field_key overrides via overrides dict.
 
     JSON body:
         token: str (from preview response)
+        overrides: dict (optional) {filename: field_key}
     """
     data = request.get_json(silent=True) or {}
     token = data.get('token', '').strip()
 
     if not token:
         return jsonify(success=False, error='Token não informado.'), 400
+
+    admin_id = session.get('user_id')
 
     with _lock:
         cached = _PREVIEW_CACHE.pop(token, None)
@@ -335,11 +464,24 @@ def confirm():
         return jsonify(success=False,
                        error='Token expirado ou inválido. Refaça o preview.'), 404
 
-    field_key = cached['field_key']
-    all_items = cached['items']
-    files_info = cached['files_info']
+    # Validate token belongs to this admin (replay protection)
+    if cached.get('admin_id') != admin_id:
+        return jsonify(success=False,
+                       error='Token pertence a outro administrador.'), 403
 
-    if not all_items:
+    # Apply overrides if provided
+    overrides = data.get('overrides', {})
+    files_data = cached['files']
+    for fd in files_data:
+        if fd['filename'] in overrides:
+            override_key = overrides[fd['filename']]
+            if override_key in _VALID_FIELD_KEYS:
+                fd['field_key'] = override_key
+
+    # Filter out files without field_key or items
+    files_data = [fd for fd in files_data if fd.get('field_key') and fd.get('items')]
+
+    if not files_data:
         return jsonify(success=False, error='Nenhum item válido para importar.'), 400
 
     # Check concurrent job limit
@@ -354,21 +496,22 @@ def confirm():
     job_id = str(uuid.uuid4())[:8]
     job = {
         'job_id': job_id,
-        'field_key': field_key,
         'status': 'queued',
-        'total_files': len(files_info),
+        'total_files': len(files_data),
         'current_file_index': 0,
         'current_filename': '',
         'files': [{
-            'filename': fi['filename'],
-            'sheet_name': fi.get('sheet_name', ''),
-            'total_rows': fi.get('total_rows', 0),
-            'valid_items': fi.get('valid_items', 0),
+            'filename': fd['filename'],
+            'field_key': fd['field_key'],
+            'field_key_label': _FIELD_KEY_LABELS.get(fd['field_key'], '?'),
+            'sheet_name': fd.get('sheet_name', ''),
+            'total_rows': fd.get('total_rows', 0),
+            'valid_items': len(fd.get('items', [])),
             'created': 0,
             'updated': 0,
             'status': 'queued',
             'error': None,
-        } for fi in files_info],
+        } for fd in files_data],
         'total_created': 0,
         'total_updated': 0,
         'created_at': datetime.utcnow(),
@@ -384,12 +527,12 @@ def confirm():
     app = current_app._get_current_object()
     t = threading.Thread(
         target=_process_confirm_job,
-        args=(app, job_id, field_key, all_items, files_info),
+        args=(app, job_id, files_data),
         daemon=True,
     )
     t.start()
 
-    return jsonify(success=True, job_id=job_id, total_files=len(files_info))
+    return jsonify(success=True, job_id=job_id, total_files=len(files_data))
 
 
 @oaz_banco_bp.route('/api/admin/bancos/status/<job_id>')
@@ -408,7 +551,6 @@ def import_status(job_id):
     return jsonify(
         success=True,
         job_id=job['job_id'],
-        field_key=job['field_key'],
         status=job['status'],
         total_files=job['total_files'],
         current_file_index=job.get('current_file_index', 0),

@@ -128,15 +128,30 @@ def parse_banco_xlsx(file_bytes):
             'total_rows': len(df),
             'skipped_inactive': 0,
             'skipped_invalid': 0,
+            'invalid_examples': [],
+            'detected_columns': {},
             'error': 'Nenhuma coluna "Código" ou "WSID" encontrada.',
             'sheet_name': sheet,
         }
+
+    # Build detected columns info
+    detected_columns = {}
+    if wsid_idx is not None:
+        detected_columns['wsid'] = str(header_vals[wsid_idx])
+    if codigo_idx is not None:
+        detected_columns['codigo'] = str(header_vals[codigo_idx])
+    if descricao_idx is not None:
+        detected_columns['descricao'] = str(header_vals[descricao_idx])
+    if status_idx is not None:
+        detected_columns['status'] = str(header_vals[status_idx])
 
     # --- Parse data rows ---
     data = df.iloc[header_row + 1:]
     items = []
     skipped_inactive = 0
     skipped_invalid = 0
+    invalid_examples = []  # up to 10, with reason
+    _MAX_INVALID_EXAMPLES = 10
 
     for _, row in data.iterrows():
         vals = row.tolist()
@@ -157,6 +172,12 @@ def parse_banco_xlsx(file_bytes):
         wsid_value = wsid or codigo
         if not wsid_value:
             skipped_invalid += 1
+            if len(invalid_examples) < _MAX_INVALID_EXAMPLES:
+                invalid_examples.append({
+                    'descricao': descricao or '',
+                    'wsid': '',
+                    'reason': 'WSID ausente',
+                })
             continue
 
         # Determine text_value: use Descrição if available
@@ -164,6 +185,12 @@ def parse_banco_xlsx(file_bytes):
 
         if not text_value:
             skipped_invalid += 1
+            if len(invalid_examples) < _MAX_INVALID_EXAMPLES:
+                invalid_examples.append({
+                    'descricao': '',
+                    'wsid': wsid_value,
+                    'reason': 'Descrição vazia',
+                })
             continue
 
         items.append({
@@ -178,6 +205,9 @@ def parse_banco_xlsx(file_bytes):
         'total_rows': len(data),
         'skipped_inactive': skipped_inactive,
         'skipped_invalid': skipped_invalid,
+        'invalid_examples': invalid_examples,
+        'detected_columns': detected_columns,
         'error': None,
         'sheet_name': sheet,
     }
+
