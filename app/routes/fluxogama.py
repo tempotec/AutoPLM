@@ -404,7 +404,7 @@ def send_batch_specs():
 
         try:
             result = send_payload(payload, dry_run=dry_run)
-            is_ok = result.get('ok', False)
+            is_ok = result.get('status') in ('success', 'dry_run')
 
             if is_ok:
                 success_count += 1
@@ -414,8 +414,8 @@ def send_batch_specs():
             results.append({
                 'spec_id': spec_id,
                 'ok': is_ok,
-                'message': result.get('message', 'Enviado' if is_ok else 'Erro'),
-                'status_code': result.get('status_code'),
+                'message': 'Enviado com sucesso.' if is_ok else result.get('error', 'Erro desconhecido.'),
+                'status_code': result.get('http_status'),
             })
         except Exception as exc:
             error_count += 1

@@ -1168,8 +1168,8 @@
             });
         }
 
-        // Individual checkboxes
-        document.querySelectorAll('.ficha-card-select').forEach(cb => {
+        // Individual checkboxes (fichas only, exclude spec checkboxes)
+        document.querySelectorAll('.ficha-card-select:not(.spec-card-select)').forEach(cb => {
             cb.addEventListener('change', (e) => {
                 e.stopPropagation();
                 const id = parseInt(cb.dataset.fichaId, 10);
@@ -1181,7 +1181,7 @@
                 updateFluxState();
                 // Update select-all checkbox
                 if (fluxSelectAll) {
-                    const allCbs = document.querySelectorAll('.ficha-card-select');
+                    const allCbs = document.querySelectorAll('.ficha-card-select:not(.spec-card-select)');
                     fluxSelectAll.checked = allCbs.length > 0 && Array.from(allCbs).every(c => c.checked);
                 }
             });
@@ -1190,7 +1190,7 @@
         // Select all
         if (fluxSelectAll) {
             fluxSelectAll.addEventListener('change', () => {
-                document.querySelectorAll('.ficha-card-select').forEach(cb => {
+                document.querySelectorAll('.ficha-card-select:not(.spec-card-select)').forEach(cb => {
                     cb.checked = fluxSelectAll.checked;
                     const id = parseInt(cb.dataset.fichaId, 10);
                     if (fluxSelectAll.checked) {
