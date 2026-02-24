@@ -106,12 +106,18 @@ def import_preview():
         'token': token,
         'header': payload.get('header', {}),
         'columns': payload.get('columns', []),
-        'counts': {
-            'total_items': len(payload.get('items', [])),
-            'invalid_rows': len(payload.get('invalid_rows', [])),
-        },
-        'invalid_rows': payload.get('invalid_rows', []),
+        'counts': payload.get('counts_summary', {
+            'valid': len(payload.get('items', [])),
+            'invalid': len(payload.get('invalid_rows', [])),
+            'duplicated_refs': 0,
+            'fractional_qty': 0,
+        }),
+        'invalid_rows': payload.get('invalid_rows', [])[:10],
         'warnings': payload.get('warnings', []),
+        'messages': payload.get('messages', []),
+        'detected_columns': payload.get('detected_columns', []),
+        'missing_columns': payload.get('missing_columns', []),
+        'unmapped_columns': payload.get('unmapped_columns', []),
         'preview_items': preview_items,
     })
 

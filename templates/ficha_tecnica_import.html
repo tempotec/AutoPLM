@@ -331,6 +331,65 @@
             background-color: #1f2937;
             color: #cbd5f5;
         }
+
+        .alert-box {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .alert-box.warning {
+            background-color: #422006;
+            border: 1px solid #854d0e;
+            color: #fbbf24;
+        }
+
+        .alert-box.info {
+            background-color: #0c1929;
+            border: 1px solid #1e3a5f;
+            color: #60a5fa;
+        }
+
+        .alert-box ul {
+            margin: 6px 0 0 16px;
+            padding: 0;
+        }
+
+        .alert-box li {
+            margin-bottom: 2px;
+        }
+
+        .columns-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .col-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-family: monospace;
+        }
+
+        .col-tag.mapped {
+            background-color: #064e3b;
+            color: #34d399;
+        }
+
+        .col-tag.missing {
+            background-color: #7f1d1d;
+            color: #fca5a5;
+        }
+
+        .col-tag.unmapped {
+            background-color: #1f2937;
+            color: #94a3b8;
+        }
     </style>
 </head>
 
@@ -430,7 +489,7 @@
                 <div class="info-box">
                     <strong>Instrucoes rapidas</strong>
                     <div>1) Garanta que a planilha possua cabecalhos.</div>
-                    <div>2) As colunas obrigatorias sao: item_no_ref_supplier, moq, oaz_qty.</div>
+                    <div>2) Coluna obrigatoria: item_no_ref_supplier. Opcionais: moq, oaz_qty (default 0).</div>
                     <div>3) Use "Gerar Preview" antes de confirmar a importacao.</div>
                 </div>
                 <div class="status-line" id="statusLine"></div>
@@ -439,9 +498,14 @@
             <section class="card">
                 <h2>Preview</h2>
                 <div class="preview-meta" id="previewMeta">
-                    <span class="pill">Total: <strong id="previewTotal">0</strong></span>
-                    <span class="pill">Invalidos: <strong id="previewInvalid">0</strong></span>
+                    <span class="pill">Válidos: <strong id="previewTotal">0</strong></span>
+                    <span class="pill">Inválidos: <strong id="previewInvalid">0</strong></span>
+                    <span class="pill" id="previewDupPill" style="display: none;">Duplicados: <strong
+                            id="previewDup">0</strong></span>
                 </div>
+                <div id="previewWarnings"></div>
+                <div id="previewColumns" style="display: none;"></div>
+                <div id="previewInvalidDetails" style="display: none;"></div>
                 <div class="info-box" id="previewEmpty">
                     O preview dos dados aparecera aqui apos gerar o preview.
                 </div>
@@ -469,6 +533,9 @@
         const previewEmpty = document.getElementById('previewEmpty');
         const previewTotal = document.getElementById('previewTotal');
         const previewInvalid = document.getElementById('previewInvalid');
+        const previewWarnings = document.getElementById('previewWarnings');
+        const previewColumns = document.getElementById('previewColumns');
+        const previewInvalidDetails = document.getElementById('previewInvalidDetails');
 
         let currentToken = null;
         let currentColumns = [];
@@ -487,7 +554,99 @@
             previewEmpty.style.display = 'block';
             previewTotal.textContent = '0';
             previewInvalid.textContent = '0';
+            previewWarnings.innerHTML = '';
+            previewColumns.style.display = 'none';
+            previewColumns.innerHTML = '';
+            previewInvalidDetails.style.display = 'none';
+            previewInvalidDetails.innerHTML = '';
             confirmButton.disabled = true;
+        }
+
+        function renderMessages(messages) {
+            previewWarnings.innerHTML = '';
+            if (!messages || !messages.length) return;
+
+            // Group by severity
+            const errors = messages.filter(m => m.severity === 'error');
+            const warnings = messages.filter(m => m.severity === 'warning');
+
+            if (errors.length) {
+                const box = document.createElement('div');
+                box.className = 'alert-box';
+                box.style.backgroundColor = '#450a0a';
+                box.style.borderColor = '#991b1b';
+                box.style.color = '#fca5a5';
+                box.innerHTML = '<strong><i class="fas fa-times-circle"></i> ERRO — Importação impossível:</strong>';
+                const ul = document.createElement('ul');
+                errors.forEach(m => {
+                    const li = document.createElement('li');
+                    li.textContent = m.text;
+                    ul.appendChild(li);
+                });
+                box.appendChild(ul);
+                previewWarnings.appendChild(box);
+            }
+
+            if (warnings.length) {
+                const box = document.createElement('div');
+                box.className = 'alert-box warning';
+                box.innerHTML = '<strong><i class="fas fa-exclamation-triangle"></i> Avisos:</strong>';
+                const ul = document.createElement('ul');
+                warnings.forEach(m => {
+                    const li = document.createElement('li');
+                    li.textContent = m.text;
+                    ul.appendChild(li);
+                });
+                box.appendChild(ul);
+                previewWarnings.appendChild(box);
+            }
+        }
+
+        function renderColumnInfo(detected, missing, unmapped) {
+            previewColumns.innerHTML = '';
+            if ((!detected || !detected.length) && (!missing || !missing.length)) {
+                previewColumns.style.display = 'none';
+                return;
+            }
+            previewColumns.style.display = 'block';
+            const box = document.createElement('div');
+            box.className = 'alert-box info';
+            let html = '<strong><i class="fas fa-columns"></i> Colunas detectadas:</strong><div class="columns-grid">';
+            (detected || []).forEach(c => {
+                html += `<span class="col-tag mapped">✓ ${c}</span>`;
+            });
+            (missing || []).forEach(c => {
+                html += `<span class="col-tag missing">✗ ${c}</span>`;
+            });
+            html += '</div>';
+            if (unmapped && unmapped.length > 0) {
+                html += `<div style="margin-top:6px;font-size:11px;color:#64748b">Colunas extras (nao mapeadas): `;
+                html += unmapped.slice(0, 8).map(u => u.source || u.mapped_as).join(', ');
+                if (unmapped.length > 8) html += ` ... +${unmapped.length - 8}`;
+                html += '</div>';
+            }
+            box.innerHTML = html;
+            previewColumns.appendChild(box);
+        }
+
+        function renderInvalidDetails(invalidRows) {
+            previewInvalidDetails.innerHTML = '';
+            if (!invalidRows || !invalidRows.length) {
+                previewInvalidDetails.style.display = 'none';
+                return;
+            }
+            previewInvalidDetails.style.display = 'block';
+            const box = document.createElement('div');
+            box.className = 'alert-box warning';
+            let html = `<strong><i class="fas fa-times-circle"></i> ${invalidRows.length} linha(s) invalida(s):</strong><ul>`;
+            invalidRows.slice(0, 5).forEach(ir => {
+                const errors = (ir.errors || []).filter(Boolean).join(', ');
+                html += `<li>Linha ${ir.row}: ${errors}</li>`;
+            });
+            if (invalidRows.length > 5) html += `<li>... e mais ${invalidRows.length - 5} linha(s)</li>`;
+            html += '</ul>';
+            box.innerHTML = html;
+            previewInvalidDetails.appendChild(box);
         }
 
         function renderPreview(columns, items) {
@@ -540,11 +699,23 @@
                 } else {
                     currentToken = data.token;
                     currentColumns = data.columns || [];
-                    previewTotal.textContent = data.counts ? data.counts.total_items : 0;
-                    previewInvalid.textContent = data.counts ? data.counts.invalid_rows : 0;
+                    previewTotal.textContent = data.counts ? data.counts.valid : 0;
+                    previewInvalid.textContent = data.counts ? data.counts.invalid : 0;
+                    const dupCount = data.counts ? (data.counts.duplicated_refs || 0) : 0;
+                    document.getElementById('previewDup').textContent = dupCount;
+                    document.getElementById('previewDupPill').style.display = dupCount > 0 ? '' : 'none';
+                    renderMessages(data.messages || []);
+                    renderColumnInfo(data.detected_columns, data.missing_columns, data.unmapped_columns);
+                    renderInvalidDetails(data.invalid_rows);
                     renderPreview(currentColumns, data.preview_items || []);
-                    confirmButton.disabled = false;
-                    setStatus('Preview gerado com sucesso.', 'success');
+                    // Disable confirm if there are errors (not just warnings)
+                    const hasErrors = (data.messages || []).some(m => m.severity === 'error');
+                    confirmButton.disabled = hasErrors;
+                    if (hasErrors) {
+                        setStatus('Preview gerado, mas há erros que impedem a importação.', 'error');
+                    } else {
+                        setStatus('Preview gerado com sucesso.', 'success');
+                    }
                 }
             } catch (err) {
                 setStatus('Erro ao gerar preview.', 'error');

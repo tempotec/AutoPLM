@@ -1,79 +1,84 @@
-"""Parse the /retorno/modelo schema HTML and test querying models."""
+"""Fetch the Bearer-auth version of /retorno/modelo (4.4KB) for format clues,
+then try querying with the correct filter format."""
 import httpx
 import json
-import re
-from html.parser import HTMLParser
-
-# Read saved HTML
-with open("flux_retorno_raw.html", "r", encoding="utf-8") as f:
-    html = f.read()
-
-# Extract table rows with field info
-print("=" * 70)
-print("EXTRACTING FIELD DOCUMENTATION FROM SCHEMA HTML")
-print("=" * 70)
-
-# Find all field names (they appear as td content like "modelo.id", "modelo.referencia", etc.)
-field_pattern = r'<td[^>]*>([a-z]+\.[a-z._]+)</td>'
-fields = re.findall(field_pattern, html, re.IGNORECASE)
-unique_fields = sorted(set(fields))
-print(f"\nFound {len(unique_fields)} unique fields:")
-for f in unique_fields[:50]:
-    print(f"  {f}")
-if len(unique_fields) > 50:
-    print(f"  ... and {len(unique_fields) - 50} more")
-
-# Look for 'modelo.' prefixed fields specifically  
-modelo_fields = [f for f in unique_fields if f.startswith('modelo.')]
-print(f"\n--- modelo.* fields ({len(modelo_fields)}) ---")
-for f in modelo_fields:
-    print(f"  {f}")
-
-# Now try POST /retorno/modelo to query models
-print("\n" + "=" * 70)
-print("TESTING POST /retorno/modelo TO QUERY MODELS")
-print("=" * 70)
 
 TOKEN = "eyJhbGciOiJIUzM4NCJ9.eyJzdWIiOiI5NSIsImlzcyI6Imh0dHBzOi8vb2F6LmZsdXhvZ2FtYS5jb20uYnIvcmVzdC9hcGkvdjEvYXV0ZW50aWNhY2FvIiwiaWF0IjoxNzcxOTU1OTc3LCJleHAiOjE3NzIwMDk5Nzd9.j9EF8htvH8nTU7LmAXRI_Eq7sdQON6GY9rdHrqHdsLOLkuufAs5OFG0IlB9UmDLx"
 BASE = "https://oaz.fluxogama.com.br"
-HEADERS = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/json"}
+H = {"Authorization": f"Bearer {TOKEN}", "Accept": "application/json"}
 
-# Try different query formats
-tests = [
-    # Empty body (list all?)
-    ("POST empty list", []),
-    # With pagination-like params
-    ("POST with limit", {"limit": 5}),
-    # With filter
-    ("POST with filter obj", {"modelo.id": "> 0"}),
-    # Array with empty filter
-    ("POST array empty filter", [{}]),
-    # Array with filter
-    ("POST array with filter", [{"campo": "modelo.id", "operador": ">", "valor": "0"}]),
+# Get the 4.4KB Bearer page (probably a form/instructions)
+print("=== Bearer GET /retorno/modelo (4.4KB) ===")
+r = httpx.get(f"{BASE}/rest/api/v1/retorno/modelo", headers=H, timeout=15)
+print(r.text)
+print("=== END ===\n")
+
+# Based on the Java error "VORetornoFiltroCampos":
+# The VO (Value Object) probably has fields: campo, operador, valor
+# And the request body probably has: campos (VORetornoFiltroCampos), listas (something)
+# The error said "from Array value" when I sent a list, meaning campos must be an OBJECT
+# But when I sent an object {campo: value} it said "at least 1 campo or 1 lista"
+# 
+# My theory: VORetornoFiltroCampos is the CONTAINER object, not a filter spec
+# It probably has fields like:
+#   campos: { "modelo.id": "= 1", "modelo.referencia": "like %TEST%" }
+#   listas: ["cor", "ficha"]
+#
+# Wait - the error says VORetornoFiltroCampos cannot be deserialized from Array
+# when I sent campos as a list. So campos IS the VORetornoFiltroCampos object.
+# And the check "at least 1 campo or 1 lista" means:
+# - VORetornoFiltroCampos has two map fields: "campos" and "listas"
+# - At runtime, at least one key must exist in either map
+# 
+# So the real structure is probably:
+# VORetornoFiltroCampos {
+#   Map<String, String> campos;  // field filters
+#   Map<String, ?> listas;       // related data to include
+# }
+#
+# But the top-level JSON IS the VORetornoFiltroCampos
+# So body = { "campos": {field: filter_expr}, "listas": {...} }
+# But I already tried that and it said "at least 1 campo or 1 lista"
+# Which means the maps were empty after deserialization
+#
+# Maybe the issue is that the field names contain dots (modelo.id)
+# and Jackson might be interpreting them as nested paths
+# Let me try without dots or with escaping
+
+print("=== Testing various formats ===")
+
+bodies = [
+    # Try flat field names without dots
+    {"campos": {"id": "> 0"}},
+    # Try nested
+    {"campos": {"modelo": {"id": "> 0"}}},
+    # Try with listas as a map of strings
+    {"listas": {"cor": ""}},
+    {"listas": {"cor": "= 1"}},
+    {"listas": {"ficha": ""}},
+    # Try both
+    {"campos": {"id": "> 0"}, "listas": {"cor": ""}},
+    # Try with un-dotted field
+    {"campos": {"fg_status": "= 1"}},
+    # Try with modelo prefix
+    {"campos": {"modelo": "> 0"}},
 ]
 
-for label, body in tests:
-    print(f"\n  [{label}]")
-    r = httpx.post(
-        f"{BASE}/rest/api/v1/retorno/modelo",
-        json=body,
-        headers=HEADERS,
-        timeout=15,
-    )
+for body in bodies:
+    r = httpx.post(f"{BASE}/rest/api/v1/retorno/modelo", 
+                   json=body, headers=H, timeout=15)
     ct = r.headers.get("content-type", "")
-    is_json = "json" in ct or r.text.strip()[:1] in ("{", "[")
-    print(f"  Status: {r.status_code}, Type: {'JSON' if is_json else 'HTML'}, Len: {len(r.text)}")
+    is_json = r.text.strip()[:1] in ("{", "[")
+    status_text = f"Status: {r.status_code}"
     if is_json:
         try:
             data = r.json()
-            if isinstance(data, list):
-                print(f"  Array: {len(data)} items")
-                if data:
-                    print(f"  Keys: {list(data[0].keys())[:15]}")
-                    print(f"  First: {json.dumps(data[0], ensure_ascii=False)[:400]}")
+            if isinstance(data, list) and len(data) > 0:
+                status_text += f" SUCCESS! {len(data)} items"
             else:
-                print(f"  {json.dumps(data, ensure_ascii=False)[:400]}")
+                status_text += f" {json.dumps(data, ensure_ascii=False)[:150]}"
         except:
-            print(f"  Raw: {r.text[:300]}")
+            status_text += f" raw: {r.text[:150]}"
     else:
-        print(f"  HTML preview: {r.text[:200]}")
+        status_text += f" text: {r.text[:150]}"
+    print(f"  Body={json.dumps(body)[:60]:60s} | {status_text}")
