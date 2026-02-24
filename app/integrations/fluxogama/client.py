@@ -72,23 +72,22 @@ def send_payload(payload, dry_run=False):
             'timestamp': timestamp,
         }
 
-    # Build URL with chave as query param
+    # Build URL (no more chave in query string)
     url = f"{base_url}{endpoint}"
-    params = urllib.parse.urlencode({'chave': chave})
-    full_url = f"{url}?{params}"
 
-    # Encode payload
-    body = json.dumps(payload, ensure_ascii=False).encode('utf-8')
+    # Wrap payload in array — Fluxogama API expects ArrayList<Modelo>
+    body = json.dumps([payload], ensure_ascii=False).encode('utf-8')
 
-    # Build request
+    # Build request with Bearer token auth
     req = urllib.request.Request(
-        full_url,
+        url,
         data=body,
         method='POST',
         headers={
             'Content-Type': 'application/json; charset=utf-8',
             'Accept': 'application/json',
             'User-Agent': 'OAZ-StyleSheet-PLM/1.0',
+            'Authorization': f'Bearer {chave}',
         },
     )
 
