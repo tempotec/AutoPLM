@@ -237,7 +237,10 @@ def build_payload(ficha, item):
     for key, cfg in top_level.items():
         computed = cfg.get('computed')
         if computed == 'ws_id':
-            payload[key] = _compute_ws_id(ficha, item)
+            ws_id_val = _compute_ws_id(ficha, item)
+            payload[key] = ws_id_val
+            # Also set 'codigo' = ws_id for stable Fluxogama lookup
+            payload['codigo'] = ws_id_val
             continue
         if computed == 'cores':
             payload[key] = _compute_cores(item)

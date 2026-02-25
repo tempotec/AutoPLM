@@ -365,9 +365,65 @@
         </div>
     </div>
 
+    <!-- Subetapa Selection Modal -->
+    <div id="fluxSendOverlay"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:9999;justify-content:center;align-items:center;">
+        <div
+            style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:28px;width:480px;max-width:90vw;box-shadow:0 25px 50px rgba(0,0,0,.5);">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                <i class="fas fa-paper-plane" style="font-size:20px;color:#a78bfa;"></i>
+                <h2 style="font-size:18px;font-weight:700;color:#fff;margin:0;">Escolha a subetapa de destino</h2>
+            </div>
+            <p style="color:#94a3b8;font-size:13px;margin-bottom:20px;">
+                Essa subetapa define onde o modelo será criado no Fluxogama (caso ainda não exista).
+            </p>
+
+            <div style="margin-bottom:16px;">
+                <label style="font-size:12px;color:#cbd5f5;margin-bottom:6px;display:block;">Subetapa *</label>
+                <select id="fluxSubetapaSelect"
+                    style="width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e5e7eb;font-size:13px;cursor:pointer;">
+                    <option value="">-- Selecione --</option>
+                </select>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;cursor:pointer;">
+                    <input type="checkbox" id="fluxDryRunCheck"
+                        style="accent-color:#a78bfa;width:16px;height:16px;cursor:pointer;">
+                    <span>Dry-run (não enviar de verdade)</span>
+                </label>
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#94a3b8;cursor:pointer;">
+                    <input type="checkbox" id="fluxForceCheck"
+                        style="accent-color:#f59e0b;width:16px;height:16px;cursor:pointer;">
+                    <span>Force (reenviar mesmo se já enviado)</span>
+                </label>
+            </div>
+
+            <div id="fluxSendMsg" style="margin-bottom:16px;font-size:13px;min-height:20px;"></div>
+
+            <div style="display:flex;justify-content:flex-end;gap:10px;">
+                <button class="btn btn-secondary" id="btnFluxSendCancel"><i class="fas fa-times"></i> Cancelar</button>
+                <button class="btn" id="btnFluxSendConfirm" disabled
+                    style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;opacity:0.5;cursor:not-allowed;">
+                    <i class="fas fa-paper-plane"></i> Confirmar e Enviar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
+        // ─── Subetapa Options (easy to maintain) ───
+        const SUBETAPA_OPTIONS = [
+            { label: 'Ficha do desenvolvimento', wsid: '14' },
+            { label: 'Entrada do mix Souq', wsid: '54' },
+            { label: 'Tabela de Medidas', wsid: '70' },
+            { label: 'Fluxogama', wsid: '11' },
+        ];
+
         const fichaId = {{ ficha.id }};
         const itemId = {{ item.id }};
+
+        // ─── Preview Modal ───
         const overlay = document.getElementById('fluxPreviewOverlay');
         const previewBody = document.getElementById('fluxPreviewBody');
         const previewTitle = document.getElementById('fluxPreviewTitle');
@@ -378,7 +434,7 @@
             fluxMsg.innerHTML = `<span style="color:${colors[type] || '#cbd5e1'}">${text}</span>`;
         }
 
-        // Preview
+        // Preview button
         document.getElementById('btnFluxPreview').addEventListener('click', async () => {
             previewBody.innerHTML = '<p style="color:#a78bfa;">Carregando…</p>';
             previewTitle.textContent = 'Preview Fluxogama';
@@ -409,65 +465,123 @@
         document.getElementById('btnClosePreview').addEventListener('click', () => overlay.style.display = 'none');
         overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
 
-        // Send
-        document.getElementById('btnFluxSend').addEventListener('click', async () => {
-            // First do a dry-run
-            showMsg('<i class="fas fa-vial"></i> Testando (dry-run)…', 'info');
-            try {
-                const dryR = await fetch(`/api/fluxogama/send/ficha/${fichaId}/item/${itemId}?dry_run=1`, {
-                    method: 'POST', credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const dryD = await dryR.json();
+        // ─── Subetapa Send Modal ───
+        const sendOverlay = document.getElementById('fluxSendOverlay');
+        const subetapaSelect = document.getElementById('fluxSubetapaSelect');
+        const dryRunCheck = document.getElementById('fluxDryRunCheck');
+        const forceCheck = document.getElementById('fluxForceCheck');
+        const sendMsg = document.getElementById('fluxSendMsg');
+        const btnConfirm = document.getElementById('btnFluxSendConfirm');
+        const btnCancel = document.getElementById('btnFluxSendCancel');
 
-                if (dryR.status === 422 || (dryD.errors && dryD.errors.length > 0)) {
-                    showMsg(`<i class="fas fa-exclamation-triangle"></i> Validação falhou: ${(dryD.errors || []).join('; ')}`, 'error');
-                    return;
-                }
-                if (dryR.status === 409) {
-                    if (!confirm('Este item já foi enviado. Deseja reenviar?')) return;
-                    // Use force
-                    const forceR = await fetch(`/api/fluxogama/send/ficha/${fichaId}/item/${itemId}?force=1`, {
-                        method: 'POST', credentials: 'same-origin',
-                        headers: { 'Content-Type': 'application/json' }
-                    });
-                    const forceD = await forceR.json();
-                    handleSendResult(forceD, forceR.status);
-                    return;
-                }
-
-                // Dry-run OK — ask to confirm real send
-                if (!confirm('Dry-run OK. Enviar para o Fluxogama agora?')) {
-                    showMsg('Envio cancelado.', 'info');
-                    return;
-                }
-
-                showMsg('<i class="fas fa-spinner fa-spin"></i> Enviando…', 'info');
-                const realR = await fetch(`/api/fluxogama/send/ficha/${fichaId}/item/${itemId}`, {
-                    method: 'POST', credentials: 'same-origin',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const realD = await realR.json();
-                handleSendResult(realD, realR.status);
-            } catch (err) {
-                showMsg(`<i class="fas fa-exclamation-triangle"></i> Erro de conexão: ${err.message}`, 'error');
-            }
+        // Populate subetapa dropdown
+        SUBETAPA_OPTIONS.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.wsid;
+            o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
+            subetapaSelect.appendChild(o);
         });
 
-        function handleSendResult(data, status) {
-            if (data.fluxogama_status === 'sent' || data.fluxogama_status === 'success') {
-                showMsg('<i class="fas fa-check-circle"></i> Enviado com sucesso!', 'success');
-                document.getElementById('fluxBadge').innerHTML =
-                    '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(52,211,153,0.15);color:#34d399;"><i class="fas fa-check-circle"></i> Integrado</span>';
-            } else if (status === 409) {
-                showMsg('<i class="fas fa-info-circle"></i> Já enviado anteriormente.', 'info');
-            } else {
-                const errMsg = data.fluxogama_error || data.error || 'Erro desconhecido';
-                showMsg(`<i class="fas fa-exclamation-triangle"></i> ${errMsg}`, 'error');
-                document.getElementById('fluxBadge').innerHTML =
-                    '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(248,113,113,0.15);color:#f87171;"><i class="fas fa-exclamation-circle"></i> Erro</span>';
+        // Enable/disable confirm button based on subetapa selection
+        subetapaSelect.addEventListener('change', () => {
+            const hasValue = subetapaSelect.value !== '';
+            btnConfirm.disabled = !hasValue;
+            btnConfirm.style.opacity = hasValue ? '1' : '0.5';
+            btnConfirm.style.cursor = hasValue ? 'pointer' : 'not-allowed';
+        });
+
+        // Open modal on "Enviar" click
+        document.getElementById('btnFluxSend').addEventListener('click', () => {
+            sendMsg.innerHTML = '';
+            btnConfirm.disabled = !subetapaSelect.value;
+            btnConfirm.style.opacity = subetapaSelect.value ? '1' : '0.5';
+            btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
+            sendOverlay.style.display = 'flex';
+        });
+
+        // Close modal
+        btnCancel.addEventListener('click', () => sendOverlay.style.display = 'none');
+        sendOverlay.addEventListener('click', e => { if (e.target === sendOverlay) sendOverlay.style.display = 'none'; });
+
+        // ─── Confirm Send ───
+        btnConfirm.addEventListener('click', async () => {
+            const subetapa = subetapaSelect.value;
+            if (!subetapa) return;
+
+            const dryRun = dryRunCheck.checked;
+            const force = forceCheck.checked;
+
+            // Build query string
+            const params = new URLSearchParams({ allow_create: '1', subetapa });
+            if (dryRun) params.set('dry_run', '1');
+            if (force) params.set('force', '1');
+
+            const url = `/api/fluxogama/send/ficha/${fichaId}/item/${itemId}?${params.toString()}`;
+
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando…';
+            sendMsg.innerHTML = '';
+
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await resp.json();
+
+                if (resp.status === 409) {
+                    sendMsg.innerHTML = '<span style="color:#f59e0b;"><i class="fas fa-info-circle"></i> Este item já foi enviado. Marque "Force" e tente novamente.</span>';
+                    forceCheck.checked = true;
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
+                    return;
+                }
+
+                if (resp.status === 422) {
+                    const errList = (data.errors || [data.error || 'Erro de validação']).join('; ');
+                    sendMsg.innerHTML = `<span style="color:#f87171;"><i class="fas fa-exclamation-triangle"></i> ${errList}</span>`;
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
+                    return;
+                }
+
+                // Handle result
+                if (data.fluxogama_status === 'sent' || data.fluxogama_status === 'success') {
+                    sendMsg.innerHTML = '<span style="color:#34d399;"><i class="fas fa-check-circle"></i> Enviado com sucesso!</span>';
+                    document.getElementById('fluxBadge').innerHTML =
+                        '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(52,211,153,0.15);color:#34d399;"><i class="fas fa-check-circle"></i> Integrado</span>';
+                    showMsg('<i class="fas fa-check-circle"></i> Enviado com sucesso!', 'success');
+                } else if (data.fluxogama_status === 'dry_run') {
+                    sendMsg.innerHTML = '<span style="color:#a78bfa;"><i class="fas fa-vial"></i> Dry-run concluído (nada foi enviado).</span>';
+                    showMsg('<i class="fas fa-vial"></i> Dry-run OK.', 'info');
+                } else {
+                    const errMsg = data.fluxogama_error || data.error || 'Erro desconhecido';
+                    const httpSt = data.fluxogama_http_status ? ` (HTTP ${data.fluxogama_http_status})` : '';
+                    sendMsg.innerHTML = `<span style="color:#f87171;"><i class="fas fa-exclamation-triangle"></i> ${errMsg}${httpSt}</span>`;
+                    document.getElementById('fluxBadge').innerHTML =
+                        '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(248,113,113,0.15);color:#f87171;"><i class="fas fa-exclamation-circle"></i> Erro</span>';
+                    showMsg(`<i class="fas fa-exclamation-triangle"></i> ${errMsg}`, 'error');
+                }
+
+                // Show response details if available
+                if (data.fluxogama_response && typeof data.fluxogama_response === 'string') {
+                    try {
+                        const parsed = JSON.parse(data.fluxogama_response);
+                        if (parsed.mensagens) {
+                            sendMsg.innerHTML += `<div style="margin-top:8px;background:#0f172a;border:1px solid #1f2937;border-radius:6px;padding:10px;font-size:11px;color:#94a3b8;max-height:120px;overflow-y:auto;">${parsed.mensagens.map(m => `<div>• ${m}</div>`).join('')}</div>`;
+                        }
+                    } catch (_) { }
+                }
+
+                btnConfirm.innerHTML = '<i class="fas fa-check"></i> Concluído';
+                // Don't re-enable — user should close or retry
+            } catch (err) {
+                sendMsg.innerHTML = `<span style="color:#f87171;"><i class="fas fa-exclamation-triangle"></i> Erro de conexão: ${err.message}</span>`;
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
             }
-        }
+        });
     </script>
 </body>
 

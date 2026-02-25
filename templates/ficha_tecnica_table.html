@@ -684,11 +684,34 @@
             <div class="flux-modal-body" id="fluxModalBody">
                 <!-- Populated by JS -->
             </div>
+
+            <!-- Subetapa selection -->
+            <div style="padding:0 24px 16px;">
+                <label style="font-size:12px;color:#cbd5f5;margin-bottom:6px;display:block;">Subetapa de destino
+                    *</label>
+                <select id="fluxBatchSubetapa"
+                    style="width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e5e7eb;font-size:13px;cursor:pointer;">
+                    <option value="">-- Selecione --</option>
+                </select>
+                <p style="color:#64748b;font-size:11px;margin-top:4px;">Define onde o modelo será criado no Fluxogama
+                    (caso não exista).</p>
+
+                <div style="display:flex;gap:16px;margin-top:12px;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="fluxBatchDryRun" style="accent-color:#a78bfa;cursor:pointer;">
+                        Dry-run
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="fluxBatchForce" style="accent-color:#f59e0b;cursor:pointer;"> Force
+                    </label>
+                </div>
+            </div>
+
             <div class="flux-modal-footer" id="fluxModalFooter">
                 <button class="btn btn-secondary" id="btnFluxCancel">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
-                <button class="btn btn-flux" id="btnFluxConfirm">
+                <button class="btn btn-flux" id="btnFluxConfirm" disabled style="opacity:0.5;cursor:not-allowed;">
                     <i class="fas fa-check"></i> Confirmar envio
                 </button>
             </div>
@@ -696,6 +719,14 @@
     </div>
 
     <script>
+        // ─── Subetapa Options (easy to maintain) ───
+        const SUBETAPA_OPTIONS = [
+            { label: 'Ficha do desenvolvimento', wsid: '14' },
+            { label: 'Entrada do mix Souq', wsid: '54' },
+            { label: 'Tabela de Medidas', wsid: '70' },
+            { label: 'Fluxogama', wsid: '11' },
+        ];
+
         const fichaId = {{ ficha.id }};
         const searchInput = document.getElementById('searchInput');
         const filterGrupo = document.getElementById('filterGrupo');
@@ -967,6 +998,25 @@
             _origRenderRows(items);
         };
 
+        // Populate batch subetapa dropdown
+        const batchSubetapaSelect = document.getElementById('fluxBatchSubetapa');
+        const batchDryRunCheck = document.getElementById('fluxBatchDryRun');
+        const batchForceCheck = document.getElementById('fluxBatchForce');
+        SUBETAPA_OPTIONS.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.wsid;
+            o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
+            batchSubetapaSelect.appendChild(o);
+        });
+
+        // Enable/disable confirm based on subetapa selection
+        batchSubetapaSelect.addEventListener('change', () => {
+            const hasVal = batchSubetapaSelect.value !== '';
+            btnFluxConfirm.disabled = !hasVal;
+            btnFluxConfirm.style.opacity = hasVal ? '1' : '0.5';
+            btnFluxConfirm.style.cursor = hasVal ? 'pointer' : 'not-allowed';
+        });
+
         btnSendFlux.addEventListener('click', () => {
             if (!selectedIds.size) return;
             showFluxConfirmation();
@@ -999,7 +1049,9 @@
                 ${listHtml}
             `;
 
-            btnFluxConfirm.disabled = false;
+            btnFluxConfirm.disabled = !batchSubetapaSelect.value;
+            btnFluxConfirm.style.opacity = batchSubetapaSelect.value ? '1' : '0.5';
+            btnFluxConfirm.style.cursor = batchSubetapaSelect.value ? 'pointer' : 'not-allowed';
             btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
             btnFluxCancel.style.display = '';
             fluxModal.classList.add('active');
@@ -1020,7 +1072,15 @@
             btnFluxCancel.style.display = 'none';
 
             try {
-                const resp = await fetch('/api/fluxogama/send-batch', {
+                // Build query with subetapa
+                const batchParams = new URLSearchParams({
+                    allow_create: '1',
+                    subetapa: batchSubetapaSelect.value,
+                });
+                if (batchDryRunCheck.checked) batchParams.set('dry_run', '1');
+                if (batchForceCheck.checked) batchParams.set('force', '1');
+
+                const resp = await fetch(`/api/fluxogama/send-batch?${batchParams.toString()}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

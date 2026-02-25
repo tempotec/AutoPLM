@@ -1092,12 +1092,34 @@
                 <h2>Enviar para o Flux</h2>
             </div>
             <div class="flux-modal-body" id="fluxModalBody"></div>
+
+            <!-- Subetapa selection -->
+            <div style="padding:0 24px 16px;">
+                <label style="font-size:12px;color:#cbd5f5;margin-bottom:6px;display:block;">Subetapa de destino
+                    *</label>
+                <select id="fluxDashSubetapa"
+                    style="width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e5e7eb;font-size:13px;cursor:pointer;">
+                    <option value="">-- Selecione --</option>
+                </select>
+                <p style="color:#64748b;font-size:11px;margin-top:4px;">Define onde o modelo será criado no Fluxogama.
+                </p>
+
+                <div style="display:flex;gap:16px;margin-top:12px;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="fluxDashDryRun" style="accent-color:#a78bfa;cursor:pointer;"> Dry-run
+                    </label>
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
+                        <input type="checkbox" id="fluxDashForce" style="accent-color:#f59e0b;cursor:pointer;"> Force
+                    </label>
+                </div>
+            </div>
+
             <div class="flux-modal-footer">
                 <button class="btn-secondary" id="btnFluxCancel"
                     style="padding:10px 18px;border-radius:8px;border:1px solid #334155;background:#1f2937;color:#e5e7eb;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">
                     <i class="fas fa-times"></i> Cancelar
                 </button>
-                <button class="btn-flux" id="btnFluxConfirm">
+                <button class="btn-flux" id="btnFluxConfirm" disabled style="opacity:0.5;cursor:not-allowed;">
                     <i class="fas fa-check"></i> Confirmar envio
                 </button>
             </div>
@@ -1105,6 +1127,33 @@
     </div>
 
     <script>
+        // ─── Subetapa Options ───
+        const SUBETAPA_OPTIONS = [
+            { label: 'Ficha do desenvolvimento', wsid: '14' },
+            { label: 'Entrada do mix Souq', wsid: '54' },
+            { label: 'Tabela de Medidas', wsid: '70' },
+            { label: 'Fluxogama', wsid: '11' },
+        ];
+
+        // Populate dropdown
+        const dashSubetapa = document.getElementById('fluxDashSubetapa');
+        const dashDryRun = document.getElementById('fluxDashDryRun');
+        const dashForce = document.getElementById('fluxDashForce');
+        SUBETAPA_OPTIONS.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.wsid;
+            o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
+            dashSubetapa.appendChild(o);
+        });
+
+        // Helper: build subetapa query params
+        function buildFluxParams() {
+            const p = new URLSearchParams({ allow_create: '1', subetapa: dashSubetapa.value });
+            if (dashDryRun.checked) p.set('dry_run', '1');
+            if (dashForce.checked) p.set('force', '1');
+            return p;
+        }
+
         function filterProducts() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const collectionFilter = document.getElementById('collectionFilter') ? document.getElementById('collectionFilter').value : '';
@@ -1147,6 +1196,14 @@
         const fluxModalBody = document.getElementById('fluxModalBody');
         const btnFluxCancel = document.getElementById('btnFluxCancel');
         const btnFluxConfirm = document.getElementById('btnFluxConfirm');
+
+        // Enable/disable confirm based on subetapa
+        dashSubetapa.addEventListener('change', () => {
+            const hasVal = dashSubetapa.value !== '';
+            btnFluxConfirm.disabled = !hasVal;
+            btnFluxConfirm.style.opacity = hasVal ? '1' : '0.5';
+            btnFluxConfirm.style.cursor = hasVal ? 'pointer' : 'not-allowed';
+        });
 
         function updateFluxState() {
             const has = selectedFichaIds.size > 0;
@@ -1228,7 +1285,9 @@
                     ${listHtml}
                 `;
 
-                btnFluxConfirm.disabled = false;
+                btnFluxConfirm.disabled = !dashSubetapa.value;
+                btnFluxConfirm.style.opacity = dashSubetapa.value ? '1' : '0.5';
+                btnFluxConfirm.style.cursor = dashSubetapa.value ? 'pointer' : 'not-allowed';
                 btnFluxConfirm.style.display = '';
                 btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
                 btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
@@ -1274,7 +1333,7 @@
                         const itemIds = itemsData.items.map(it => it.id);
 
                         // Send batch
-                        const sendResp = await fetch('/api/fluxogama/send-batch', {
+                        const sendResp = await fetch(`/api/fluxogama/send-batch?${buildFluxParams().toString()}`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ ficha_id: fichaId, item_ids: itemIds }),
@@ -1422,7 +1481,9 @@
                 `;
 
                 // Rebind confirm to spec send
-                btnFluxConfirm.disabled = false;
+                btnFluxConfirm.disabled = !dashSubetapa.value;
+                btnFluxConfirm.style.opacity = dashSubetapa.value ? '1' : '0.5';
+                btnFluxConfirm.style.cursor = dashSubetapa.value ? 'pointer' : 'not-allowed';
                 btnFluxConfirm.style.display = '';
                 btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
                 btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
@@ -1438,7 +1499,7 @@
 
             const specIds = Array.from(selectedSpecIds);
             try {
-                const resp = await fetch('/api/fluxogama/send-batch-specs', {
+                const resp = await fetch(`/api/fluxogama/send-batch-specs?${buildFluxParams().toString()}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ spec_ids: specIds }),

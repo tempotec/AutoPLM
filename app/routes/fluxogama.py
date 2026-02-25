@@ -4,6 +4,7 @@ Fluxogama API Routes
 Blueprint com rotas para preview e envio de payloads ao Fluxogama.
 """
 import json
+import os
 from datetime import datetime
 from flask import Blueprint, jsonify, session, request
 from app.extensions import csrf, db
@@ -109,6 +110,24 @@ def send_to_fluxogama(ficha_id, item_id):
             'sent': False,
         }), 422
 
+    # Model creation support: inject sistema_criar_modelo + subetapa
+    allow_create = request.args.get('allow_create', '1') in ('1', 'true', 'yes')
+    if allow_create:
+        subetapa = request.args.get(
+            'subetapa',
+            os.environ.get('FLUXOGAMA_SUBETAPA_WSID', ''),
+        )
+        if not subetapa:
+            return jsonify({
+                'ficha_id': ficha.id,
+                'item_id': item.id,
+                'error': 'subetapa obrigatória para criação. '
+                         'Configure FLUXOGAMA_SUBETAPA_WSID no .env ou passe ?subetapa=<wsid>.',
+                'valid': False,
+            }), 422
+        payload['sistema_criar_modelo'] = 1
+        payload['subetapa'] = subetapa
+
     # Set integration status before sending
     if not dry_run:
         payload['uno.7'] = 'Integrado'
@@ -195,6 +214,21 @@ def send_batch():
 
     dry_run = request.args.get('dry_run', '0') in ('1', 'true', 'yes')
     force = request.args.get('force', '0') in ('1', 'true', 'yes')
+    allow_create = request.args.get('allow_create', '1') in ('1', 'true', 'yes')
+
+    # Resolve subetapa once for the whole batch
+    subetapa = ''
+    if allow_create:
+        subetapa = request.args.get(
+            'subetapa',
+            os.environ.get('FLUXOGAMA_SUBETAPA_WSID', ''),
+        )
+        if not subetapa:
+            return jsonify({
+                'error': 'subetapa obrigatória para criação. '
+                         'Configure FLUXOGAMA_SUBETAPA_WSID no .env ou passe ?subetapa=<wsid>.',
+                'valid': False,
+            }), 422
 
     results = []
     success_count = 0
@@ -242,6 +276,12 @@ def send_batch():
             })
             error_count += 1
             continue
+
+
+        # Model creation support: inject sistema_criar_modelo + subetapa
+        if allow_create:
+            payload['sistema_criar_modelo'] = 1
+            payload['subetapa'] = subetapa
 
         # Set integration status
         if not dry_run:
@@ -329,6 +369,22 @@ def send_batch_specs():
         }), 400
 
     dry_run = request.args.get('dry_run', '0') in ('1', 'true', 'yes')
+    force = request.args.get('force', '0') in ('1', 'true', 'yes')
+    allow_create = request.args.get('allow_create', '1') in ('1', 'true', 'yes')
+
+    # Resolve subetapa once for the whole batch
+    subetapa = ''
+    if allow_create:
+        subetapa = request.args.get(
+            'subetapa',
+            os.environ.get('FLUXOGAMA_SUBETAPA_WSID', ''),
+        )
+        if not subetapa:
+            return jsonify({
+                'error': 'subetapa obrigatória para criação. '
+                         'Configure FLUXOGAMA_SUBETAPA_WSID no .env ou passe ?subetapa=<wsid>.',
+                'valid': False,
+            }), 422
 
     results = []
     success_count = 0
@@ -361,6 +417,7 @@ def send_batch_specs():
             'referencia': spec.ref_souq or '',
             'colecao': spec.collection or '',
             'ws_id': f'spec_{spec.id}',
+            'codigo': f'spec_{spec.id}',
 
             # uno.1 – Descrição título peça
             'uno.1': spec.description or '',
@@ -416,6 +473,11 @@ def send_batch_specs():
             })
             error_count += 1
             continue
+
+        # Model creation support: inject sistema_criar_modelo + subetapa
+        if allow_create:
+            payload['sistema_criar_modelo'] = 1
+            payload['subetapa'] = subetapa
 
         try:
             result = send_payload(payload, dry_run=dry_run)
