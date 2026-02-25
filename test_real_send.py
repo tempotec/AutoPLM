@@ -13,23 +13,25 @@ if not token:
     load_dotenv('.env.local')
     token = os.environ.get('FLUXOGAMA_CHAVE', '')
 
+jwt_claims = {}
 if token:
     parts = token.split('.')
     if len(parts) >= 2:
         payload_b64 = parts[1] + '=' * (4 - len(parts[1]) % 4)
         try:
-            payload_data = json.loads(base64.b64decode(payload_b64))
-            iat = datetime.utcfromtimestamp(payload_data.get('iat', 0))
-            exp = datetime.utcfromtimestamp(payload_data.get('exp', 0))
+            jwt_claims = json.loads(base64.b64decode(payload_b64))
+            iat = datetime.utcfromtimestamp(jwt_claims.get('iat', 0))
+            exp = datetime.utcfromtimestamp(jwt_claims.get('exp', 0))
             now = datetime.utcnow()
-            expired = now.timestamp() > payload_data.get('exp', 0)
+            expired = now.timestamp() > jwt_claims.get('exp', 0)
             print("=== JWT CHECK ===")
-            print(f"  Subject: {payload_data.get('sub')}")
-            print(f"  Issuer:  {payload_data.get('iss')}")
-            print(f"  Issued:  {iat}")
-            print(f"  Expires: {exp}")
-            print(f"  Now:     {now}")
-            print(f"  Expired: {expired}")
+            print(f"  Subject:  {jwt_claims.get('sub')}")
+            print(f"  Issuer:   {jwt_claims.get('iss')}")
+            print(f"  Audience: {jwt_claims.get('aud', '(not set)')}")
+            print(f"  Issued:   {iat}")
+            print(f"  Expires:  {exp}")
+            print(f"  Now:      {now}")
+            print(f"  Expired:  {expired}")
             if expired:
                 print("\n⚠️  TOKEN EXPIRADO — o envio real vai falhar com 401/403.")
                 print("  Precisa renovar FLUXOGAMA_CHAVE no .env.local")
@@ -95,6 +97,13 @@ with app.app_context():
         else:
             print(f"\n❌ REAL SEND RESULT: {d3.get('fluxogama_status')}")
             print(f"   Error: {d3.get('fluxogama_error')}")
+            http_st = d3.get('fluxogama_http_status')
+            if http_st in (401, 403) and jwt_claims:
+                print(f"\n   JWT diagnostics (share with Fluxogama support):")
+                print(f"     iss: {jwt_claims.get('iss')}")
+                print(f"     aud: {jwt_claims.get('aud', '(not set)')}")
+                print(f"     sub: {jwt_claims.get('sub')}")
+                print(f"     exp: {jwt_claims.get('exp')}")
 
         print()
         print("=" * 60)
