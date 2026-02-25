@@ -508,6 +508,32 @@
                 transform: rotate(360deg);
             }
         }
+
+        /* Flux status badges */
+        .flux-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .flux-badge.sent {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+        }
+
+        .flux-badge.error {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        .flux-badge.pending {
+            color: #64748b;
+        }
     </style>
 </head>
 
@@ -725,6 +751,11 @@
                 tableHeader.appendChild(th);
             });
 
+            const fluxTh = document.createElement('th');
+            fluxTh.textContent = 'Flux';
+            fluxTh.title = 'Status Fluxogama';
+            tableHeader.appendChild(fluxTh);
+
             const actionTh = document.createElement('th');
             actionTh.textContent = 'Acoes';
             tableHeader.appendChild(actionTh);
@@ -757,6 +788,19 @@
                     td.textContent = value === null || value === undefined ? '' : value;
                     tr.appendChild(td);
                 });
+
+                // Flux status badge
+                const tdFlux = document.createElement('td');
+                const fs = item.fluxogama_status;
+                if (fs === 'sent') {
+                    tdFlux.innerHTML = '<span class="flux-badge sent"><i class="fas fa-check-circle"></i> Integrado</span>';
+                    tdFlux.title = item.fluxogama_sent_at ? `Enviado em ${new Date(item.fluxogama_sent_at).toLocaleString('pt-BR')}` : '';
+                } else if (fs === 'error') {
+                    tdFlux.innerHTML = '<span class="flux-badge error"><i class="fas fa-exclamation-circle"></i> Erro</span>';
+                } else {
+                    tdFlux.innerHTML = '<span class="flux-badge pending">—</span>';
+                }
+                tr.appendChild(tdFlux);
 
                 const tdAction = document.createElement('td');
                 const editLink = document.createElement('a');
@@ -1020,26 +1064,32 @@
             if (errorMsg) {
                 html = `<p class="flux-result-fail"><i class="fas fa-exclamation-triangle"></i> ${errorMsg}</p>`;
             } else if (data) {
-                const { success_count, error_count, results } = data;
-                if (error_count === 0) {
-                    html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> ${success_count} ${success_count === 1 ? 'item enviado' : 'itens enviados'} com sucesso!</p>`;
-                } else {
-                    html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${success_count} enviado(s) com sucesso.</p>`;
-                    html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${error_count} com erro.</p>`;
-                }
+                const { success_count, error_count, skipped_count, results } = data;
+                const parts = [];
+                if (success_count > 0) parts.push(`<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${success_count} ${success_count === 1 ? 'enviado' : 'enviados'} com sucesso.</p>`);
+                if (skipped_count > 0) parts.push(`<p style="color:#a78bfa;margin-bottom:8px;"><i class="fas fa-forward"></i> ${skipped_count} ${skipped_count === 1 ? 'já enviado — pulado' : 'já enviados — pulados'}.</p>`);
+                if (error_count > 0) parts.push(`<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${error_count} com erro.</p>`);
+                if (parts.length === 0 && data.dry_run) parts.push(`<p class="flux-result-ok"><i class="fas fa-vial"></i> Dry-run concluído.</p>`);
+                html = parts.join('');
+
                 // Show per-item details
                 if (results && results.length > 0) {
                     html += '<ul class="flux-item-list" style="margin-top:12px;">';
                     results.forEach(r => {
-                        const icon = r.ok ? '<i class="fas fa-check" style="color:#34d399"></i>' : '<i class="fas fa-times" style="color:#f87171"></i>';
+                        let icon;
+                        if (r.skipped) icon = '<i class="fas fa-forward" style="color:#a78bfa"></i>';
+                        else if (r.ok) icon = '<i class="fas fa-check" style="color:#34d399"></i>';
+                        else icon = '<i class="fas fa-times" style="color:#f87171"></i>';
                         html += `<li>${icon} <span class="item-ref">Item #${r.item_id}</span><span>${r.message}</span></li>`;
                     });
                     html += '</ul>';
                 }
 
                 // Status line update
-                if (error_count === 0) {
-                    setStatus(`Envio concluído: ${success_count} itens enviados ao Flux.`, 'success');
+                if (error_count === 0 && !data.dry_run) {
+                    setStatus(`Envio concluído: ${success_count} enviados ao Flux.`, 'success');
+                } else if (data.dry_run) {
+                    setStatus(`Dry-run: ${success_count} OK, ${error_count} com erro.`, 'success');
                 } else {
                     setStatus(`Envio parcial: ${success_count} OK, ${error_count} com erro.`, 'error');
                 }

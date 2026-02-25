@@ -53,7 +53,7 @@ def preview_payload(ficha_id, item_id):
         return err
 
     payload, errors, warnings = build_payload(ficha, item)
-    extra_errors = validate_payload(payload)
+    extra_errors = validate_payload(payload, existing_errors=errors)
     all_errors = errors + extra_errors
 
     return jsonify({
@@ -83,8 +83,9 @@ def send_to_fluxogama(ficha_id, item_id):
     dry_run = request.args.get('dry_run', '0') in ('1', 'true', 'yes')
 
     # Dedup check: block resend if already integrated (unless force=1)
+    # Fires on dry-run too — "already sent" is important audit info.
     force = request.args.get('force', '0') in ('1', 'true', 'yes')
-    if not dry_run and not force and item.fluxogama_status == 'sent':
+    if not force and item.fluxogama_status == 'sent':
         return jsonify({
             'ficha_id': ficha.id,
             'item_id': item.id,
@@ -94,7 +95,7 @@ def send_to_fluxogama(ficha_id, item_id):
         }), 409
 
     payload, errors, warnings = build_payload(ficha, item)
-    extra_errors = validate_payload(payload)
+    extra_errors = validate_payload(payload, existing_errors=errors)
     all_errors = errors + extra_errors
 
     if all_errors and not dry_run:
@@ -194,10 +195,12 @@ def send_batch():
         return jsonify({'error': 'Acesso negado.'}), 403
 
     dry_run = request.args.get('dry_run', '0') in ('1', 'true', 'yes')
+    force = request.args.get('force', '0') in ('1', 'true', 'yes')
 
     results = []
     success_count = 0
     error_count = 0
+    skipped_count = 0
 
     for item_id in item_ids:
         item = FichaTecnicaItem.query.get(item_id)
@@ -212,12 +215,25 @@ def send_batch():
             error_count += 1
             continue
 
+        # Dedup check: skip already-sent items (unless force=1)
+        # Fires on dry-run too — "already sent" is audit info.
+        if not force and item.fluxogama_status == 'sent':
+            results.append({
+                'item_id': item_id,
+                'ok': True,
+                'skipped': True,
+                'message': 'Já enviado anteriormente. Use ?force=1 para reenviar.',
+                'fluxogama_sent_at': item.fluxogama_sent_at.isoformat() if item.fluxogama_sent_at else None,
+            })
+            skipped_count += 1
+            continue
+
         # Build and validate payload
         payload, errors, warnings = build_payload(ficha, item)
-        extra_errors = validate_payload(payload)
+        extra_errors = validate_payload(payload, existing_errors=errors)
         all_errors = errors + extra_errors
 
-        if all_errors and not dry_run:
+        if all_errors:
             results.append({
                 'item_id': item_id,
                 'ok': False,
@@ -282,6 +298,7 @@ def send_batch():
         'total': len(item_ids),
         'success_count': success_count,
         'error_count': error_count,
+        'skipped_count': skipped_count,
         'dry_run': dry_run,
         'results': results,
     })

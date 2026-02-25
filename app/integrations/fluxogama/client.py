@@ -5,12 +5,16 @@ Sends payloads to the Fluxogama API using urllib (no external dependencies).
 Supports dry-run mode for testing without actually sending.
 """
 import json
+import logging
 import os
 import ssl
+import time
 import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime
+
+logger = logging.getLogger('fluxogama.client')
 
 
 def _get_config():
@@ -94,14 +98,26 @@ def send_payload(payload, dry_run=False):
     # Create SSL context (allow self-signed in dev if needed)
     ctx = ssl.create_default_context()
 
+    logger.info(
+        "Fluxogama POST %s | payload_size=%d bytes | ws_id=%s",
+        url, len(body), payload.get('ws_id', '?'),
+    )
+    t0 = time.monotonic()
+
     try:
         with urllib.request.urlopen(req, timeout=30, context=ctx) as resp:
+            elapsed = time.monotonic() - t0
             http_status = resp.status
             response_body = resp.read().decode('utf-8')
             try:
                 response_data = json.loads(response_body)
             except (ValueError, TypeError):
                 response_data = response_body
+
+            logger.info(
+                "Fluxogama OK | status=%d | elapsed=%.2fs | response_size=%d",
+                http_status, elapsed, len(response_body),
+            )
 
             return {
                 'status': 'success',
@@ -112,11 +128,17 @@ def send_payload(payload, dry_run=False):
                 'timestamp': timestamp,
             }
     except urllib.error.HTTPError as e:
+        elapsed = time.monotonic() - t0
         error_body = ''
         try:
             error_body = e.read().decode('utf-8')
         except Exception:
             pass
+
+        logger.error(
+            "Fluxogama HTTP ERROR | status=%d %s | elapsed=%.2fs | body=%s",
+            e.code, e.reason, elapsed, error_body[:500],
+        )
 
         return {
             'status': 'error',
@@ -127,6 +149,11 @@ def send_payload(payload, dry_run=False):
             'timestamp': timestamp,
         }
     except urllib.error.URLError as e:
+        elapsed = time.monotonic() - t0
+        logger.error(
+            "Fluxogama URL ERROR | reason=%s | elapsed=%.2fs",
+            str(e.reason), elapsed,
+        )
         return {
             'status': 'error',
             'payload': payload,
@@ -136,6 +163,11 @@ def send_payload(payload, dry_run=False):
             'timestamp': timestamp,
         }
     except Exception as e:
+        elapsed = time.monotonic() - t0
+        logger.error(
+            "Fluxogama UNEXPECTED ERROR | type=%s | msg=%s | elapsed=%.2fs",
+            type(e).__name__, str(e), elapsed,
+        )
         return {
             'status': 'error',
             'payload': payload,

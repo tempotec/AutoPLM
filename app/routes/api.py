@@ -360,6 +360,11 @@ def ficha_itens(ficha_id):
                 item_data[col['name']] = getattr(item, col['name'], None)
             else:
                 item_data[col['name']] = raw.get(col['sourceColumnName'])
+        # Include Fluxogama integration status
+        item_data['fluxogama_status'] = item.fluxogama_status
+        item_data['fluxogama_sent_at'] = (
+            item.fluxogama_sent_at.isoformat() if item.fluxogama_sent_at else None
+        )
         items.append(item_data)
 
     return jsonify({

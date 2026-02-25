@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -230,6 +231,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <aside class="sidebar">
@@ -287,12 +289,13 @@
 
             <section class="card">
                 <form method="POST">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <div class="form-grid">
                         {% for field in fields %}
                         <div class="form-group">
                             <label for="field_{{ field.name }}">{{ field.label }}</label>
-                            <input type="text" id="field_{{ field.name }}" name="field_{{ field.name }}" value="{{ field.value }}">
+                            <input type="text" id="field_{{ field.name }}" name="field_{{ field.name }}"
+                                value="{{ field.value }}">
                         </div>
                         {% endfor %}
                     </div>
@@ -307,7 +310,165 @@
                     </div>
                 </form>
             </section>
+
+            <!-- Fluxogama Integration -->
+            <section class="card" style="margin-top:20px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:12px;">
+                        <i class="fas fa-paper-plane" style="color:#a78bfa;font-size:18px;"></i>
+                        <h2 style="font-size:16px;font-weight:700;color:#fff;margin:0;">Fluxogama</h2>
+                    </div>
+                    <div id="fluxBadge">
+                        {% if item.fluxogama_status == 'sent' %}
+                        <span
+                            style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(52,211,153,0.15);color:#34d399;">
+                            <i class="fas fa-check-circle"></i> Integrado
+                        </span>
+                        {% elif item.fluxogama_status == 'error' %}
+                        <span
+                            style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(248,113,113,0.15);color:#f87171;">
+                            <i class="fas fa-exclamation-circle"></i> Erro
+                        </span>
+                        {% else %}
+                        <span style="color:#64748b;font-size:12px;">Não enviado</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div style="display:flex;gap:10px;">
+                    <button class="btn btn-secondary" id="btnFluxPreview" type="button">
+                        <i class="fas fa-eye"></i> Preview
+                    </button>
+                    <button class="btn" id="btnFluxSend" type="button"
+                        style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;">
+                        <i class="fas fa-paper-plane"></i> Enviar
+                    </button>
+                </div>
+                <div id="fluxMsg" style="margin-top:12px;font-size:13px;"></div>
+            </section>
         </main>
     </div>
+
+    <!-- Flux Preview Modal -->
+    <div id="fluxPreviewOverlay"
+        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:9999;justify-content:center;align-items:center;">
+        <div
+            style="background:#1e293b;border:1px solid #334155;border-radius:16px;padding:28px;width:640px;max-width:90vw;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 25px 50px rgba(0,0,0,.5);">
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                <i class="fas fa-eye" style="font-size:20px;color:#a78bfa;"></i>
+                <h2 style="font-size:18px;font-weight:700;color:#fff;margin:0;" id="fluxPreviewTitle">Preview Fluxogama
+                </h2>
+            </div>
+            <div id="fluxPreviewBody" style="flex:1;overflow-y:auto;margin-bottom:20px;"></div>
+            <div style="display:flex;justify-content:flex-end;">
+                <button class="btn btn-secondary" id="btnClosePreview"><i class="fas fa-times"></i> Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const fichaId = {{ ficha.id }};
+        const itemId = {{ item.id }};
+        const overlay = document.getElementById('fluxPreviewOverlay');
+        const previewBody = document.getElementById('fluxPreviewBody');
+        const previewTitle = document.getElementById('fluxPreviewTitle');
+        const fluxMsg = document.getElementById('fluxMsg');
+
+        function showMsg(text, type) {
+            const colors = { success: '#34d399', error: '#f87171', info: '#a78bfa' };
+            fluxMsg.innerHTML = `<span style="color:${colors[type] || '#cbd5e1'}">${text}</span>`;
+        }
+
+        // Preview
+        document.getElementById('btnFluxPreview').addEventListener('click', async () => {
+            previewBody.innerHTML = '<p style="color:#a78bfa;">Carregando…</p>';
+            previewTitle.textContent = 'Preview Fluxogama';
+            overlay.style.display = 'flex';
+            try {
+                const r = await fetch(`/api/fluxogama/payload/ficha/${fichaId}/item/${itemId}`, { credentials: 'same-origin' });
+                const d = await r.json();
+                let html = '';
+                if (d.errors && d.errors.length > 0) {
+                    html += '<div style="background:rgba(248,113,113,0.1);border:1px solid #7f1d1d;border-radius:8px;padding:10px;margin-bottom:12px;">';
+                    html += '<p style="color:#f87171;font-weight:600;font-size:13px;margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Erros de validação</p>';
+                    d.errors.forEach(e => html += `<p style="color:#fca5a5;font-size:12px;margin:2px 0;">• ${e}</p>`);
+                    html += '</div>';
+                }
+                if (d.warnings && d.warnings.length > 0) {
+                    html += '<div style="background:rgba(251,191,36,0.1);border:1px solid #78350f;border-radius:8px;padding:10px;margin-bottom:12px;">';
+                    html += '<p style="color:#fbbf24;font-weight:600;font-size:13px;margin-bottom:6px;"><i class="fas fa-info-circle"></i> Avisos</p>';
+                    d.warnings.forEach(w => html += `<p style="color:#fde68a;font-size:12px;margin:2px 0;">• ${w}</p>`);
+                    html += '</div>';
+                }
+                html += `<pre style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;color:#e2e8f0;font-size:12px;overflow-x:auto;white-space:pre-wrap;">${JSON.stringify(d.payload, null, 2)}</pre>`;
+                previewBody.innerHTML = html;
+            } catch (err) {
+                previewBody.innerHTML = `<p style="color:#f87171;">Erro: ${err.message}</p>`;
+            }
+        });
+
+        document.getElementById('btnClosePreview').addEventListener('click', () => overlay.style.display = 'none');
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
+
+        // Send
+        document.getElementById('btnFluxSend').addEventListener('click', async () => {
+            // First do a dry-run
+            showMsg('<i class="fas fa-vial"></i> Testando (dry-run)…', 'info');
+            try {
+                const dryR = await fetch(`/api/fluxogama/send/ficha/${fichaId}/item/${itemId}?dry_run=1`, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const dryD = await dryR.json();
+
+                if (dryR.status === 422 || (dryD.errors && dryD.errors.length > 0)) {
+                    showMsg(`<i class="fas fa-exclamation-triangle"></i> Validação falhou: ${(dryD.errors || []).join('; ')}`, 'error');
+                    return;
+                }
+                if (dryR.status === 409) {
+                    if (!confirm('Este item já foi enviado. Deseja reenviar?')) return;
+                    // Use force
+                    const forceR = await fetch(`/api/fluxogama/send/ficha/${fichaId}/item/${itemId}?force=1`, {
+                        method: 'POST', credentials: 'same-origin',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const forceD = await forceR.json();
+                    handleSendResult(forceD, forceR.status);
+                    return;
+                }
+
+                // Dry-run OK — ask to confirm real send
+                if (!confirm('Dry-run OK. Enviar para o Fluxogama agora?')) {
+                    showMsg('Envio cancelado.', 'info');
+                    return;
+                }
+
+                showMsg('<i class="fas fa-spinner fa-spin"></i> Enviando…', 'info');
+                const realR = await fetch(`/api/fluxogama/send/ficha/${fichaId}/item/${itemId}`, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const realD = await realR.json();
+                handleSendResult(realD, realR.status);
+            } catch (err) {
+                showMsg(`<i class="fas fa-exclamation-triangle"></i> Erro de conexão: ${err.message}`, 'error');
+            }
+        });
+
+        function handleSendResult(data, status) {
+            if (data.fluxogama_status === 'sent' || data.fluxogama_status === 'success') {
+                showMsg('<i class="fas fa-check-circle"></i> Enviado com sucesso!', 'success');
+                document.getElementById('fluxBadge').innerHTML =
+                    '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(52,211,153,0.15);color:#34d399;"><i class="fas fa-check-circle"></i> Integrado</span>';
+            } else if (status === 409) {
+                showMsg('<i class="fas fa-info-circle"></i> Já enviado anteriormente.', 'info');
+            } else {
+                const errMsg = data.fluxogama_error || data.error || 'Erro desconhecido';
+                showMsg(`<i class="fas fa-exclamation-triangle"></i> ${errMsg}`, 'error');
+                document.getElementById('fluxBadge').innerHTML =
+                    '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(248,113,113,0.15);color:#f87171;"><i class="fas fa-exclamation-circle"></i> Erro</span>';
+            }
+        }
+    </script>
 </body>
+
 </html>

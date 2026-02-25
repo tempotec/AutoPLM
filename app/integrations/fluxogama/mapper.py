@@ -307,11 +307,44 @@ def build_payload(ficha, item):
     return payload, errors, warnings
 
 
-def validate_payload(payload):
-    """Extra validation pass on a built payload."""
+def validate_payload(payload, existing_errors=None):
+    """
+    Extra validation pass on a built payload.
+    Checks all required fields defined in field_map.json.
+    Skips fields already reported in existing_errors to avoid duplicates.
+    """
+    existing_errors = existing_errors or []
+    # Extract field keys already mentioned in existing errors (e.g. "(colecao)")
+    already_flagged = set()
+    for err in existing_errors:
+        # Match pattern like "(colecao)" or "(uno.1)"
+        import re
+        match = re.search(r'\(([^)]+)\)', err)
+        if match:
+            already_flagged.add(match.group(1))
+
     errors = []
-    if not payload.get('referencia'):
-        errors.append("Campo 'referencia' é obrigatório e está vazio.")
-    if not payload.get('uno.1'):
-        errors.append("Campo 'uno.1' (Descrição título peça) é obrigatório e está vazio.")
+    field_map = _load_field_map()
+
+    def _is_empty(val):
+        """True if None or blank string. Does NOT flag 0 or False."""
+        return val is None or (isinstance(val, str) and val.strip() == "")
+
+    # Check top_level required fields
+    for key, cfg in field_map.get('top_level', {}).items():
+        if key in already_flagged:
+            continue
+        if cfg.get('required') and _is_empty(payload.get(key)):
+            label = cfg.get('label', key)
+            errors.append(f"Campo obrigatório '{label}' ({key}) está vazio.")
+
+    # Check uno_fields required fields
+    for key, cfg in field_map.get('uno_fields', {}).items():
+        if key in already_flagged:
+            continue
+        if cfg.get('required') and _is_empty(payload.get(key)):
+            label = cfg.get('label', key)
+            errors.append(f"Campo obrigatório '{label}' ({key}) está vazio.")
+
     return errors
+
