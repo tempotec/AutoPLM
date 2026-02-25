@@ -1,8 +1,12 @@
-"""Check JWT expiry and do the first real send."""
+"""Check JWT expiry and do the first real send. (Windows-safe output)"""
 import os
+import sys
 import json
 import base64
 from datetime import datetime
+
+# Force UTF-8 output on Windows
+sys.stdout.reconfigure(encoding='utf-8')
 
 os.environ['APP_ENV'] = 'development'
 
@@ -33,12 +37,11 @@ if token:
             print(f"  Now:      {now}")
             print(f"  Expired:  {expired}")
             if expired:
-                print("\n⚠️  TOKEN EXPIRADO — o envio real vai falhar com 401/403.")
-                print("  Precisa renovar FLUXOGAMA_CHAVE no .env.local")
+                print("\n[WARN] TOKEN EXPIRADO")
         except Exception as e:
             print(f"Erro ao decodar JWT: {e}")
 else:
-    print("FLUXOGAMA_CHAVE não encontrada")
+    print("FLUXOGAMA_CHAVE nao encontrada")
 
 print()
 
@@ -59,7 +62,7 @@ with app.app_context():
         item_id = 8
 
         print("=" * 60)
-        print(f" STEP 1: Preview (GET payload) — ficha={ficha_id} item={item_id}")
+        print(f" STEP 1: Preview (GET payload) - ficha={ficha_id} item={item_id}")
         print("=" * 60)
         r1 = client.get(f'/api/fluxogama/payload/ficha/{ficha_id}/item/{item_id}')
         d1 = r1.get_json()
@@ -67,9 +70,9 @@ with app.app_context():
         print(f"Valid: {d1.get('valid')}")
         print(f"Errors: {d1.get('errors')}")
         if not d1.get('valid'):
-            print("❌ Item not valid — cannot proceed with real send")
-            exit(1)
-        print("✅ Preview OK\n")
+            print("[FAIL] Item not valid")
+            sys.exit(1)
+        print("[PASS] Preview OK\n")
 
         print("=" * 60)
         print(f" STEP 2: Dry-run (POST ?dry_run=1)")
@@ -79,9 +82,9 @@ with app.app_context():
         print(f"Status: {r2.status_code}")
         print(f"Fluxogama status: {d2.get('fluxogama_status')}")
         if r2.status_code != 200:
-            print(f"❌ Dry-run failed: {d2.get('error')}")
-            exit(1)
-        print("✅ Dry-run OK\n")
+            print(f"[FAIL] Dry-run failed: {d2.get('error')}")
+            sys.exit(1)
+        print("[PASS] Dry-run OK\n")
 
         print("=" * 60)
         print(f" STEP 3: REAL SEND (POST without dry_run)")
@@ -93,13 +96,13 @@ with app.app_context():
         print(json.dumps(d3, indent=2, ensure_ascii=False))
 
         if d3.get('fluxogama_status') == 'success' or d3.get('sent'):
-            print("\n✅ REAL SEND SUCCEEDED")
+            print("\n[PASS] REAL SEND SUCCEEDED")
         else:
-            print(f"\n❌ REAL SEND RESULT: {d3.get('fluxogama_status')}")
+            print(f"\n[FAIL] REAL SEND RESULT: {d3.get('fluxogama_status')}")
             print(f"   Error: {d3.get('fluxogama_error')}")
             http_st = d3.get('fluxogama_http_status')
             if http_st in (401, 403) and jwt_claims:
-                print(f"\n   JWT diagnostics (share with Fluxogama support):")
+                print(f"\n   JWT diagnostics:")
                 print(f"     iss: {jwt_claims.get('iss')}")
                 print(f"     aud: {jwt_claims.get('aud', '(not set)')}")
                 print(f"     sub: {jwt_claims.get('sub')}")
@@ -113,9 +116,9 @@ with app.app_context():
         d4 = r4.get_json()
         print(f"Status: {r4.status_code}")
         if r4.status_code == 409:
-            print("✅ Dedup OK — returned 409 as expected")
+            print("[PASS] Dedup OK - returned 409 as expected")
         else:
-            print(f"⚠️ Expected 409, got {r4.status_code}")
+            print(f"[INFO] Got {r4.status_code} (409 expected only if STEP 3 succeeded)")
         print(json.dumps(d4, indent=2, ensure_ascii=False))
 
         print()
@@ -127,17 +130,16 @@ with app.app_context():
         print(f"Status: {r5.status_code}")
         print(json.dumps(d5, indent=2, ensure_ascii=False))
         if r5.status_code == 200:
-            print("✅ Force resend OK")
+            print("[PASS] Force resend OK")
         else:
-            print(f"⚠️ Expected 200, got {r5.status_code}")
+            print(f"[INFO] Got {r5.status_code}")
 
         print()
         print("=" * 60)
         print(" SUMMARY")
         print("=" * 60)
-        # Check DB state
         item = FichaTecnicaItem.query.get(item_id)
         print(f"  Item {item_id} final DB state:")
         print(f"    fluxogama_status:  {item.fluxogama_status}")
         print(f"    fluxogama_sent_at: {item.fluxogama_sent_at}")
-        print(f"    fluxogama_response (first 200 chars): {(item.fluxogama_response or '')[:200]}")
+        print(f"    fluxogama_response (first 300 chars): {(item.fluxogama_response or '')[:300]}")
