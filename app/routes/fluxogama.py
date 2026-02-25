@@ -128,7 +128,6 @@ def send_to_fluxogama(ficha_id, item_id):
             item.fluxogama_response = response_snippet
         else:
             item.fluxogama_status = 'error'
-            item.fluxogama_sent_at = now
             error_info = {
                 'error': result.get('error', ''),
                 'http_status': result.get('http_status'),
@@ -269,7 +268,6 @@ def send_batch():
                 })
             else:
                 item.fluxogama_status = 'error'
-                item.fluxogama_sent_at = now
                 error_info = {
                     'error': result.get('error', ''),
                     'http_status': result.get('http_status'),
