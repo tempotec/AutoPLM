@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}StyleFlow{% endblock %}</title>
+
+    {# Google Fonts — Inter #}
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    {# Font Awesome #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    {# Global Design System #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/global.css') }}">
+
+    {# Page-specific CSS #}
+    {% block styles %}{% endblock %}
+</head>
+
+<body>
+    {# Mobile menu button (hidden on desktop) #}
+    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Menu">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <div class="app-container">
+        {# Sidebar — from partial #}
+        {% include 'partials/sidebar.html' %}
+
+        {# Main Content Area #}
+        <main class="main-content">
+            {# Page Header (optional) #}
+            {% block page_header %}{% endblock %}
+
+            {# Flash Messages #}
+            {% include 'partials/flash_messages.html' %}
+
+            {# Page Content #}
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    {# Modals (outside main flow) #}
+    {% block modals %}{% endblock %}
+
+    {# Sidebar active state + mobile toggle #}
+    <script src="{{ url_for('static', filename='js/sidebar-active.js') }}"></script>
+
+    {# Page-specific JS #}
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

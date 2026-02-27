@@ -1,189 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{%- extends "layout.html" -%}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fornecedores - StyleFlow</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% block title %}Fornecedores - StyleFlow{% endblock %}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #0a0e1a;
-            color: #e5e7eb;
-        }
-
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 240px;
-            background-color: #0f1420;
-            padding: 24px 16px;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #1e293b;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
-            margin-bottom: 32px;
-        }
-
-        .logo img {
-            height: 32px;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .logo span {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .nav-menu {
-            flex: 1;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            margin-bottom: 4px;
-            border-radius: 8px;
-            color: #94a3b8;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .nav-item:hover {
-            background-color: #1e293b;
-            color: #e5e7eb;
-        }
-
-        .nav-item.active {
-            background-color: #2563eb;
-            color: #ffffff;
-        }
-
-        .nav-item i {
-            width: 20px;
-            text-align: center;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-top: 1px solid #1e293b;
-            margin-top: 16px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-
-        .user-info {
-            flex: 1;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #e5e7eb;
-        }
-
-        .user-role {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .logout-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            padding: 10px 16px;
-            margin-top: 12px;
-            background-color: #dc2626;
-            color: #ffffff;
-            border: none;
-            border-radius: 8px;
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .logout-btn:hover {
-            background-color: #b91c1c;
-            transform: translateY(-1px);
-        }
-
-        .logout-btn i {
-            font-size: 16px;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 32px 40px;
-            overflow-y: auto;
-            margin-left: 240px;
-        }
-
-        .page-header {
-            margin-bottom: 32px;
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-
-        .page-title {
-            font-size: 28px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .page-subtitle {
-            color: #94a3b8;
-            font-size: 14px;
-        }
-
-        .search-bar {
+{% block styles %}
+<style>
+.search-bar {
             display: flex;
             gap: 16px;
             margin-bottom: 24px;
@@ -662,295 +483,154 @@
             background-color: #7f1d1d;
             color: #f87171;
         }
-    </style>
-</head>
+</style>
+{% endblock %}
 
-<body>
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-                <span>StyleFlow</span>
-            </div>
+{% block content %}
+<header class="page-header">
+    <div class="header-top">
+        <div>
+            <h1 class="page-title">Fornecedores</h1>
+            <p class="page-subtitle">Gerencie seus contatos e parcerias de forma eficiente</p>
+        </div>
+    </div>
+</header>
 
-            <nav class="nav-menu">
-                <a href="{{ url_for('dashboard.index') }}" class="nav-item">
-                    <i class="fas fa-home"></i>
-                    <span>Painel</span>
-                </a>
-                <a href="{{ url_for('collections.index') }}" class="nav-item">
-                    <i class="fas fa-folder"></i>
-                    <span>Minhas Coleções</span>
-                </a>
-                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
-                    <i class="fas fa-drafting-compass"></i>
-                    <span>Desenhos Técnicos</span>
-                </a>
-                <a href="{{ url_for('suppliers.index') }}" class="nav-item active">
-                    <i class="fas fa-truck"></i>
-                    <span>Fornecedores</span>
-                </a>
-                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
-                    <i class="fas fa-database"></i>
-                    <span>Banco OAZ</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Relatórios</span>
-                </a>
-            </nav>
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for message in messages %}
+<div class="flash-message success">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ message }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
 
-            <div style="margin-top: auto;">
-                <a href="{{ url_for('settings.index') }}" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Configurações</span>
-                </a>
-                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sair</span>
-                </a>
-
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        {{ current_user.username[0].upper() }}
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">{{ current_user.username }}</div>
-                        <div class="user-role">{{ 'Administrador' if current_user.is_admin else 'Estilista' }}</div>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <header class="page-header">
-                <div class="header-top">
-                    <div>
-                        <h1 class="page-title">Fornecedores</h1>
-                        <p class="page-subtitle">Gerencie seus contatos e parcerias de forma eficiente</p>
-                    </div>
-                </div>
-            </header>
-
-            {% with messages = get_flashed_messages() %}
-            {% if messages %}
-            {% for message in messages %}
-            <div class="flash-message success">
-                <i class="fas fa-check-circle"></i>
-                <span>{{ message }}</span>
-            </div>
+<div class="search-bar">
+    <div class="search-input-group">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Buscar fornecedor..." value="{{ search_query }}">
+    </div>
+    <div class="material-filter-group">
+        <select id="materialFilter">
+            <option value="">Todos os materiais</option>
+            {% for material in materials_options %}
+            <option value="{{ material }}" {{ 'selected' if material==material_filter else '' }}>
+                {{ material }}
+            </option>
             {% endfor %}
-            {% endif %}
-            {% endwith %}
+        </select>
+    </div>
+    <button class="btn-primary" onclick="openModal()">
+        <i class="fas fa-plus"></i>
+        Novo Fornecedor
+    </button>
+</div>
 
-            <div class="search-bar">
-                <div class="search-input-group">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar fornecedor..." value="{{ search_query }}">
-                </div>
-                <div class="material-filter-group">
-                    <select id="materialFilter">
-                        <option value="">Todos os materiais</option>
-                        {% for material in materials_options %}
-                        <option value="{{ material }}" {{ 'selected' if material==material_filter else '' }}>
-                            {{ material }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                <button class="btn-primary" onclick="openModal()">
-                    <i class="fas fa-plus"></i>
-                    Novo Fornecedor
-                </button>
-            </div>
-
-            <div class="suppliers-table">
-                <div class="table-header">
-                    <div>FORNECEDOR</div>
-                    <div>CONTATO</div>
-                    <div>MATERIAIS FORNECIDOS</div>
-                    <div>PEÇAS ASSOCIADAS</div>
-                    <div>AÇÕES</div>
-                </div>
-
-                {% for item in suppliers %}
-                <div class="table-row">
-                    <div class="supplier-info">
-                        <div class="supplier-avatar" style="background-color: {{ item.supplier.avatar_color }};">
-                            {{ item.supplier.name[0].upper() }}
-                        </div>
-                        <div class="supplier-details">
-                            <h4>{{ item.supplier.name }}</h4>
-                            <p>{{ item.supplier.location or 'Localização não informada' }}</p>
-                        </div>
-                    </div>
-
-                    <div class="contact-info">
-                        <p>{{ item.supplier.contact_name or 'Sem contato' }}</p>
-                        <span>{{ item.supplier.contact_email or '' }}</span>
-                    </div>
-
-                    <div class="materials-tags">
-                        {% if item.supplier.materials_json %}
-                        {% set materials_list = item.supplier.materials_json | from_json %}
-                        {% for material in materials_list[:3] %}
-                        <span class="material-tag" style="background-color: {{ material.color }}; color: white;">
-                            {{ material.name }}
-                        </span>
-                        {% endfor %}
-                        {% if materials_list | length > 3 %}
-                        <span class="material-tag" style="background-color: #64748b; color: white;">
-                            +{{ materials_list | length - 3 }}
-                        </span>
-                        {% endif %}
-                        {% endif %}
-                    </div>
-
-                    <div class="spec-count">
-                        {{ item.spec_count }}
-                    </div>
-
-                    <div class="actions">
-                        <button class="action-btn" onclick="viewSupplier({{ item.supplier.id }})">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="action-btn" onclick="viewSupplierProducts({{ item.supplier.id }})">
-                            <i class="fas fa-ellipsis-h"></i>
-                        </button>
-                        <button class="action-btn" onclick="editSupplier({{ item.supplier.id }})">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="action-btn"
-                            onclick="deleteSupplier({{ item.supplier.id }}, '{{ item.supplier.name }}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-                {% else %}
-                <div class="table-row" style="justify-content: center;">
-                    <div style="grid-column: 1 / -1; text-align: center; color: #64748b;">
-                        Nenhum fornecedor encontrado
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-
-            {% if pagination.pages > 1 %}
-            <div class="pagination">
-                {% if pagination.has_prev %}
-                <a href="?page={{ pagination.prev_num }}&search={{ search_query }}&material={{ material_filter }}"
-                    class="page-btn">
-                    <i class="fas fa-chevron-left"></i>
-                </a>
-                {% endif %}
-
-                {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
-                {% if page_num %}
-                <a href="?page={{ page_num }}&search={{ search_query }}&material={{ material_filter }}"
-                    class="page-btn {{ 'active' if page_num == pagination.page else '' }}">
-                    {{ page_num }}
-                </a>
-                {% else %}
-                <span class="page-btn" style="cursor: default;">...</span>
-                {% endif %}
-                {% endfor %}
-
-                {% if pagination.has_next %}
-                <a href="?page={{ pagination.next_num }}&search={{ search_query }}&material={{ material_filter }}"
-                    class="page-btn">
-                    <i class="fas fa-chevron-right"></i>
-                </a>
-                {% endif %}
-            </div>
-            {% endif %}
-        </main>
+<div class="suppliers-table">
+    <div class="table-header">
+        <div>FORNECEDOR</div>
+        <div>CONTATO</div>
+        <div>MATERIAIS FORNECIDOS</div>
+        <div>PEÇAS ASSOCIADAS</div>
+        <div>AÇÕES</div>
     </div>
 
-    <div id="supplierModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">Novo Fornecedor</h2>
-                <button class="close-btn" onclick="closeModal()">&times;</button>
+    {% for item in suppliers %}
+    <div class="table-row">
+        <div class="supplier-info">
+            <div class="supplier-avatar" style="background-color: {{ item.supplier.avatar_color }};">
+                {{ item.supplier.name[0].upper() }}
             </div>
-
-            <form id="supplierForm" onsubmit="saveSupplier(event)">
-                <input type="hidden" id="supplierId">
-
-                <div class="form-group">
-                    <label>Nome do Fornecedor *</label>
-                    <input type="text" id="supplierName" required>
-                </div>
-
-                <div class="form-group">
-                    <label>Localização</label>
-                    <input type="text" id="supplierLocation" placeholder="Ex: São Paulo, SP">
-                </div>
-
-                <div class="form-group">
-                    <label>Nome do Contato</label>
-                    <input type="text" id="contactName">
-                </div>
-
-                <div class="form-group">
-                    <label>E-mail do Contato</label>
-                    <input type="email" id="contactEmail">
-                </div>
-
-                <div class="form-group">
-                    <label>Telefone do Contato</label>
-                    <input type="tel" id="contactPhone">
-                </div>
-
-                <div class="form-group">
-                    <label>Materiais Fornecidos</label>
-                    <div class="materials-input" id="materialsContainer"></div>
-                    <div class="add-material-form">
-                        <input type="text" id="newMaterialName" placeholder="Nome do material">
-                        <select id="newMaterialColor">
-                            <option value="#6366f1">Roxo</option>
-                            <option value="#10b981">Verde</option>
-                            <option value="#3b82f6">Azul</option>
-                            <option value="#f59e0b">Laranja</option>
-                            <option value="#ef4444">Vermelho</option>
-                            <option value="#8b5cf6">Violeta</option>
-                            <option value="#ec4899">Rosa</option>
-                            <option value="#14b8a6">Teal</option>
-                        </select>
-                        <button type="button" onclick="addMaterial()">Adicionar</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Cor do Avatar</label>
-                    <div class="avatar-colors">
-                        <div class="avatar-color-option selected" style="background-color: #667eea;"
-                            data-color="#667eea"></div>
-                        <div class="avatar-color-option" style="background-color: #f093fb;" data-color="#f093fb"></div>
-                        <div class="avatar-color-option" style="background-color: #4facfe;" data-color="#4facfe"></div>
-                        <div class="avatar-color-option" style="background-color: #43e97b;" data-color="#43e97b"></div>
-                        <div class="avatar-color-option" style="background-color: #fa709a;" data-color="#fa709a"></div>
-                        <div class="avatar-color-option" style="background-color: #ff9a56;" data-color="#ff9a56"></div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-save">Salvar Fornecedor</button>
-            </form>
-        </div>
-    </div>
-
-    <div id="productsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="productsModalTitle">Produtos do Fornecedor</h2>
-                <button class="close-btn" onclick="closeProductsModal()">&times;</button>
-            </div>
-            <div id="productsModalBody">
-                <p>Carregando...</p>
+            <div class="supplier-details">
+                <h4>{{ item.supplier.name }}</h4>
+                <p>{{ item.supplier.location or 'Localização não informada' }}</p>
             </div>
         </div>
-    </div>
 
-    <script>
+        <div class="contact-info">
+            <p>{{ item.supplier.contact_name or 'Sem contato' }}</p>
+            <span>{{ item.supplier.contact_email or '' }}</span>
+        </div>
+
+        <div class="materials-tags">
+            {% if item.supplier.materials_json %}
+            {% set materials_list = item.supplier.materials_json | from_json %}
+            {% for material in materials_list[:3] %}
+            <span class="material-tag" style="background-color: {{ material.color }}; color: white;">
+                {{ material.name }}
+            </span>
+            {% endfor %}
+            {% if materials_list | length > 3 %}
+            <span class="material-tag" style="background-color: #64748b; color: white;">
+                +{{ materials_list | length - 3 }}
+            </span>
+            {% endif %}
+            {% endif %}
+        </div>
+
+        <div class="spec-count">
+            {{ item.spec_count }}
+        </div>
+
+        <div class="actions">
+            <button class="action-btn" onclick="viewSupplier({{ item.supplier.id }})">
+                <i class="fas fa-eye"></i>
+            </button>
+            <button class="action-btn" onclick="viewSupplierProducts({{ item.supplier.id }})">
+                <i class="fas fa-ellipsis-h"></i>
+            </button>
+            <button class="action-btn" onclick="editSupplier({{ item.supplier.id }})">
+                <i class="fas fa-edit"></i>
+            </button>
+            <button class="action-btn"
+                onclick="deleteSupplier({{ item.supplier.id }}, '{{ item.supplier.name }}')">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+    {% else %}
+    <div class="table-row" style="justify-content: center;">
+        <div style="grid-column: 1 / -1; text-align: center; color: #64748b;">
+            Nenhum fornecedor encontrado
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+    {% if pagination.has_prev %}
+    <a href="?page={{ pagination.prev_num }}&search={{ search_query }}&material={{ material_filter }}"
+        class="page-btn">
+        <i class="fas fa-chevron-left"></i>
+    </a>
+    {% endif %}
+
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+    {% if page_num %}
+    <a href="?page={{ page_num }}&search={{ search_query }}&material={{ material_filter }}"
+        class="page-btn {{ 'active' if page_num == pagination.page else '' }}">
+        {{ page_num }}
+    </a>
+    {% else %}
+    <span class="page-btn" style="cursor: default;">...</span>
+    {% endif %}
+    {% endfor %}
+
+    {% if pagination.has_next %}
+    <a href="?page={{ pagination.next_num }}&search={{ search_query }}&material={{ material_filter }}"
+        class="page-btn">
+        <i class="fas fa-chevron-right"></i>
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
         let materials = [];
         let selectedColor = '#667eea';
         let currentSupplierId = null;
@@ -1196,7 +876,5 @@
                 closeProductsModal();
             }
         }
-    </script>
-</body>
-
-</html>
+</script>
+{% endblock %}

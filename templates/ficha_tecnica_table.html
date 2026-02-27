@@ -1,163 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{%- extends "layout.html" -%}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ficha Tecnica - Itens</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% block title %}Ficha Tecnica - Itens{% endblock %}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #0a0e1a;
-            color: #e5e7eb;
-        }
-
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 240px;
-            background-color: #0f1420;
-            padding: 24px 16px;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #1e293b;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
-            margin-bottom: 32px;
-        }
-
-        .logo img {
-            height: 32px;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .logo span {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .nav-menu {
-            flex: 1;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            margin-bottom: 4px;
-            border-radius: 8px;
-            color: #94a3b8;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .nav-item:hover {
-            background-color: #1e293b;
-            color: #e5e7eb;
-        }
-
-        .nav-item.active {
-            background-color: #2563eb;
-            color: #ffffff;
-        }
-
-        .nav-item i {
-            width: 20px;
-            text-align: center;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-top: 1px solid #1e293b;
-            margin-top: 16px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-
-        .user-info {
-            flex: 1;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #e5e7eb;
-        }
-
-        .user-role {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 32px 40px;
-            overflow-y: auto;
-            margin-left: 240px;
-        }
-
-        .page-header {
-            margin-bottom: 24px;
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .page-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .page-subtitle {
-            color: #94a3b8;
-            font-size: 14px;
-            margin-top: 8px;
-        }
-
-        .btn {
+{% block styles %}
+<style>
+.btn {
             border: none;
             padding: 10px 16px;
             border-radius: 8px;
@@ -534,191 +381,90 @@
         .flux-badge.pending {
             color: #64748b;
         }
-    </style>
-</head>
+</style>
+{% endblock %}
 
-<body>
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-                <span>StyleFlow</span>
-            </div>
-
-            <nav class="nav-menu">
-                <a href="{{ url_for('dashboard.index') }}" class="nav-item active">
-                    <i class="fas fa-home"></i>
-                    <span>Painel</span>
-                </a>
-                <a href="{{ url_for('collections.index') }}" class="nav-item">
-                    <i class="fas fa-folder"></i>
-                    <span>Minhas Colecoes</span>
-                </a>
-                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
-                    <i class="fas fa-drafting-compass"></i>
-                    <span>Desenhos Tecnicos</span>
-                </a>
-                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
-                    <i class="fas fa-truck"></i>
-                    <span>Fornecedores</span>
-                </a>
-                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
-                    <i class="fas fa-database"></i>
-                    <span>Banco OAZ</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Relatorios</span>
-                </a>
-            </nav>
-
-            <div style="margin-top: auto;">
-                <a href="{{ url_for('settings.index') }}" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Configuracoes</span>
-                </a>
-                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sair</span>
-                </a>
-
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        {{ current_user.username[0].upper() }}
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">{{ current_user.username }}</div>
-                        <div class="user-role">{% if current_user.is_admin %}Admin{% else %}Estilista{% endif %}</div>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <header class="page-header">
-                <div class="header-top">
-                    <div>
-                        <h1 class="page-title">Itens da Ficha Tecnica</h1>
-                        <p class="page-subtitle">Gerencie os itens importados do Excel.</p>
-                    </div>
-                    <div class="action-group">
-                        <button class="btn btn-danger" id="btnDeleteFicha" title="Excluir esta ficha inteira">
-                            <i class="fas fa-trash-alt"></i>
-                            Excluir Ficha
-                        </button>
-                        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i>
-                            Voltar
-                        </a>
-                    </div>
-                </div>
-            </header>
-
-            <div class="controls">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" placeholder="Buscar por referencia, descricao ou item">
-                </div>
-                <input class="select-input" type="text" id="filterGrupo" placeholder="Filtro grupo">
-                <input class="select-input" type="text" id="filterLinha" placeholder="Filtro linha">
-                <input class="select-input" type="text" id="filterCor" placeholder="Filtro cor">
-                <select class="select-input" id="perPage">
-                    <option value="25">25 por pagina</option>
-                    <option value="50">50 por pagina</option>
-                    <option value="100">100 por pagina</option>
-                </select>
-            </div>
-
-            <section class="table-card">
-                <div class="table-actions">
-                    <div class="action-group">
-                        <label style="display:flex;align-items:center;gap:8px;">
-                            <input type="checkbox" id="selectAll" class="checkbox">
-                            Selecionar pagina
-                        </label>
-                        <button class="btn btn-danger" id="btnBulkDelete" disabled>
-                            <i class="fas fa-trash"></i>
-                            Excluir selecionados
-                        </button>
-                        <button class="btn btn-ghost" id="btnClearAll">
-                            <i class="fas fa-broom"></i>
-                            Limpar tudo
-                        </button>
-                        <button class="btn btn-flux" id="btnSendFlux" disabled>
-                            <i class="fas fa-paper-plane"></i>
-                            Enviar para o Flux
-                        </button>
-                        <span class="selection-counter hidden" id="selectionCounter">0 itens selecionados</span>
-                    </div>
-                    <div class="action-group">
-                        <button class="btn btn-primary" id="btnExport">
-                            <i class="fas fa-file-export"></i>
-                            Exportar CSV
-                        </button>
-                    </div>
-                </div>
-                <div class="status-line" id="statusLine"></div>
-                <div class="table-wrapper">
-                    <table>
-                        <thead>
-                            <tr id="tableHeader"></tr>
-                        </thead>
-                        <tbody id="tableBody"></tbody>
-                    </table>
-                </div>
-                <div class="pagination">
-                    <button class="page-btn" id="prevPage">Anterior</button>
-                    <button class="page-btn" id="nextPage">Proxima</button>
-                </div>
-            </section>
-        </main>
-    </div>
-
-    <!-- Flux Confirmation Modal -->
-    <div class="flux-modal-overlay" id="fluxModal">
-        <div class="flux-modal">
-            <div class="flux-modal-header">
-                <i class="fas fa-paper-plane"></i>
-                <h2>Enviar para o Flux</h2>
-            </div>
-            <div class="flux-modal-body" id="fluxModalBody">
-                <!-- Populated by JS -->
-            </div>
-
-            <!-- Subetapa selection -->
-            <div style="padding:0 24px 16px;">
-                <label style="font-size:12px;color:#cbd5f5;margin-bottom:6px;display:block;">Subetapa de destino
-                    *</label>
-                <select id="fluxBatchSubetapa"
-                    style="width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e5e7eb;font-size:13px;cursor:pointer;">
-                    <option value="">-- Selecione --</option>
-                </select>
-                <p style="color:#64748b;font-size:11px;margin-top:4px;">Define onde o modelo será criado no Fluxogama
-                    (caso não exista).</p>
-
-                <div style="display:flex;gap:16px;margin-top:12px;">
-                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
-                        <input type="checkbox" id="fluxBatchDryRun" style="accent-color:#a78bfa;cursor:pointer;">
-                        Dry-run
-                    </label>
-                    <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
-                        <input type="checkbox" id="fluxBatchForce" style="accent-color:#f59e0b;cursor:pointer;"> Force
-                    </label>
-                </div>
-            </div>
-
-            <div class="flux-modal-footer" id="fluxModalFooter">
-                <button class="btn btn-secondary" id="btnFluxCancel">
-                    <i class="fas fa-times"></i> Cancelar
-                </button>
-                <button class="btn btn-flux" id="btnFluxConfirm" disabled style="opacity:0.5;cursor:not-allowed;">
-                    <i class="fas fa-check"></i> Confirmar envio
-                </button>
-            </div>
+{% block content %}
+<header class="page-header">
+    <div class="header-top">
+        <div>
+            <h1 class="page-title">Itens da Ficha Tecnica</h1>
+            <p class="page-subtitle">Gerencie os itens importados do Excel.</p>
+        </div>
+        <div class="action-group">
+            <button class="btn btn-danger" id="btnDeleteFicha" title="Excluir esta ficha inteira">
+                <i class="fas fa-trash-alt"></i>
+                Excluir Ficha
+            </button>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Voltar
+            </a>
         </div>
     </div>
+</header>
 
-    <script>
+<div class="controls">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Buscar por referencia, descricao ou item">
+    </div>
+    <input class="select-input" type="text" id="filterGrupo" placeholder="Filtro grupo">
+    <input class="select-input" type="text" id="filterLinha" placeholder="Filtro linha">
+    <input class="select-input" type="text" id="filterCor" placeholder="Filtro cor">
+    <select class="select-input" id="perPage">
+        <option value="25">25 por pagina</option>
+        <option value="50">50 por pagina</option>
+        <option value="100">100 por pagina</option>
+    </select>
+</div>
+
+<section class="table-card">
+    <div class="table-actions">
+        <div class="action-group">
+            <label style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox" id="selectAll" class="checkbox">
+                Selecionar pagina
+            </label>
+            <button class="btn btn-danger" id="btnBulkDelete" disabled>
+                <i class="fas fa-trash"></i>
+                Excluir selecionados
+            </button>
+            <button class="btn btn-ghost" id="btnClearAll">
+                <i class="fas fa-broom"></i>
+                Limpar tudo
+            </button>
+            <button class="btn btn-flux" id="btnSendFlux" disabled>
+                <i class="fas fa-paper-plane"></i>
+                Enviar para o Flux
+            </button>
+            <span class="selection-counter hidden" id="selectionCounter">0 itens selecionados</span>
+        </div>
+        <div class="action-group">
+            <button class="btn btn-primary" id="btnExport">
+                <i class="fas fa-file-export"></i>
+                Exportar CSV
+            </button>
+        </div>
+    </div>
+    <div class="status-line" id="statusLine"></div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr id="tableHeader"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+    <div class="pagination">
+        <button class="page-btn" id="prevPage">Anterior</button>
+        <button class="page-btn" id="nextPage">Proxima</button>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
         // ─── Subetapa Options (easy to maintain) ───
         const SUBETAPA_OPTIONS = [
             { label: 'Ficha do desenvolvimento', wsid: '14' },
@@ -1199,7 +945,5 @@
         });
 
         loadColumns();
-    </script>
-</body>
-
-</html>
+</script>
+{% endblock %}

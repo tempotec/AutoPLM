@@ -1,163 +1,10 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+{%- extends "layout.html" -%}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Importar Excel - StyleFlow</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% block title %}Importar Excel - StyleFlow{% endblock %}
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: #0a0e1a;
-            color: #e5e7eb;
-        }
-
-        .app-container {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            width: 240px;
-            background-color: #0f1420;
-            padding: 24px 16px;
-            display: flex;
-            flex-direction: column;
-            border-right: 1px solid #1e293b;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 12px;
-            margin-bottom: 32px;
-        }
-
-        .logo img {
-            height: 32px;
-            width: auto;
-            object-fit: contain;
-        }
-
-        .logo span {
-            font-size: 18px;
-            font-weight: 600;
-            color: #ffffff;
-        }
-
-        .nav-menu {
-            flex: 1;
-        }
-
-        .nav-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            margin-bottom: 4px;
-            border-radius: 8px;
-            color: #94a3b8;
-            text-decoration: none;
-            transition: all 0.2s;
-            cursor: pointer;
-        }
-
-        .nav-item:hover {
-            background-color: #1e293b;
-            color: #e5e7eb;
-        }
-
-        .nav-item.active {
-            background-color: #2563eb;
-            color: #ffffff;
-        }
-
-        .nav-item i {
-            width: 20px;
-            text-align: center;
-        }
-
-        .user-profile {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px;
-            border-top: 1px solid #1e293b;
-            margin-top: 16px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 600;
-        }
-
-        .user-info {
-            flex: 1;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 500;
-            color: #e5e7eb;
-        }
-
-        .user-role {
-            font-size: 12px;
-            color: #64748b;
-        }
-
-        .main-content {
-            flex: 1;
-            padding: 32px 40px;
-            overflow-y: auto;
-            margin-left: 240px;
-        }
-
-        .page-header {
-            margin-bottom: 24px;
-        }
-
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .page-title {
-            font-size: 28px;
-            font-weight: 700;
-            color: #ffffff;
-        }
-
-        .page-subtitle {
-            color: #94a3b8;
-            font-size: 14px;
-            margin-top: 8px;
-        }
-
-        .btn {
+{% block styles %}
+<style>
+.btn {
             border: none;
             padding: 10px 16px;
             border-radius: 8px;
@@ -390,138 +237,81 @@
             background-color: #1f2937;
             color: #94a3b8;
         }
-    </style>
-</head>
+</style>
+{% endblock %}
 
-<body>
-    <div class="app-container">
-        <aside class="sidebar">
-            <div class="logo">
-                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
-                <span>StyleFlow</span>
-            </div>
-
-            <nav class="nav-menu">
-                <a href="{{ url_for('dashboard.index') }}" class="nav-item active">
-                    <i class="fas fa-home"></i>
-                    <span>Painel</span>
-                </a>
-                <a href="{{ url_for('collections.index') }}" class="nav-item">
-                    <i class="fas fa-folder"></i>
-                    <span>Minhas Colecoes</span>
-                </a>
-                <a href="{{ url_for('drawings.gallery') }}" class="nav-item">
-                    <i class="fas fa-drafting-compass"></i>
-                    <span>Desenhos Tecnicos</span>
-                </a>
-                <a href="{{ url_for('suppliers.index') }}" class="nav-item">
-                    <i class="fas fa-truck"></i>
-                    <span>Fornecedores</span>
-                </a>
-                <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item">
-                    <i class="fas fa-database"></i>
-                    <span>Banco OAZ</span>
-                </a>
-                <a href="#" class="nav-item">
-                    <i class="fas fa-chart-line"></i>
-                    <span>Relatorios</span>
-                </a>
-            </nav>
-
-            <div style="margin-top: auto;">
-                <a href="{{ url_for('settings.index') }}" class="nav-item">
-                    <i class="fas fa-cog"></i>
-                    <span>Configuracoes</span>
-                </a>
-                <a href="{{ url_for('auth.logout') }}" class="nav-item" style="color: #f87171;">
-                    <i class="fas fa-sign-out-alt"></i>
-                    <span>Sair</span>
-                </a>
-
-                <div class="user-profile">
-                    <div class="user-avatar">
-                        {{ current_user.username[0].upper() }}
-                    </div>
-                    <div class="user-info">
-                        <div class="user-name">{{ current_user.username }}</div>
-                        <div class="user-role">{% if current_user.is_admin %}Admin{% else %}Estilista{% endif %}</div>
-                    </div>
-                </div>
-            </div>
-        </aside>
-
-        <main class="main-content">
-            <header class="page-header">
-                <div class="header-top">
-                    <div>
-                        <h1 class="page-title">Importar Excel (Ficha Tecnica)</h1>
-                        <p class="page-subtitle">Envie o arquivo XLSX para criar a ficha tecnica.</p>
-                    </div>
-                    <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
-                        <i class="fas fa-arrow-left"></i>
-                        Voltar
-                    </a>
-                </div>
-            </header>
-
-            <section class="card">
-                <h2>Arquivo XLSX</h2>
-                <div class="form-group">
-                    <div class="file-input">
-                        <input type="file" id="excelFile" accept=".xlsx">
-                    </div>
-                    <span class="hint">Formatos aceitos: .xlsx. Tamanho maximo recomendado: 10MB.</span>
-                </div>
-                <div class="button-row">
-                    <button class="btn btn-primary" id="btnPreview">
-                        <i class="fas fa-eye"></i>
-                        Gerar Preview
-                    </button>
-                    <button class="btn btn-success" id="btnConfirm" disabled>
-                        <i class="fas fa-check"></i>
-                        Confirmar Importacao
-                    </button>
-                    <button class="btn btn-ghost" id="btnClear">
-                        <i class="fas fa-eraser"></i>
-                        Limpar
-                    </button>
-                </div>
-                <div class="info-box">
-                    <strong>Instrucoes rapidas</strong>
-                    <div>1) Garanta que a planilha possua cabecalhos.</div>
-                    <div>2) Coluna obrigatoria: item_no_ref_supplier. Opcionais: moq, oaz_qty (default 0).</div>
-                    <div>3) Use "Gerar Preview" antes de confirmar a importacao.</div>
-                </div>
-                <div class="status-line" id="statusLine"></div>
-            </section>
-
-            <section class="card">
-                <h2>Preview</h2>
-                <div class="preview-meta" id="previewMeta">
-                    <span class="pill">Válidos: <strong id="previewTotal">0</strong></span>
-                    <span class="pill">Inválidos: <strong id="previewInvalid">0</strong></span>
-                    <span class="pill" id="previewDupPill" style="display: none;">Duplicados: <strong
-                            id="previewDup">0</strong></span>
-                </div>
-                <div id="previewWarnings"></div>
-                <div id="previewColumns" style="display: none;"></div>
-                <div id="previewInvalidDetails" style="display: none;"></div>
-                <div class="info-box" id="previewEmpty">
-                    O preview dos dados aparecera aqui apos gerar o preview.
-                </div>
-                <div class="table-wrapper" id="previewTableWrap" style="display: none;">
-                    <table>
-                        <thead>
-                            <tr id="previewHeader"></tr>
-                        </thead>
-                        <tbody id="previewBody"></tbody>
-                    </table>
-                </div>
-            </section>
-        </main>
+{% block content %}
+<header class="page-header">
+    <div class="header-top">
+        <div>
+            <h1 class="page-title">Importar Excel (Ficha Tecnica)</h1>
+            <p class="page-subtitle">Envie o arquivo XLSX para criar a ficha tecnica.</p>
+        </div>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
     </div>
+</header>
 
-    <script>
+<section class="card">
+    <h2>Arquivo XLSX</h2>
+    <div class="form-group">
+        <div class="file-input">
+            <input type="file" id="excelFile" accept=".xlsx">
+        </div>
+        <span class="hint">Formatos aceitos: .xlsx. Tamanho maximo recomendado: 10MB.</span>
+    </div>
+    <div class="button-row">
+        <button class="btn btn-primary" id="btnPreview">
+            <i class="fas fa-eye"></i>
+            Gerar Preview
+        </button>
+        <button class="btn btn-success" id="btnConfirm" disabled>
+            <i class="fas fa-check"></i>
+            Confirmar Importacao
+        </button>
+        <button class="btn btn-ghost" id="btnClear">
+            <i class="fas fa-eraser"></i>
+            Limpar
+        </button>
+    </div>
+    <div class="info-box">
+        <strong>Instrucoes rapidas</strong>
+        <div>1) Garanta que a planilha possua cabecalhos.</div>
+        <div>2) Coluna obrigatoria: item_no_ref_supplier. Opcionais: moq, oaz_qty (default 0).</div>
+        <div>3) Use "Gerar Preview" antes de confirmar a importacao.</div>
+    </div>
+    <div class="status-line" id="statusLine"></div>
+</section>
+
+<section class="card">
+    <h2>Preview</h2>
+    <div class="preview-meta" id="previewMeta">
+        <span class="pill">Válidos: <strong id="previewTotal">0</strong></span>
+        <span class="pill">Inválidos: <strong id="previewInvalid">0</strong></span>
+        <span class="pill" id="previewDupPill" style="display: none;">Duplicados: <strong
+                id="previewDup">0</strong></span>
+    </div>
+    <div id="previewWarnings"></div>
+    <div id="previewColumns" style="display: none;"></div>
+    <div id="previewInvalidDetails" style="display: none;"></div>
+    <div class="info-box" id="previewEmpty">
+        O preview dos dados aparecera aqui apos gerar o preview.
+    </div>
+    <div class="table-wrapper" id="previewTableWrap" style="display: none;">
+        <table>
+            <thead>
+                <tr id="previewHeader"></tr>
+            </thead>
+            <tbody id="previewBody"></tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
         const previewButton = document.getElementById('btnPreview');
         const confirmButton = document.getElementById('btnConfirm');
         const clearButton = document.getElementById('btnClear');
@@ -759,7 +549,5 @@
             setStatus('', '');
             resetPreview();
         });
-    </script>
-</body>
-
-</html>
+</script>
+{% endblock %}

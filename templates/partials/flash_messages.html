@@ -1,0 +1,35 @@
+{# ─── Flash Messages Partial ─── #}
+{# Include wherever you need flash messages #}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
+{% for category, message in messages %}
+<div class="flash-message {{ category }}">
+    {% if category == 'success' %}
+    <i class="fas fa-check-circle"></i>
+    {% elif category == 'error' %}
+    <i class="fas fa-exclamation-circle"></i>
+    {% elif category == 'warning' %}
+    <i class="fas fa-exclamation-triangle"></i>
+    {% else %}
+    <i class="fas fa-info-circle"></i>
+    {% endif %}
+    <span>{{ message }}</span>
+</div>
+{% endfor %}
+{% endif %}
+{% endwith %}
+
+{# Fallback: also handle messages without categories (get_flashed_messages()) #}
+{% with messages = get_flashed_messages() %}
+{% if messages %}
+{% for message in messages %}
+{% if message is string %}
+<div class="flash-message success">
+    <i class="fas fa-check-circle"></i>
+    <span>{{ message }}</span>
+</div>
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endwith %}

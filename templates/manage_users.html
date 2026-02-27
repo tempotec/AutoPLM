@@ -1,94 +1,118 @@
-{% extends "base.html" %}
+{% extends "layout.html" %}
 
-{% block title %}Gerenciar Usuários - Fichas Técnicas{% endblock %}
+{% block title %}Gerenciar Usuários - StyleFlow{% endblock %}
+
+{% block styles %}
+<style>
+    .btn-group-actions {
+        display: flex;
+        gap: 6px;
+    }
+
+    .btn-icon {
+        padding: 8px 10px;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-subtle);
+        background: transparent;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+    }
+
+    .btn-icon:hover {
+        background: var(--bg-hover);
+        color: var(--text-secondary);
+    }
+
+    .btn-icon.danger {
+        border-color: #7f1d1d;
+        color: #f87171;
+    }
+
+    .btn-icon.danger:hover {
+        background: rgba(239, 68, 68, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="header-top">
+        <h1 class="page-title"><i class="fas fa-users" style="margin-right:8px;"></i>Gerenciar Usuários</h1>
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Novo Usuário
+        </a>
+    </div>
+    <p class="page-subtitle">Administre os usuários do sistema</p>
+</div>
+{% endblock %}
 
 {% block content %}
-<div class="row mt-4">
-    <div class="col-12">
-        <div class="d-flex justify-content-between align-items-center">
-            <h2><i class="fas fa-users me-2"></i>Gerenciar Usuários</h2>
-            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-1"></i>Novo Usuário
-            </a>
-        </div>
-        <hr>
-    </div>
+{% if users %}
+<div class="table-container">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nome de Usuário</th>
+                <th>E-mail</th>
+                <th>Tipo</th>
+                <th>Data Criação</th>
+                <th>Fichas</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.id }}</td>
+                <td><i class="fas fa-user" style="margin-right:6px;color:var(--text-dim);"></i>{{ user.username }}</td>
+                <td>{{ user.email }}</td>
+                <td>
+                    {% if user.is_admin %}
+                    <span class="badge badge-admin">Admin</span>
+                    {% else %}
+                    <span class="badge badge-info">Usuário</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                <td><span class="badge badge-collection">{{ user.specifications|length }}</span></td>
+                <td>
+                    <div class="btn-group-actions">
+                        <a href="{{ url_for('admin.view_user', id=user.id) }}" class="btn-icon" title="Ver detalhes">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn-icon" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        {% if not user.is_admin or user.id != session.user_id %}
+                        <button class="btn-icon danger" title="Excluir"
+                            onclick="if(confirm('Tem certeza que deseja excluir o usuário {{ user.username }}?')) { document.getElementById('delete-user-form-{{ user.id }}').submit(); }">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <form id="delete-user-form-{{ user.id }}" method="POST"
+                            action="{{ url_for('admin.delete_user', id=user.id) }}" style="display:none;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                        </form>
+                        {% endif %}
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-body">
-                {% if users %}
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Nome de Usuário</th>
-                                <th>E-mail</th>
-                                <th>Tipo</th>
-                                <th>Data Criação</th>
-                                <th>Fichas</th>
-                                <th>Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                            <tr>
-                                <td>{{ user.id }}</td>
-                                <td>
-                                    <i class="fas fa-user me-1"></i>
-                                    {{ user.username }}
-                                </td>
-                                <td>{{ user.email }}</td>
-                                <td>
-                                    {% if user.is_admin %}
-                                        <span class="badge bg-danger">Admin</span>
-                                    {% else %}
-                                        <span class="badge bg-primary">Usuário</span>
-                                    {% endif %}
-                                </td>
-                                <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
-                                <td>
-                                    <span class="badge bg-info">{{ user.specifications|length }}</span>
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{{ url_for('admin.view_user', id=user.id) }}" class="btn btn-outline-primary" title="Ver detalhes">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        <a href="{{ url_for('admin.edit_user', id=user.id) }}" class="btn btn-outline-secondary" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        {% if not user.is_admin or user.id != session.user_id %}
-                                        <button class="btn btn-outline-danger" title="Excluir usuário" 
-                                                onclick="if(confirm('Tem certeza que deseja excluir o usuário {{ user.username }}? Todas as especificações deste usuário também serão excluídas.')) { 
-                                                    document.getElementById('delete-user-form-{{ user.id }}').submit(); 
-                                                }">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
-                                        {% endif %}
-                                    </div>
-                                    {% if not user.is_admin or user.id != session.user_id %}
-                                    <form id="delete-user-form-{{ user.id }}" method="POST" action="{{ url_for('admin.delete_user', id=user.id) }}" style="display: none;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    </form>
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                {% else %}
-                <div class="text-center py-4">
-                    <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">Nenhum usuário encontrado</h5>
-                </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-users"></i>
+    <h3>Nenhum usuário encontrado</h3>
+    <p>Crie o primeiro usuário do sistema</p>
+    <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Novo Usuário
+    </a>
 </div>
+{% endif %}
 {% endblock %}

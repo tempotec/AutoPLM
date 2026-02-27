@@ -1,0 +1,61 @@
+{# ─── Sidebar Partial ─── #}
+{# Include this in layout.html or any standalone template #}
+{# Variables expected: current_user (from session/context) #}
+
+<aside class="sidebar" id="sidebar">
+    <div class="logo">
+        <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Logo">
+        <span>StyleFlow</span>
+    </div>
+
+    <nav class="nav-menu">
+        <a href="{{ url_for('dashboard.index') }}" class="nav-item" data-nav="dashboard">
+            <i class="fas fa-home"></i>
+            <span>Painel</span>
+        </a>
+        <a href="{{ url_for('collections.index') }}" class="nav-item" data-nav="collections">
+            <i class="fas fa-folder"></i>
+            <span>Minhas Coleções</span>
+        </a>
+        <a href="{{ url_for('drawings.gallery') }}" class="nav-item" data-nav="drawings">
+            <i class="fas fa-drafting-compass"></i>
+            <span>Desenhos Técnicos</span>
+        </a>
+        <a href="{{ url_for('suppliers.index') }}" class="nav-item" data-nav="suppliers">
+            <i class="fas fa-truck"></i>
+            <span>Fornecedores</span>
+        </a>
+        <a href="{{ url_for('oaz_banco.import_view') }}" class="nav-item" data-nav="oaz_banco">
+            <i class="fas fa-database"></i>
+            <span>Banco OAZ</span>
+        </a>
+        {% if session.is_admin %}
+        <a href="{{ url_for('drawings.activity_logs') }}" class="nav-item" data-nav="activity_logs">
+            <i class="fas fa-history"></i>
+            <span>Logs de Atividade</span>
+        </a>
+        {% endif %}
+    </nav>
+
+    <div class="sidebar-bottom">
+        <a href="{{ url_for('settings.index') }}" class="nav-item" data-nav="settings">
+            <i class="fas fa-cog"></i>
+            <span>Configurações</span>
+        </a>
+        <a href="{{ url_for('auth.logout') }}" class="nav-item logout">
+            <i class="fas fa-sign-out-alt"></i>
+            <span>Sair</span>
+        </a>
+
+        <div class="user-profile">
+            <div class="user-avatar">
+                {{ current_user.username[0].upper() if current_user else '?' }}
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ current_user.username if current_user else 'Usuário' }}</div>
+                <div class="user-role">{% if current_user and current_user.is_admin %}Admin{% else %}Estilista{% endif
+                    %}</div>
+            </div>
+        </div>
+    </div>
+</aside>

@@ -52,13 +52,13 @@ def process_stage_thumbnail(spec, file_path, thread_session):
         thumbnail_url = generate_image_thumbnail(file_path, spec.id)
         if thumbnail_url:
             spec.pdf_thumbnail = thumbnail_url
-            print(f"  ✓ Thumbnail gerado: {thumbnail_url}")
+            print(f"  [OK] Thumbnail gerado: {thumbnail_url}")
     elif is_pdf_file(filename):
         print(f"[ETAPA 1] Gerando thumbnail do PDF: {filename}")
         thumbnail_url = generate_pdf_thumbnail(file_path, spec.id)
         if thumbnail_url:
             spec.pdf_thumbnail = thumbnail_url
-            print(f"  ✓ Thumbnail gerado: {thumbnail_url}")
+            print(f"  [OK] Thumbnail gerado: {thumbnail_url}")
     
     spec.processing_stage = STAGE_THUMBNAIL
     thread_session.commit()
@@ -170,9 +170,9 @@ def process_stage_supplier_link(spec, file_path, thread_session):
         supplier = get_or_create_supplier(spec.supplier, spec.user_id, thread_session)
         if supplier:
             spec.supplier_id = supplier.id
-            print(f"  ✓ Fornecedor vinculado: {supplier.name} (ID: {supplier.id})")
+            print(f"  [OK] Fornecedor vinculado: {supplier.name} (ID: {supplier.id})")
     else:
-        print(f"  ✓ Fornecedor já vinculado ou não detectado")
+        print(f"  [OK] Fornecedor já vinculado ou não detectado")
     
     spec.processing_stage = STAGE_SUPPLIER_LINK
     thread_session.commit()
@@ -186,7 +186,7 @@ def process_stage_complete(spec, thread_session):
     spec.last_error = None
     spec.error_stage = None
     thread_session.commit()
-    print(f"  ✓ Processamento concluído com sucesso!")
+    print(f"  [OK] Processamento concluído com sucesso!")
     return True
 
 
@@ -229,7 +229,7 @@ def _apply_visual_analysis_to_spec(spec, visual_analysis):
     if detalhes:
         spec.finishes = ' | '.join(detalhes)
     
-    print(f"  ✓ Dados extraídos: {spec.description}, Grupo: {spec.main_group}")
+    print(f"  [OK] Dados extraídos: {spec.description}, Grupo: {spec.main_group}")
 
 
 def _apply_extracted_data_to_spec(spec, extracted_data):
@@ -243,7 +243,7 @@ def _apply_extracted_data_to_spec(spec, extracted_data):
                         continue
             setattr(spec, key, convert_value_to_string(value))
     
-    print(f"  ✓ Dados extraídos: {spec.description}, Fornecedor: {spec.supplier}")
+    print(f"  [OK] Dados extraídos: {spec.description}, Fornecedor: {spec.supplier}")
 
 
 def advance_spec_processing(spec_id, upload_folder, app):
@@ -289,7 +289,7 @@ def advance_spec_processing(spec_id, upload_folder, app):
                     current_stage = spec.processing_stage
                     
                 except Exception as stage_error:
-                    print(f"  ❌ Erro na etapa {to_stage}: {stage_error}")
+                    print(f"  [X] Erro na etapa {to_stage}: {stage_error}")
                     spec.last_error = str(stage_error)
                     spec.error_stage = to_stage
                     spec.retry_count = (spec.retry_count or 0) + 1
@@ -342,7 +342,7 @@ def process_batch_queue(batch_id, upload_folder, app, batch_size=5):
             ).order_by(Specification.id).limit(batch_size).all()
             
             if not pending_specs:
-                print(f"\n✓ Lote {batch_id} concluído - nenhum arquivo pendente")
+                print(f"\n[OK] Lote {batch_id} concluído - nenhum arquivo pendente")
                 session.close()
                 break
             
@@ -355,11 +355,11 @@ def process_batch_queue(batch_id, upload_folder, app, batch_size=5):
                 try:
                     success = advance_spec_processing(spec_id, upload_folder, app)
                     if success:
-                        print(f"  ✓ Spec {spec_id} processado com sucesso")
+                        print(f"  [OK] Spec {spec_id} processado com sucesso")
                     else:
-                        print(f"  ⚠️ Spec {spec_id} falhou - continuando com próximo")
+                        print(f"  [!] Spec {spec_id} falhou - continuando com próximo")
                 except Exception as e:
-                    print(f"  ❌ Erro ao processar spec {spec_id}: {e}")
+                    print(f"  [X] Erro ao processar spec {spec_id}: {e}")
             
             time.sleep(0.5)
     
