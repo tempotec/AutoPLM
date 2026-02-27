@@ -73,6 +73,7 @@ class Specification(db.Model):
     status_changed_at = db.Column(db.DateTime)
     status_completed_at = db.Column(db.DateTime)
     price_range = db.Column(db.String(10))
+    fluxogama_subetapa = db.Column(db.String(20))  # WSID da sub-etapa no Fluxogama
 
     collection_obj = db.relationship('Collection', backref='specifications', lazy=True)
     supplier_obj = db.relationship('Supplier', backref='specifications', lazy=True)

@@ -113,6 +113,18 @@
                             {% endfor %}
                         </select>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-paper-plane"
+                                style="margin-right:6px;color:#60a5fa;"></i>Subetapa Fluxogama</label>
+                        <select name="fluxogama_subetapa" id="fluxogamaSubetapa" class="form-input">
+                            <option value="">-- Sem subetapa (não cria no Fluxogama) --</option>
+                            {% for sub in subetapas %}
+                            <option value="{{ sub.wsid }}">{{ sub.nome }} (wsid: {{ sub.wsid }})</option>
+                            {% endfor %}
+                        </select>
+                        <small style="color:#f59e0b;font-size:11px;margin-top:4px;display:block;">Sem subetapa — você
+                            poderá enviar, mas o Fluxogama vai exigir subetapa para criar o modelo.</small>
+                    </div>
                 </div>
             </div>
         </div>
@@ -248,6 +260,7 @@
             formData.append('supplier_id', document.querySelector('[name="supplier_id"]').value);
             formData.append('stylist', document.querySelector('[name="stylist"]').value);
             formData.append('price_range', document.querySelector('[name="price_range"]').value);
+            formData.append('fluxogama_subetapa', document.querySelector('[name="fluxogama_subetapa"]').value);
             for (let file of selectedFiles) formData.append('files', file);
             try {
                 const response = await fetch('{{ url_for("specifications.upload_batch_files") }}', { method: 'POST', body: formData });

@@ -342,6 +342,22 @@ def send_batch():
     })
 
 
+
+def _friendly_flux_error(raw_error: str, effective_subetapa: str = '') -> str:
+    """Convert raw Fluxogama API errors into actionable user-facing messages."""
+    if 'Subetapa não encontrada' in raw_error:
+        wsid_note = f" (WSID {effective_subetapa!r})" if effective_subetapa else ''
+        return (
+            f"Subetapa{wsid_note} não encontrada no Fluxogama para esta coleção. "
+            "Edite a ficha e escolha outra subetapa, ou verifique se ela está vinculada à coleção no Fluxogama."
+        )
+    if 'Coleção não encontrada' in raw_error:
+        return "Coleção não encontrada no Fluxogama. Verifique o COLLECTION_MAP e se a coleção está cadastrada."
+    if 'Modelo não encontrado' in raw_error:
+        return "Modelo não encontrado no Fluxogama. Ative 'Criar modelo' ou verifique a referência da spec."
+    return raw_error or 'Erro desconhecido.'
+
+
 @fluxogama_bp.route('/send-batch-specs', methods=['POST'])
 @login_required
 @csrf.exempt
@@ -372,19 +388,13 @@ def send_batch_specs():
     force = request.args.get('force', '0') in ('1', 'true', 'yes')
     allow_create = request.args.get('allow_create', '1') in ('1', 'true', 'yes')
 
-    # Resolve subetapa once for the whole batch
+    # Resolve subetapa once for the whole batch (optional for specs)
     subetapa = ''
     if allow_create:
         subetapa = request.args.get(
             'subetapa',
             os.environ.get('FLUXOGAMA_SUBETAPA_WSID', ''),
         )
-        if not subetapa:
-            return jsonify({
-                'error': 'subetapa obrigatória para criação. '
-                         'Configure FLUXOGAMA_SUBETAPA_WSID no .env ou passe ?subetapa=<wsid>.',
-                'valid': False,
-            }), 422
 
     results = []
     success_count = 0
@@ -413,9 +423,27 @@ def send_batch_specs():
         # Build payload from Specification fields
         # Maps Specification model fields → Fluxogama uno.X keys
         # aligned with field_map.json and the OAZ /remessa/modelo schema
+
+        # Mapeamento de coleções PDF → WSID numérico do Fluxogama
+        COLLECTION_MAP = {
+            'VERÃO 26/27': '61',
+            'VERAO 26/27': '61',
+            'VERÃO 2026/2027': '61',
+            'VERÃO 2027': '61',
+            'VERAO 2027': '61',
+            'VERÃO 2027 TSM | SOUQ': '61',
+            'VERAO 2027 TSM | SOUQ': '61',
+            'INVERNO 27': '62',
+            'INVERNO 2027': '62',
+            'INVERNO 27 - TSM | SOUQ': '62',
+        }
+        raw_collection = (spec.collection or '').strip()
+        mapped_collection = COLLECTION_MAP.get(raw_collection.upper(), raw_collection)
+        print(f"  [FLUX] Coleção: '{raw_collection}' → '{mapped_collection}'")
+
         payload = {
             'referencia': spec.ref_souq or '',
-            'colecao': spec.collection or '',
+            'colecao': mapped_collection,
             'ws_id': f'spec_{spec.id}',
             'codigo': f'spec_{spec.id}',
 
@@ -475,9 +503,24 @@ def send_batch_specs():
             continue
 
         # Model creation support: inject sistema_criar_modelo + subetapa
+        # Per-spec subetapa takes priority over global modal param
+        # IMPORTANT: use (x or '') pattern to avoid str(None) → "None"
+        global_sub = (subetapa or '').strip()
+        spec_sub = (getattr(spec, 'fluxogama_subetapa', None) or '').strip()
+        effective_subetapa = spec_sub or global_sub
+        print(f"  [FLUX] Subetapa: spec={spec_sub!r} | global={global_sub!r} | effective={effective_subetapa!r}")
+
         if allow_create:
+            if not effective_subetapa:
+                results.append({
+                    'spec_id': spec_id,
+                    'ok': False,
+                    'message': 'Subetapa não definida. Edite a ficha e selecione uma subetapa antes de enviar com allow_create=1.',
+                })
+                error_count += 1
+                continue
             payload['sistema_criar_modelo'] = 1
-            payload['subetapa'] = subetapa
+            payload['subetapa'] = effective_subetapa
 
         try:
             result = send_payload(payload, dry_run=dry_run)
@@ -491,7 +534,7 @@ def send_batch_specs():
             results.append({
                 'spec_id': spec_id,
                 'ok': is_ok,
-                'message': 'Enviado com sucesso.' if is_ok else result.get('error', 'Erro desconhecido.'),
+                'message': 'Enviado com sucesso.' if is_ok else _friendly_flux_error(result.get('error', ''), effective_subetapa),
                 'status_code': result.get('http_status'),
             })
         except Exception as exc:

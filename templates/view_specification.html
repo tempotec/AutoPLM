@@ -4,7 +4,7 @@
 
 {% block styles %}
 <style>
-/* Sidebar */
+    /* Sidebar */
 
 
 
@@ -14,7 +14,7 @@
 
 
 
-        /* Settings & Logout Section */
+    /* Settings & Logout Section */
 
 
 
@@ -22,366 +22,366 @@
 
 
 
-        /* User Profile */
+    /* User Profile */
 
 
 
 
 
-        /* Main Content */
+    /* Main Content */
 
-        .spec-container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
+    .spec-container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
 
-        .spec-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 2rem;
-        }
+    .spec-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 2rem;
+    }
 
-        .spec-title-section h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 0.5rem;
-        }
+    .spec-title-section h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 0.5rem;
+    }
 
-        .spec-meta {
-            display: flex;
-            gap: 1rem;
-            font-size: 0.95rem;
-            color: #8b92b0;
-            margin-top: 0.5rem;
-        }
+    .spec-meta {
+        display: flex;
+        gap: 1rem;
+        font-size: 0.95rem;
+        color: #8b92b0;
+        margin-top: 0.5rem;
+    }
 
-        .spec-meta-item {
-            display: flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
+    .spec-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
 
-        .spec-meta-divider {
-            color: #4a5072;
-        }
+    .spec-meta-divider {
+        color: #4a5072;
+    }
 
-        .status-badge {
-            display: inline-block;
-            padding: 0.4rem 1rem;
-            border-radius: 6px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
+    .status-badge {
+        display: inline-block;
+        padding: 0.4rem 1rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
 
-        .status-draft {
-            background: #3a4a6a;
-            color: #a5b4fc;
-        }
+    .status-draft {
+        background: #3a4a6a;
+        color: #a5b4fc;
+    }
 
-        .status-in_development {
-            background: #1e3a8a;
-            color: #93c5fd;
-        }
+    .status-in_development {
+        background: #1e3a8a;
+        color: #93c5fd;
+    }
 
-        .status-approved {
-            background: #065f46;
-            color: #6ee7b7;
-        }
+    .status-approved {
+        background: #065f46;
+        color: #6ee7b7;
+    }
 
-        .status-completed {
-            background: #065f46;
-            color: #6ee7b7;
-        }
+    .status-completed {
+        background: #065f46;
+        color: #6ee7b7;
+    }
 
-        .status-in_production {
-            background: #7c2d12;
-            color: #fca5a5;
-        }
+    .status-in_production {
+        background: #7c2d12;
+        color: #fca5a5;
+    }
 
-        .status-imported {
-            background: #4c1d95;
-            color: #c4b5fd;
-        }
-
-        /* Price Range Badges */
-        .price-badge-p1 {
-            background: #065f46;
-            color: #6ee7b7;
-        }
-
-        .price-badge-p2 {
-            background: #1e40af;
-            color: #93c5fd;
-        }
-
-        .price-badge-p3 {
-            background: #7c2d12;
-            color: #fdba74;
-        }
-
-        .price-badge-p4 {
-            background: #7e22ce;
-            color: #d8b4fe;
-        }
-
-        .btn-group-spec {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .btn-spec {
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary-spec {
-            background: #3b82f6;
-            color: white;
-        }
-
-        .btn-primary-spec:hover {
-            background: #2563eb;
-            transform: translateY(-1px);
-            color: white;
-        }
-
-        .btn-danger-spec {
-            background: #dc2626;
-            color: white;
-        }
-
-        .btn-danger-spec:hover {
-            background: #b91c1c;
-        }
-
-        .btn-secondary-spec {
-            background: #374151;
-            color: #e8eaf0;
-        }
-
-        .btn-secondary-spec:hover {
-            background: #4b5563;
-            color: #e8eaf0;
-        }
-
-        .spec-content {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 2rem;
-        }
-
-        .product-image-section {
-            background: #1e2538;
-            border-radius: 12px;
-            padding: 1.5rem;
-            height: fit-content;
-            position: sticky;
-            top: 2rem;
-        }
-
-        .product-image-container {
-            background: #0f1320;
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-
-        .product-image-container img {
-            width: 100%;
-            height: auto;
-            display: block;
-        }
-
-        .image-comparison-container {
-            margin-bottom: 1.5rem;
-        }
-
-        .image-section-title {
-            font-size: 1rem;
-            font-weight: 600;
-            color: #e8eaf0;
-            margin-bottom: 0.75rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .image-section-title i {
-            color: #3b82f6;
-        }
-
-        .image-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-
-        .btn-image-action {
-            padding: 0.7rem;
-            background: #2a3348;
-            border: 1px solid #3a4560;
-            border-radius: 6px;
-            color: #e8eaf0;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-            text-decoration: none;
-        }
-
-        .btn-image-action:hover {
-            background: #343d56;
-            color: #fff;
-            border-color: #4a5678;
-        }
-
-        .details-section {
-            display: flex;
-            flex-direction: column;
-            gap: 1.5rem;
-        }
-
-        .details-card {
-            background: #1e2538;
-            border-radius: 12px;
-            padding: 2rem;
-        }
-
-        .details-header {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 1.5rem;
-        }
-
-        .details-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 1.5rem;
-        }
-
-        .detail-item label {
-            display: block;
-            font-size: 0.85rem;
-            color: #8b92b0;
-            margin-bottom: 0.3rem;
-            font-weight: 600;
-        }
-
-        .detail-item .value {
-            color: #e8eaf0;
-            font-size: 1rem;
-        }
-
-        .tabs-container {
-            margin-top: 0.5rem;
-        }
-
-        .tabs-nav {
-            display: flex;
-            gap: 0.5rem;
-            border-bottom: 2px solid #2a3348;
-            margin-bottom: 1.5rem;
-        }
-
-        .tab-button {
-            padding: 0.8rem 1.5rem;
-            background: transparent;
-            border: none;
-            color: #8b92b0;
-            font-weight: 600;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            transition: all 0.2s;
-            font-size: 0.95rem;
-        }
-
-        .tab-button.active {
-            color: #3b82f6;
-            border-bottom-color: #3b82f6;
-        }
-
-        .tab-button:hover {
-            color: #e8eaf0;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .measurements-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .measurements-table thead th {
-            background: #0f1320;
-            color: #8b92b0;
-            padding: 1rem;
-            text-align: center;
-            font-weight: 600;
-            font-size: 0.9rem;
-            border-bottom: 2px solid #2a3348;
-        }
-
-        .measurements-table tbody td {
-            padding: 1rem;
-            text-align: center;
-            border-bottom: 1px solid #2a3348;
-            color: #e8eaf0;
-        }
-
-        .measurements-table tbody tr:hover {
-            background: #0f1320;
-        }
-
-        .measurements-table tbody td:first-child {
-            text-align: left;
-            font-weight: 600;
-            color: #a5b4fc;
-        }
-
-        .info-section {
-            background: #0f1320;
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-top: 1rem;
-        }
-
-        .info-section h6 {
-            color: #a5b4fc;
-            font-size: 0.9rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-        }
-
-        .info-section p {
-            color: #8b92b0;
-            font-size: 0.9rem;
-            line-height: 1.6;
-            margin-bottom: 0.5rem;
-        }
-
-        .info-section strong {
-            color: #e8eaf0;
-        }
+    .status-imported {
+        background: #4c1d95;
+        color: #c4b5fd;
+    }
+
+    /* Price Range Badges */
+    .price-badge-p1 {
+        background: #065f46;
+        color: #6ee7b7;
+    }
+
+    .price-badge-p2 {
+        background: #1e40af;
+        color: #93c5fd;
+    }
+
+    .price-badge-p3 {
+        background: #7c2d12;
+        color: #fdba74;
+    }
+
+    .price-badge-p4 {
+        background: #7e22ce;
+        color: #d8b4fe;
+    }
+
+    .btn-group-spec {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .btn-spec {
+        padding: 0.6rem 1.2rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary-spec {
+        background: #3b82f6;
+        color: white;
+    }
+
+    .btn-primary-spec:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    .btn-danger-spec {
+        background: #dc2626;
+        color: white;
+    }
+
+    .btn-danger-spec:hover {
+        background: #b91c1c;
+    }
+
+    .btn-secondary-spec {
+        background: #374151;
+        color: #e8eaf0;
+    }
+
+    .btn-secondary-spec:hover {
+        background: #4b5563;
+        color: #e8eaf0;
+    }
+
+    .spec-content {
+        display: grid;
+        grid-template-columns: 380px 1fr;
+        gap: 2rem;
+    }
+
+    .product-image-section {
+        background: #1e2538;
+        border-radius: 12px;
+        padding: 1.5rem;
+        height: fit-content;
+        position: sticky;
+        top: 2rem;
+    }
+
+    .product-image-container {
+        background: #0f1320;
+        border-radius: 8px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+
+    .product-image-container img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+
+    .image-comparison-container {
+        margin-bottom: 1.5rem;
+    }
+
+    .image-section-title {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #e8eaf0;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .image-section-title i {
+        color: #3b82f6;
+    }
+
+    .image-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .btn-image-action {
+        padding: 0.7rem;
+        background: #2a3348;
+        border: 1px solid #3a4560;
+        border-radius: 6px;
+        color: #e8eaf0;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .btn-image-action:hover {
+        background: #343d56;
+        color: #fff;
+        border-color: #4a5678;
+    }
+
+    .details-section {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+
+    .details-card {
+        background: #1e2538;
+        border-radius: 12px;
+        padding: 2rem;
+    }
+
+    .details-header {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #fff;
+        margin-bottom: 1.5rem;
+    }
+
+    .details-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.5rem;
+    }
+
+    .detail-item label {
+        display: block;
+        font-size: 0.85rem;
+        color: #8b92b0;
+        margin-bottom: 0.3rem;
+        font-weight: 600;
+    }
+
+    .detail-item .value {
+        color: #e8eaf0;
+        font-size: 1rem;
+    }
+
+    .tabs-container {
+        margin-top: 0.5rem;
+    }
+
+    .tabs-nav {
+        display: flex;
+        gap: 0.5rem;
+        border-bottom: 2px solid #2a3348;
+        margin-bottom: 1.5rem;
+    }
+
+    .tab-button {
+        padding: 0.8rem 1.5rem;
+        background: transparent;
+        border: none;
+        color: #8b92b0;
+        font-weight: 600;
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all 0.2s;
+        font-size: 0.95rem;
+    }
+
+    .tab-button.active {
+        color: #3b82f6;
+        border-bottom-color: #3b82f6;
+    }
+
+    .tab-button:hover {
+        color: #e8eaf0;
+    }
+
+    .tab-content {
+        display: none;
+    }
+
+    .tab-content.active {
+        display: block;
+    }
+
+    .measurements-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .measurements-table thead th {
+        background: #0f1320;
+        color: #8b92b0;
+        padding: 1rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.9rem;
+        border-bottom: 2px solid #2a3348;
+    }
+
+    .measurements-table tbody td {
+        padding: 1rem;
+        text-align: center;
+        border-bottom: 1px solid #2a3348;
+        color: #e8eaf0;
+    }
+
+    .measurements-table tbody tr:hover {
+        background: #0f1320;
+    }
+
+    .measurements-table tbody td:first-child {
+        text-align: left;
+        font-weight: 600;
+        color: #a5b4fc;
+    }
+
+    .info-section {
+        background: #0f1320;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+
+    .info-section h6 {
+        color: #a5b4fc;
+        font-size: 0.9rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+
+    .info-section p {
+        color: #8b92b0;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        margin-bottom: 0.5rem;
+    }
+
+    .info-section strong {
+        color: #e8eaf0;
+    }
 </style>
 {% endblock %}
 
@@ -407,8 +407,7 @@
             </span>
             {% endif %}
             {% if specification.price_range %}
-            <span class="status-badge price-badge-{{ specification.price_range.lower() }}"
-                style="margin-left: 0.5rem;">
+            <span class="status-badge price-badge-{{ specification.price_range.lower() }}" style="margin-left: 0.5rem;">
                 <i class="fas fa-tag"></i> {{ specification.price_range }}
             </span>
             {% endif %}
@@ -430,22 +429,21 @@
             </div>
         </div>
         <div class="btn-group-spec">
-            <a href="{{ url_for('specifications.edit', id=specification.id) }}"
-                class="btn-spec btn-primary-spec">
+            <a href="{{ url_for('specifications.edit', id=specification.id) }}" class="btn-spec btn-primary-spec">
                 <i class="fas fa-edit"></i>Editar Ficha
             </a>
-            <button class="btn-spec btn-danger-spec"
-                onclick="if(confirm('Tem certeza que deseja excluir esta especificação?')) { document.getElementById('delete-spec-form').submit(); }">
-                <i class="fas fa-trash"></i>Excluir
-            </button>
+            <form method="POST" action="{{ url_for('specifications.delete', id=specification.id) }}"
+                style="display:inline;"
+                onsubmit="return confirm('Tem certeza que deseja excluir esta especificação?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn-spec btn-danger-spec">
+                    <i class="fas fa-trash"></i>Excluir
+                </button>
+            </form>
             <a href="{{ url_for('dashboard.index') }}" class="btn-spec btn-secondary-spec">
                 <i class="fas fa-arrow-left"></i>Voltar
             </a>
         </div>
-        <form id="delete-spec-form" method="POST"
-            action="{{ url_for('specifications.delete', id=specification.id) }}" style="display: none;">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        </form>
     </div>
 
     <div class="spec-content">
@@ -460,8 +458,7 @@
                 specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) %}
                 <div class="product-image-container">
                     {% if specification.pdf_thumbnail %}
-                    <img src="{{ specification.pdf_thumbnail }}"
-                        alt="{{ specification.description or 'Produto' }}">
+                    <img src="{{ specification.pdf_thumbnail }}" alt="{{ specification.description or 'Produto' }}">
                     {% elif specification.technical_drawing_url %}
                     <img src="{{ specification.technical_drawing_url }}" alt="Imagem Original">
                     {% elif is_image %}
@@ -490,16 +487,14 @@
                     {% if specification.technical_drawing_url.startswith('/static/') %}
                     <img src="{{ specification.technical_drawing_url }}" alt="Desenho Técnico">
                     {% else %}
-                    <img src="{{ url_for('drawings.view_drawing', id=specification.id) }}"
-                        alt="Desenho Técnico">
+                    <img src="{{ url_for('drawings.view_drawing', id=specification.id) }}" alt="Desenho Técnico">
                     {% endif %}
                 </div>
             </div>
             {% endif %}
 
             <div class="image-actions">
-                <a href="{{ url_for('specifications.download_pdf', id=specification.id) }}"
-                    class="btn-image-action">
+                <a href="{{ url_for('specifications.download_pdf', id=specification.id) }}" class="btn-image-action">
                     <i class="fas fa-download me-2"></i>Baixar {{ 'Imagem' if is_image else 'PDF' }}
                     Original
                 </a>
@@ -509,8 +504,7 @@
 
                 {% if specification.technical_drawing_url %}
                 {% if specification.technical_drawing_url.startswith('/static/') %}
-                <a href="{{ specification.technical_drawing_url }}" target="_blank"
-                    class="btn-image-action">
+                <a href="{{ specification.technical_drawing_url }}" target="_blank" class="btn-image-action">
                     <i class="fas fa-pencil-ruler me-2"></i>Ver Desenho Técnico
                 </a>
                 {% else %}
@@ -524,8 +518,7 @@
                     <i class="fas fa-download me-2"></i>Baixar Desenho Técnico
                 </a>
                 <form method="POST" action="{{ url_for('drawings.generate', id=specification.id) }}"
-                    class="regenerate-drawing-form"
-                    onsubmit="return handleDrawingSubmit(event, this, true);">
+                    class="regenerate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, true);">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                     <button type="submit" class="btn-image-action">
                         <i class="fas fa-sync-alt me-2"></i>Gerar Novo Desenho
@@ -533,11 +526,9 @@
                 </form>
                 {% else %}
                 <form method="POST" action="{{ url_for('drawings.generate', id=specification.id) }}"
-                    class="generate-drawing-form"
-                    onsubmit="return handleDrawingSubmit(event, this, false);">
+                    class="generate-drawing-form" onsubmit="return handleDrawingSubmit(event, this, false);">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-                    <button type="submit" class="btn-image-action"
-                        style="background: #3b82f6; color: white;">
+                    <button type="submit" class="btn-image-action" style="background: #3b82f6; color: white;">
                         <i class="fas fa-magic me-2"></i>Gerar Desenho Técnico
                     </button>
                 </form>
@@ -581,12 +572,9 @@
             <div class="details-card">
                 <div class="tabs-container">
                     <div class="tabs-nav">
-                        <button class="tab-button active"
-                            onclick="switchTab('medidas', event)">Medidas</button>
-                        <button class="tab-button"
-                            onclick="switchTab('materiais', event)">Materiais</button>
-                        <button class="tab-button"
-                            onclick="switchTab('observacoes', event)">Detalhes</button>
+                        <button class="tab-button active" onclick="switchTab('medidas', event)">Medidas</button>
+                        <button class="tab-button" onclick="switchTab('materiais', event)">Materiais</button>
+                        <button class="tab-button" onclick="switchTab('observacoes', event)">Detalhes</button>
                     </div>
 
                     <!-- Medidas Tab -->
@@ -770,125 +758,125 @@
 
 {% block scripts %}
 <script>
-        function switchTab(tabName, event) {
-            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    function switchTab(tabName, event) {
+        document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
 
-            event.target.classList.add('active');
-            document.getElementById('tab-' + tabName).classList.add('active');
+        event.target.classList.add('active');
+        document.getElementById('tab-' + tabName).classList.add('active');
+    }
+
+    function handleDrawingSubmit(event, form, isRegenerate) {
+        event.preventDefault();
+
+        if (isRegenerate) {
+            if (!confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.')) {
+                return false;
+            }
         }
 
-        function handleDrawingSubmit(event, form, isRegenerate) {
-            event.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Iniciando...';
+        }
 
-            if (isRegenerate) {
-                if (!confirm('Deseja gerar um novo desenho técnico? Isso substituirá o desenho atual.')) {
-                    return false;
-                }
+        // Submit via AJAX
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
             }
-
-            const submitBtn = form.querySelector('button[type="submit"]');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Iniciando...';
-            }
-
-            // Submit via AJAX
-            const formData = new FormData(form);
-
-            fetch(form.action, {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Show processing toast
-                        if (typeof Toast !== 'undefined') {
-                            Toast.processing('Processando desenho técnico...');
-                            // Start polling for status
-                            if (typeof pollSpecStatus !== 'undefined') {
-                                pollSpecStatus(data.spec_id, function (statusData) {
-                                    // Reload page when complete to show new drawing
-                                    if (statusData.status === 'completed') {
-                                        setTimeout(() => location.reload(), 1000);
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show processing toast
+                    if (typeof Toast !== 'undefined') {
+                        Toast.processing('Processando desenho técnico...');
+                        // Start polling for status
+                        if (typeof pollSpecStatus !== 'undefined') {
+                            pollSpecStatus(data.spec_id, function (statusData) {
+                                // Reload page when complete to show new drawing
+                                if (statusData.status === 'completed') {
+                                    setTimeout(() => location.reload(), 1000);
+                                }
+                            });
+                        }
+                    } else {
+                        alert('Geração iniciada! A página será recarregada quando concluir.');
+                        // Fallback: poll manually
+                        const checkStatus = setInterval(() => {
+                            fetch(`/api/spec/status/${data.spec_id}`)
+                                .then(r => r.json())
+                                .then(s => {
+                                    if (s.status === 'completed' || s.status === 'error') {
+                                        clearInterval(checkStatus);
+                                        location.reload();
                                     }
                                 });
-                            }
-                        } else {
-                            alert('Geração iniciada! A página será recarregada quando concluir.');
-                            // Fallback: poll manually
-                            const checkStatus = setInterval(() => {
-                                fetch(`/api/spec/status/${data.spec_id}`)
-                                    .then(r => r.json())
-                                    .then(s => {
-                                        if (s.status === 'completed' || s.status === 'error') {
-                                            clearInterval(checkStatus);
-                                            location.reload();
-                                        }
-                                    });
-                            }, 3000);
-                        }
-                    } else {
-                        if (typeof Toast !== 'undefined') {
-                            Toast.error(data.error || 'Erro ao iniciar geração');
-                        } else {
-                            alert(data.error || 'Erro ao iniciar geração');
-                        }
-                        // Re-enable button
-                        if (submitBtn) {
-                            submitBtn.disabled = false;
-                            submitBtn.innerHTML = isRegenerate ? '<i class="fas fa-sync-alt me-2"></i>Gerar Novo Desenho' : '<i class="fas fa-magic me-2"></i>Gerar Desenho Técnico';
-                        }
+                        }, 3000);
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+                } else {
                     if (typeof Toast !== 'undefined') {
-                        Toast.error('Erro de conexão. Tente novamente.');
+                        Toast.error(data.error || 'Erro ao iniciar geração');
                     } else {
-                        alert('Erro de conexão. Tente novamente.');
+                        alert(data.error || 'Erro ao iniciar geração');
                     }
                     // Re-enable button
                     if (submitBtn) {
                         submitBtn.disabled = false;
                         submitBtn.innerHTML = isRegenerate ? '<i class="fas fa-sync-alt me-2"></i>Gerar Novo Desenho' : '<i class="fas fa-magic me-2"></i>Gerar Desenho Técnico';
                     }
-                });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                if (typeof Toast !== 'undefined') {
+                    Toast.error('Erro de conexão. Tente novamente.');
+                } else {
+                    alert('Erro de conexão. Tente novamente.');
+                }
+                // Re-enable button
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = isRegenerate ? '<i class="fas fa-sync-alt me-2"></i>Gerar Novo Desenho' : '<i class="fas fa-magic me-2"></i>Gerar Desenho Técnico';
+                }
+            });
 
-            return false;
-        }
-
-        function togglePdfViewer() {
-            const modal = new bootstrap.Modal(document.getElementById('pdfViewerModal'));
-            const isImage = {{ 'true' if specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false'
-        }};
-
-        if (isImage) {
-            const imageDisplay = document.getElementById('imageDisplay');
-            const imageError = document.getElementById('imageError');
-            imageDisplay.style.display = '';
-            imageError.classList.add('d-none');
-            imageDisplay.src = '{{ url_for("specifications.view_image", id=specification.id) }}';
-        } else {
-            const iframe = document.getElementById('pdfFrame');
-            iframe.src = '{{ url_for("specifications.view_pdf", id=specification.id) }}';
-        }
-        modal.show();
+        return false;
     }
 
-        document.getElementById('pdfViewerModal').addEventListener('hidden.bs.modal', function () {
-            const isImage = {{ 'true' if specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false'
-        }};
-        if (isImage) {
-            document.getElementById('imageDisplay').src = '';
-            document.getElementById('imageError').classList.add('d-none');
-        } else {
-            document.getElementById('pdfFrame').src = '';
-        }
+    function togglePdfViewer() {
+        const modal = new bootstrap.Modal(document.getElementById('pdfViewerModal'));
+        const isImage = {{ 'true' if specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false'
+    }};
+
+    if (isImage) {
+        const imageDisplay = document.getElementById('imageDisplay');
+        const imageError = document.getElementById('imageError');
+        imageDisplay.style.display = '';
+        imageError.classList.add('d-none');
+        imageDisplay.src = '{{ url_for("specifications.view_image", id=specification.id) }}';
+    } else {
+        const iframe = document.getElementById('pdfFrame');
+        iframe.src = '{{ url_for("specifications.view_pdf", id=specification.id) }}';
+    }
+    modal.show();
+    }
+
+    document.getElementById('pdfViewerModal').addEventListener('hidden.bs.modal', function () {
+        const isImage = {{ 'true' if specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false'
+    }};
+    if (isImage) {
+        document.getElementById('imageDisplay').src = '';
+        document.getElementById('imageError').classList.add('d-none');
+    } else {
+        document.getElementById('pdfFrame').src = '';
+    }
     });
 </script>
 {% endblock %}

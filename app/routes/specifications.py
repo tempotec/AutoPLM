@@ -284,6 +284,10 @@ def upload():
 
     form.supplier_id.choices = [(0, '-- Sem fornecedor --')] + [(s.id, s.name) for s in user_suppliers]
 
+    from app.models.fluxogama_subetapa import FluxogamaSubetapa
+    from app.utils.helpers import normalize_wsid
+    subetapas = FluxogamaSubetapa.query.filter_by(ativo=True, colecao_wsid=None).order_by(FluxogamaSubetapa.nome).all()
+
     if request.method == 'GET':
         form.stylist.data = user.username
 
@@ -318,6 +322,7 @@ def upload():
 
                 spec.stylists = form.stylist.data or user.username
                 spec.price_range = form.price_range.data if form.price_range.data else None
+                spec.fluxogama_subetapa = normalize_wsid(request.form.get('fluxogama_subetapa', ''))
                 spec.is_imported = bool(form.is_imported.data)
                 spec.import_category = form.import_category.data if spec.is_imported else None
                 spec.processing_status = 'processing'
@@ -400,6 +405,7 @@ def upload():
                         spec.supplier = supplier_name
                         spec.stylists = stylist
                         spec.price_range = price_range
+                        spec.fluxogama_subetapa = normalize_wsid(request.form.get('fluxogama_subetapa', ''))
                         spec.is_imported = bool(form.is_imported.data)
                         spec.import_category = form.import_category.data if spec.is_imported else None
                         spec.processing_status = 'pending'
@@ -453,9 +459,9 @@ def upload():
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return jsonify({'success': False, 'message': str(e)})
             flash('Erro ao processar o arquivo. Por favor, tente novamente.')
-            return render_template('upload_pdf.html', form=form, current_user=user)
+            return render_template('upload_pdf.html', form=form, current_user=user, subetapas=subetapas)
 
-    return render_template('upload_pdf.html', form=form, current_user=user)
+    return render_template('upload_pdf.html', form=form, current_user=user, subetapas=subetapas)
 
 
 @specifications_bp.route('/specification/<int:id>')
@@ -571,7 +577,9 @@ def delete(id):
         flash('Especificação excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
+        import traceback
         print(f"Erro ao excluir especificação {id}: {e}")
+        traceback.print_exc()
         rpa_error(f"DELETE_SPEC_ERRO: Erro ao excluir especificação ID {id}", exc=e, regiao="delete_spec")
         flash('Erro ao excluir especificação. Tente novamente.')
 
@@ -697,11 +705,14 @@ def upload_batch():
     
     form.collection_id.choices = [(0, '-- Sem coleção --')] + [(c.id, c.name) for c in user_collections]
     form.supplier_id.choices = [(0, '-- Sem fornecedor --')] + [(s.id, s.name) for s in user_suppliers]
-    
+
+    from app.models.fluxogama_subetapa import FluxogamaSubetapa
+    subetapas = FluxogamaSubetapa.query.filter_by(ativo=True, colecao_wsid=None).order_by(FluxogamaSubetapa.nome).all()
+
     if request.method == 'GET':
         form.stylist.data = user.username
     
-    return render_template('upload_batch.html', form=form, current_user=user)
+    return render_template('upload_batch.html', form=form, current_user=user, subetapas=subetapas)
 
 
 @specifications_bp.route('/upload_batch_files', methods=['POST'])
@@ -722,6 +733,7 @@ def upload_batch_files():
     supplier_id = request.form.get('supplier_id', type=int)
     stylist = request.form.get('stylist', user.username)
     price_range = request.form.get('price_range', '')
+    fluxogama_subetapa = request.form.get('fluxogama_subetapa', '').strip() or None
     
     batch_id = f"batch_{uuid.uuid4().hex[:12]}"
     
@@ -756,6 +768,7 @@ def upload_batch_files():
             spec.processing_stage = 0
             spec.stylists = stylist
             spec.price_range = price_range if price_range else None
+            spec.fluxogama_subetapa = fluxogama_subetapa
             spec.created_at = datetime.now()
             spec.set_status('in_development')
             

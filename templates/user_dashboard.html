@@ -4,7 +4,7 @@
 
 {% block styles %}
 <style>
-/* Sidebar */
+    /* Sidebar */
 
 
 
@@ -14,7 +14,7 @@
 
 
 
-        /* Settings & Logout Section */
+    /* Settings & Logout Section */
 
 
 
@@ -22,568 +22,568 @@
 
 
 
-        /* User Profile */
+    /* User Profile */
 
 
 
 
 
-        /* Main Content */
+    /* Main Content */
 
-        /* Header */
+    /* Header */
 
 
-        .header-actions {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-
-        .btn-primary {
-            background-color: #2563eb;
-            color: white;
-            border: none;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-
-        .btn-primary:hover {
-            background-color: #1d4ed8;
-        }
-
-        .btn-secondary {
-            background-color: #1f2937;
-            color: #e5e7eb;
-            border: 1px solid #334155;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-
-        .btn-secondary:hover {
-            background-color: #374151;
-        }
-
-
-        /* Search and Filters */
-        .controls-bar {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
-        }
-
-        .search-box {
-            flex: 1;
-            position: relative;
-        }
-
-        .search-box i {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: #64748b;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 12px 16px 12px 44px;
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #e5e7eb;
-            font-size: 14px;
-        }
-
-        .search-box input::placeholder {
-            color: #64748b;
-        }
-
-        .filter-select {
-            min-width: 160px;
-            padding: 12px 16px;
-            background-color: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 8px;
-            color: #e5e7eb;
-            font-size: 14px;
-            cursor: pointer;
-        }
-
-        /* Product Grid */
-        .products-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .product-card {
-            background-color: #1e293b;
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .product-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
-        }
-
-        .product-image {
-            width: 100%;
-            height: 200px;
-            background-color: #0f1420;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #475569;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .product-image img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-        }
-
-        .product-image i {
-            font-size: 48px;
-        }
-
-        .product-info {
-            padding: 16px;
-        }
-
-        .product-name {
-            font-size: 16px;
-            font-weight: 600;
-            color: #ffffff;
-            margin-bottom: 12px;
-        }
-
-        .product-meta {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .badge {
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 12px;
-            font-weight: 500;
-        }
-
-        .badge-collection {
-            background-color: #1e40af;
-            color: #60a5fa;
-        }
-
-        .badge-supplier {
-            background-color: #1e3a8a;
-            color: #93c5fd;
-        }
-
-        .badge-imported {
-            background-color: #4c1d95;
-            color: #c4b5fd;
-        }
-
-        .badge-draft {
-            background-color: #334155;
-            color: #94a3b8;
-        }
-
-        .badge-development {
-            background-color: #854d0e;
-            color: #fbbf24;
-        }
-
-        .badge-approved {
-            background-color: #065f46;
-            color: #34d399;
-        }
-
-        .badge-production {
-            background-color: #1e40af;
-            color: #60a5fa;
-        }
-
-        .badge-completed {
-            background-color: #065f46;
-            color: #34d399;
-        }
-
-        .badge-processing {
-            background-color: #854d0e;
-            color: #fbbf24;
-        }
-
-        .badge-error {
-            background-color: #7f1d1d;
-            color: #f87171;
-        }
-
-        /* Price Range Badges */
-        .badge-price-p1 {
-            background-color: #065f46;
-            color: #6ee7b7;
-        }
-
-        .badge-price-p2 {
-            background-color: #1e40af;
-            color: #93c5fd;
-        }
-
-        .badge-price-p3 {
-            background-color: #7c2d12;
-            color: #fdba74;
-        }
-
-        .badge-price-p4 {
-            background-color: #7e22ce;
-            color: #d8b4fe;
-        }
-
-        .product-actions {
-            display: flex;
-            gap: 8px;
-            padding: 12px 16px;
-            border-top: 1px solid #334155;
-        }
-
-        .btn-action {
-            flex: 1;
-            padding: 8px 12px;
-            background-color: #334155;
-            color: #e5e7eb;
-            border: none;
-            border-radius: 6px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: background 0.2s;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-action:hover {
-            background-color: #475569;
-        }
-
-        .btn-action.btn-danger {
-            background-color: #7f1d1d;
-            color: #f87171;
-        }
+    .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-        .btn-action.btn-danger:hover {
-            background-color: #991b1b;
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 80px 20px;
-        }
-
-        .empty-state i {
-            font-size: 64px;
-            color: #475569;
-            margin-bottom: 24px;
-        }
-
-        .empty-state h3 {
-            font-size: 24px;
-            font-weight: 600;
-            color: #94a3b8;
-            margin-bottom: 12px;
-        }
-
-        .empty-state p {
-            color: #64748b;
-            margin-bottom: 32px;
-        }
-
-        /* Pagination */
-        .pagination {
-            display: flex;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .page-link {
-            padding: 8px 12px;
-            background-color: #1e293b;
-            color: #e5e7eb;
-            border-radius: 6px;
-            text-decoration: none;
-            transition: background 0.2s;
-        }
-
-        .page-link:hover {
-            background-color: #334155;
-        }
-
-        .page-link.active {
-            background-color: #2563eb;
-            color: white;
-        }
-
-        .page-link.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        /* Flash Messages */
-        .flash-message {
-            padding: 12px 16px;
-            border-radius: 8px;
-            margin-bottom: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .flash-message.success {
-            background-color: #065f46;
-            color: #34d399;
-        }
-
-        .flash-message.error {
-            background-color: #7f1d1d;
-            color: #f87171;
-        }
-
-        .flash-message.info {
-            background-color: #1e40af;
-            color: #60a5fa;
-        }
-
-        /* Flux Selection & Modal */
-        .flux-toolbar {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .flux-toolbar label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: #94a3b8;
-            cursor: pointer;
-        }
-
-        .flux-toolbar label input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .btn-flux {
-            background: linear-gradient(135deg, #7c3aed, #6d28d9);
-            color: #fff;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.2s;
-        }
-
-        .btn-flux:hover:not(:disabled) {
-            background: linear-gradient(135deg, #6d28d9, #5b21b6);
-        }
-
-        .btn-flux:disabled {
-            background: #1e293b;
-            color: #475569;
-            cursor: not-allowed;
-        }
 
-        .selection-counter {
-            font-size: 13px;
-            color: #a78bfa;
-            font-weight: 500;
-        }
-
-        .selection-counter.hidden {
-            display: none;
-        }
-
-        .ficha-card-select {
-            position: absolute;
-            top: 12px;
-            left: 12px;
-            z-index: 10;
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: #7c3aed;
-        }
-
-        .ficha-card-wrapper {
-            position: relative;
-        }
-
-        .ficha-card-wrapper.selected {
-            outline: 2px solid #7c3aed;
-            border-radius: 12px;
-        }
-
-        /* Modal */
-        .flux-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(4px);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .flux-modal-overlay.active {
-            display: flex;
-        }
-
-        .flux-modal {
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 16px;
-            padding: 32px;
-            width: 500px;
-            max-width: 90vw;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-        }
-
-        .flux-modal-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .flux-modal-header i {
-            font-size: 24px;
-            color: #a78bfa;
-        }
-
-        .flux-modal-header h2 {
-            font-size: 20px;
-            font-weight: 700;
-            color: #fff;
-            margin: 0;
-        }
-
-        .flux-modal-body {
-            flex: 1;
-            overflow-y: auto;
-            margin-bottom: 24px;
-        }
-
-        .flux-modal-count {
-            font-size: 15px;
-            color: #cbd5e1;
-            margin-bottom: 16px;
-        }
-
-        .flux-modal-count strong {
-            color: #a78bfa;
-        }
-
-        .flux-item-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 220px;
-            overflow-y: auto;
-            background: #0f172a;
-            border-radius: 8px;
-            border: 1px solid #1f2937;
-        }
-
-        .flux-item-list li {
-            padding: 8px 12px;
-            font-size: 12px;
-            color: #94a3b8;
-            border-bottom: 1px solid #1f2937;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .flux-item-list li:last-child {
-            border-bottom: none;
-        }
-
-        .flux-item-list .item-ref {
-            color: #e2e8f0;
-            font-weight: 600;
-        }
+    .btn-primary {
+        background-color: #2563eb;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
 
-        .flux-modal-footer {
-            display: flex;
-            justify-content: flex-end;
-            gap: 12px;
-        }
+    .btn-primary:hover {
+        background-color: #1d4ed8;
+    }
 
-        .flux-result-ok {
-            color: #34d399;
-        }
+    .btn-secondary {
+        background-color: #1f2937;
+        color: #e5e7eb;
+        border: 1px solid #334155;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
 
-        .flux-result-fail {
-            color: #f87171;
-        }
+    .btn-secondary:hover {
+        background-color: #374151;
+    }
 
-        .flux-spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #334155;
-            border-top-color: #a78bfa;
-            border-radius: 50%;
-            animation: fluxSpin 0.6s linear infinite;
-        }
 
-        @keyframes fluxSpin {
-            to {
-                transform: rotate(360deg);
-            }
-        }
+    /* Search and Filters */
+    .controls-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 32px;
+    }
+
+    .search-box {
+        flex: 1;
+        position: relative;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #64748b;
+    }
+
+    .search-box input {
+        width: 100%;
+        padding: 12px 16px 12px 44px;
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        color: #e5e7eb;
+        font-size: 14px;
+    }
+
+    .search-box input::placeholder {
+        color: #64748b;
+    }
+
+    .filter-select {
+        min-width: 160px;
+        padding: 12px 16px;
+        background-color: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 8px;
+        color: #e5e7eb;
+        font-size: 14px;
+        cursor: pointer;
+    }
+
+    /* Product Grid */
+    .products-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .product-card {
+        background-color: #1e293b;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .product-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4);
+    }
+
+    .product-image {
+        width: 100%;
+        height: 200px;
+        background-color: #0f1420;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #475569;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .product-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+
+    .product-image i {
+        font-size: 48px;
+    }
+
+    .product-info {
+        padding: 16px;
+    }
+
+    .product-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 12px;
+    }
+
+    .product-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+
+    .badge {
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+
+    .badge-collection {
+        background-color: #1e40af;
+        color: #60a5fa;
+    }
+
+    .badge-supplier {
+        background-color: #1e3a8a;
+        color: #93c5fd;
+    }
+
+    .badge-imported {
+        background-color: #4c1d95;
+        color: #c4b5fd;
+    }
+
+    .badge-draft {
+        background-color: #334155;
+        color: #94a3b8;
+    }
+
+    .badge-development {
+        background-color: #854d0e;
+        color: #fbbf24;
+    }
+
+    .badge-approved {
+        background-color: #065f46;
+        color: #34d399;
+    }
+
+    .badge-production {
+        background-color: #1e40af;
+        color: #60a5fa;
+    }
+
+    .badge-completed {
+        background-color: #065f46;
+        color: #34d399;
+    }
+
+    .badge-processing {
+        background-color: #854d0e;
+        color: #fbbf24;
+    }
+
+    .badge-error {
+        background-color: #7f1d1d;
+        color: #f87171;
+    }
+
+    /* Price Range Badges */
+    .badge-price-p1 {
+        background-color: #065f46;
+        color: #6ee7b7;
+    }
+
+    .badge-price-p2 {
+        background-color: #1e40af;
+        color: #93c5fd;
+    }
+
+    .badge-price-p3 {
+        background-color: #7c2d12;
+        color: #fdba74;
+    }
+
+    .badge-price-p4 {
+        background-color: #7e22ce;
+        color: #d8b4fe;
+    }
+
+    .product-actions {
+        display: flex;
+        gap: 8px;
+        padding: 12px 16px;
+        border-top: 1px solid #334155;
+    }
+
+    .btn-action {
+        flex: 1;
+        padding: 8px 12px;
+        background-color: #334155;
+        color: #e5e7eb;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: background 0.2s;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-action:hover {
+        background-color: #475569;
+    }
+
+    .btn-action.btn-danger {
+        background-color: #7f1d1d;
+        color: #f87171;
+    }
+
+    .btn-action.btn-danger:hover {
+        background-color: #991b1b;
+    }
+
+    /* Empty State */
+    .empty-state {
+        text-align: center;
+        padding: 80px 20px;
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #475569;
+        margin-bottom: 24px;
+    }
+
+    .empty-state h3 {
+        font-size: 24px;
+        font-weight: 600;
+        color: #94a3b8;
+        margin-bottom: 12px;
+    }
+
+    .empty-state p {
+        color: #64748b;
+        margin-bottom: 32px;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        background-color: #1e293b;
+        color: #e5e7eb;
+        border-radius: 6px;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+
+    .page-link:hover {
+        background-color: #334155;
+    }
+
+    .page-link.active {
+        background-color: #2563eb;
+        color: white;
+    }
+
+    .page-link.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Flash Messages */
+    .flash-message {
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .flash-message.success {
+        background-color: #065f46;
+        color: #34d399;
+    }
+
+    .flash-message.error {
+        background-color: #7f1d1d;
+        color: #f87171;
+    }
+
+    .flash-message.info {
+        background-color: #1e40af;
+        color: #60a5fa;
+    }
+
+    /* Flux Selection & Modal */
+    .flux-toolbar {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .flux-toolbar label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #94a3b8;
+        cursor: pointer;
+    }
+
+    .flux-toolbar label input[type="checkbox"] {
+        width: 16px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    .btn-flux {
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: #fff;
+        border: none;
+        padding: 10px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+    }
+
+    .btn-flux:hover:not(:disabled) {
+        background: linear-gradient(135deg, #6d28d9, #5b21b6);
+    }
+
+    .btn-flux:disabled {
+        background: #1e293b;
+        color: #475569;
+        cursor: not-allowed;
+    }
+
+    .selection-counter {
+        font-size: 13px;
+        color: #a78bfa;
+        font-weight: 500;
+    }
+
+    .selection-counter.hidden {
+        display: none;
+    }
+
+    .ficha-card-select {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        z-index: 10;
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #7c3aed;
+    }
+
+    .ficha-card-wrapper {
+        position: relative;
+    }
+
+    .ficha-card-wrapper.selected {
+        outline: 2px solid #7c3aed;
+        border-radius: 12px;
+    }
+
+    /* Modal */
+    .flux-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .flux-modal-overlay.active {
+        display: flex;
+    }
+
+    .flux-modal {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 32px;
+        width: 500px;
+        max-width: 90vw;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .flux-modal-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .flux-modal-header i {
+        font-size: 24px;
+        color: #a78bfa;
+    }
+
+    .flux-modal-header h2 {
+        font-size: 20px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0;
+    }
+
+    .flux-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 24px;
+    }
+
+    .flux-modal-count {
+        font-size: 15px;
+        color: #cbd5e1;
+        margin-bottom: 16px;
+    }
+
+    .flux-modal-count strong {
+        color: #a78bfa;
+    }
+
+    .flux-item-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        max-height: 220px;
+        overflow-y: auto;
+        background: #0f172a;
+        border-radius: 8px;
+        border: 1px solid #1f2937;
+    }
+
+    .flux-item-list li {
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #94a3b8;
+        border-bottom: 1px solid #1f2937;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .flux-item-list li:last-child {
+        border-bottom: none;
+    }
+
+    .flux-item-list .item-ref {
+        color: #e2e8f0;
+        font-weight: 600;
+    }
+
+    .flux-modal-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+    }
+
+    .flux-result-ok {
+        color: #34d399;
+    }
+
+    .flux-result-fail {
+        color: #f87171;
+    }
+
+    .flux-spinner {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        border: 2px solid #334155;
+        border-top-color: #a78bfa;
+        border-radius: 50%;
+        animation: fluxSpin 0.6s linear infinite;
+    }
+
+    @keyframes fluxSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 {% endblock %}
 
@@ -678,25 +678,22 @@
 </div>
 <div class="products-grid" id="productsGrid">
     {% for spec in specifications %}
-    <div class="ficha-card-wrapper" data-spec-id="{{ spec.id }}"
-        data-spec-name="{{ spec.pdf_filename[:40] }}" data-collection="{{ spec.collection or '' }}"
-        data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}"
-        data-price-range="{{ spec.price_range or '' }}" data-name="{{ spec.pdf_filename }}"
-        data-ref="{{ spec.ref_souq or '' }}">
+    <div class="ficha-card-wrapper" data-spec-id="{{ spec.id }}" data-spec-name="{{ spec.pdf_filename[:40] }}"
+        data-collection="{{ spec.collection or '' }}" data-supplier="{{ spec.supplier or '' }}"
+        data-status="{{ spec.status or 'draft' }}" data-price-range="{{ spec.price_range or '' }}"
+        data-name="{{ spec.pdf_filename }}" data-ref="{{ spec.ref_souq or '' }}">
         <input type="checkbox" class="ficha-card-select spec-card-select" data-spec-id="{{ spec.id }}">
         <div class="product-card" data-collection="{{ spec.collection or '' }}"
             data-supplier="{{ spec.supplier or '' }}" data-status="{{ spec.status or 'draft' }}"
             data-price-range="{{ spec.price_range or '' }}" data-name="{{ spec.pdf_filename }}"
             data-ref="{{ spec.ref_souq or '' }}">
-            <a href="{{ url_for('specifications.view', id=spec.id) }}"
-                style="text-decoration: none; color: inherit;">
+            <a href="{{ url_for('specifications.view', id=spec.id) }}" style="text-decoration: none; color: inherit;">
                 <div class="product-image">
                     {% if spec.pdf_thumbnail %}
                     <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.pdf_filename }}"
                         onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-file-pdf\'></i>';">
                     {% elif spec.technical_drawing_url %}
-                    <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}"
-                        alt="{{ spec.pdf_filename }}"
+                    <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="{{ spec.pdf_filename }}"
                         onerror="this.style.display='none'; this.parentElement.innerHTML='<i class=\'fas fa-image\'></i>';">
                     {% else %}
                     <i class="fas fa-file-pdf"></i>
@@ -755,15 +752,14 @@
                 <a href="{{ url_for('specifications.edit', id=spec.id) }}" class="btn-action">
                     <i class="fas fa-edit"></i> Editar
                 </a>
-                <button class="btn-action btn-danger"
-                    onclick="if(confirm('Tem certeza que deseja excluir esta ficha?')) { document.getElementById('delete-form-{{ spec.id }}').submit(); }">
-                    <i class="fas fa-trash"></i> Excluir
-                </button>
+                <form method="POST" action="{{ url_for('specifications.delete', id=spec.id) }}" style="display:inline;"
+                    onsubmit="return confirm('Tem certeza que deseja excluir esta ficha?');">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn-action btn-danger">
+                        <i class="fas fa-trash"></i> Excluir
+                    </button>
+                </form>
             </div>
-            <form id="delete-form-{{ spec.id }}" method="POST"
-                action="{{ url_for('specifications.delete', id=spec.id) }}" style="display: none;">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            </form>
         </div>
     </div>
     {% endfor %}
@@ -805,8 +801,7 @@
         data-ficha-name="{{ ficha.number_pi_order or ficha.source_filename or 'Planilha' }}">
         <input type="checkbox" class="ficha-card-select" data-ficha-id="{{ ficha.id }}">
         <div class="product-card">
-            <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}"
-                style="text-decoration: none; color: inherit;">
+            <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}" style="text-decoration: none; color: inherit;">
                 <div class="product-image">
                     <i class="fas fa-file-excel"></i>
                 </div>
@@ -843,160 +838,206 @@
     </a>
 </div>
 {% endif %}
+
+<!-- Flux Modal -->
+<div class="flux-modal-overlay" id="fluxModal">
+    <div class="flux-modal">
+        <div class="flux-modal-header">
+            <i class="fas fa-paper-plane"></i>
+            <h2>Enviar para o Fluxogama</h2>
+        </div>
+        <div style="margin-bottom: 16px;">
+            <label style="display:block; font-size:13px; color:#94a3b8; margin-bottom:6px;">Subetapa:</label>
+            <select id="fluxDashSubetapa" class="filter-select" style="width:100%;">
+                <option value="">-- Selecione a subetapa --</option>
+            </select>
+            <div style="margin-top:10px; display:flex; gap:16px;">
+                <label style="font-size:12px; color:#94a3b8; display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="fluxDashDryRun"> Dry Run (teste)
+                </label>
+                <label style="font-size:12px; color:#94a3b8; display:flex; align-items:center; gap:6px;">
+                    <input type="checkbox" id="fluxDashForce"> Forçar reenvio
+                </label>
+            </div>
+        </div>
+        <div class="flux-modal-body" id="fluxModalBody"></div>
+        <div class="flux-modal-footer">
+            <button class="btn-flux" id="btnFluxCancel" style="background:#334155;">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button class="btn-flux" id="btnFluxConfirm" disabled style="opacity:0.5; cursor:not-allowed;">
+                <i class="fas fa-check"></i> Confirmar envio
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-        // ─── Subetapa Options ───
-        const SUBETAPA_OPTIONS = [
-            { label: 'Ficha do desenvolvimento', wsid: '14' },
-            { label: 'Entrada do mix Souq', wsid: '54' },
-            { label: 'Tabela de Medidas', wsid: '70' },
-            { label: 'Fluxogama', wsid: '11' },
-        ];
+    // ─── Subetapa Options ───
+    const SUBETAPA_OPTIONS = [
+        { label: 'Ficha do desenvolvimento', wsid: '14' },
+        { label: 'Entrada do mix Souq', wsid: '54' },
+        { label: 'Entrada do mix TSM', wsid: '55' },
+        { label: 'Tabela de Medidas', wsid: '70' },
+        { label: 'Fluxogama', wsid: '11' },
+        { label: 'Bases de Etiquetas e Tag', wsid: '12' },
+        { label: 'Kit de Aviamentos', wsid: '13' },
+        { label: 'Cotação/Escolha com Fornecedor', wsid: '15' },
+        { label: 'Montagem da Coleção', wsid: '16' },
+        { label: 'Prova de Roupa/Lacre', wsid: '17' },
+        { label: 'Envio comentários p/ Fornecedor', wsid: '18' },
+        { label: 'Aprovação do Produto Lacre/Ppsample', wsid: '19' },
+        { label: 'Estilo importado', wsid: '3' },
+        { label: 'p/fazer desenhos', wsid: '18' },
+        { label: 'Desenhos à fazer', wsid: '69' },
+        { label: 'Cadastros auxiliares', wsid: '1' },
+        { label: 'Treinamento', wsid: '57' },
+    ];
 
-        // Populate dropdown
-        const dashSubetapa = document.getElementById('fluxDashSubetapa');
-        const dashDryRun = document.getElementById('fluxDashDryRun');
-        const dashForce = document.getElementById('fluxDashForce');
-        SUBETAPA_OPTIONS.forEach(opt => {
-            const o = document.createElement('option');
-            o.value = opt.wsid;
-            o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
-            dashSubetapa.appendChild(o);
-        });
+    // Populate dropdown
+    const dashSubetapa = document.getElementById('fluxDashSubetapa');
+    const dashDryRun = document.getElementById('fluxDashDryRun');
+    const dashForce = document.getElementById('fluxDashForce');
+    SUBETAPA_OPTIONS.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt.wsid;
+        o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
+        dashSubetapa.appendChild(o);
+    });
 
-        // Helper: build subetapa query params
-        function buildFluxParams() {
-            const p = new URLSearchParams({ allow_create: '1', subetapa: dashSubetapa.value });
-            if (dashDryRun.checked) p.set('dry_run', '1');
-            if (dashForce.checked) p.set('force', '1');
-            return p;
-        }
+    // Helper: build subetapa query params
+    function buildFluxParams() {
+        const p = new URLSearchParams({ allow_create: '1', subetapa: dashSubetapa.value });
+        if (dashDryRun.checked) p.set('dry_run', '1');
+        if (dashForce.checked) p.set('force', '1');
+        return p;
+    }
 
-        function filterProducts() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const collectionFilter = document.getElementById('collectionFilter') ? document.getElementById('collectionFilter').value : '';
-            const supplierFilter = document.getElementById('supplierFilter') ? document.getElementById('supplierFilter').value : '';
-            const statusFilter = document.getElementById('statusFilter').value;
-            const priceRangeFilter = document.getElementById('priceRangeFilter').value;
+    function filterProducts() {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const collectionFilter = document.getElementById('collectionFilter') ? document.getElementById('collectionFilter').value : '';
+        const supplierFilter = document.getElementById('supplierFilter') ? document.getElementById('supplierFilter').value : '';
+        const statusFilter = document.getElementById('statusFilter').value;
+        const priceRangeFilter = document.getElementById('priceRangeFilter').value;
 
-            const cards = document.querySelectorAll('.product-card');
+        const cards = document.querySelectorAll('.product-card');
 
-            cards.forEach(card => {
-                const name = (card.dataset.name || '').toLowerCase();
-                const ref = (card.dataset.ref || '').toLowerCase();
-                const collection = card.dataset.collection || '';
-                const supplier = card.dataset.supplier || '';
-                const status = card.dataset.status || '';
-                const priceRange = card.dataset.priceRange || '';
+        cards.forEach(card => {
+            const name = (card.dataset.name || '').toLowerCase();
+            const ref = (card.dataset.ref || '').toLowerCase();
+            const collection = card.dataset.collection || '';
+            const supplier = card.dataset.supplier || '';
+            const status = card.dataset.status || '';
+            const priceRange = card.dataset.priceRange || '';
 
-                const matchesSearch = name.includes(searchTerm) || ref.includes(searchTerm) || collection.toLowerCase().includes(searchTerm);
-                const matchesCollection = !collectionFilter || collection === collectionFilter;
-                const matchesSupplier = !supplierFilter || supplier === supplierFilter;
-                const matchesStatus = !statusFilter || status === statusFilter;
-                const matchesPriceRange = !priceRangeFilter || priceRange === priceRangeFilter;
+            const matchesSearch = name.includes(searchTerm) || ref.includes(searchTerm) || collection.toLowerCase().includes(searchTerm);
+            const matchesCollection = !collectionFilter || collection === collectionFilter;
+            const matchesSupplier = !supplierFilter || supplier === supplierFilter;
+            const matchesStatus = !statusFilter || status === statusFilter;
+            const matchesPriceRange = !priceRangeFilter || priceRange === priceRangeFilter;
 
-                // Hide wrapper if card is wrapped, otherwise hide card directly
-                const target = card.closest('.ficha-card-wrapper') || card;
-                if (matchesSearch && matchesCollection && matchesSupplier && matchesStatus && matchesPriceRange) {
-                    target.style.display = '';
-                } else {
-                    target.style.display = 'none';
-                }
-            });
-        }
-
-        // ─── Flux Selection & Send ───
-        const selectedFichaIds = new Set();
-        const btnSendFlux = document.getElementById('btnSendFlux');
-        const selectionCounter = document.getElementById('selectionCounter');
-        const fluxSelectAll = document.getElementById('fluxSelectAll');
-        const fluxModal = document.getElementById('fluxModal');
-        const fluxModalBody = document.getElementById('fluxModalBody');
-        const btnFluxCancel = document.getElementById('btnFluxCancel');
-        const btnFluxConfirm = document.getElementById('btnFluxConfirm');
-
-        // Enable/disable confirm based on subetapa
-        dashSubetapa.addEventListener('change', () => {
-            const hasVal = dashSubetapa.value !== '';
-            btnFluxConfirm.disabled = !hasVal;
-            btnFluxConfirm.style.opacity = hasVal ? '1' : '0.5';
-            btnFluxConfirm.style.cursor = hasVal ? 'pointer' : 'not-allowed';
-        });
-
-        function updateFluxState() {
-            const has = selectedFichaIds.size > 0;
-            if (btnSendFlux) btnSendFlux.disabled = !has;
-            if (selectionCounter) {
-                if (has) {
-                    selectionCounter.classList.remove('hidden');
-                    selectionCounter.textContent = selectedFichaIds.size === 1
-                        ? '1 ficha selecionada'
-                        : `${selectedFichaIds.size} fichas selecionadas`;
-                } else {
-                    selectionCounter.classList.add('hidden');
-                }
+            // Hide wrapper if card is wrapped, otherwise hide card directly
+            const target = card.closest('.ficha-card-wrapper') || card;
+            if (matchesSearch && matchesCollection && matchesSupplier && matchesStatus && matchesPriceRange) {
+                target.style.display = '';
+            } else {
+                target.style.display = 'none';
             }
-            // Update card outlines
-            document.querySelectorAll('.ficha-card-wrapper').forEach(w => {
-                const id = parseInt(w.dataset.fichaId, 10);
-                w.classList.toggle('selected', selectedFichaIds.has(id));
-            });
-        }
+        });
+    }
 
-        // Individual checkboxes (fichas only, exclude spec checkboxes)
-        document.querySelectorAll('.ficha-card-select:not(.spec-card-select)').forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                e.stopPropagation();
+    // ─── Flux Selection & Send ───
+    const selectedFichaIds = new Set();
+    const btnSendFlux = document.getElementById('btnSendFlux');
+    const selectionCounter = document.getElementById('selectionCounter');
+    const fluxSelectAll = document.getElementById('fluxSelectAll');
+    const fluxModal = document.getElementById('fluxModal');
+    const fluxModalBody = document.getElementById('fluxModalBody');
+    const btnFluxCancel = document.getElementById('btnFluxCancel');
+    const btnFluxConfirm = document.getElementById('btnFluxConfirm');
+
+    // Enable/disable confirm based on subetapa
+    dashSubetapa.addEventListener('change', () => {
+        const hasVal = dashSubetapa.value !== '';
+        btnFluxConfirm.disabled = !hasVal;
+        btnFluxConfirm.style.opacity = hasVal ? '1' : '0.5';
+        btnFluxConfirm.style.cursor = hasVal ? 'pointer' : 'not-allowed';
+    });
+
+    function updateFluxState() {
+        const has = selectedFichaIds.size > 0;
+        if (btnSendFlux) btnSendFlux.disabled = !has;
+        if (selectionCounter) {
+            if (has) {
+                selectionCounter.classList.remove('hidden');
+                selectionCounter.textContent = selectedFichaIds.size === 1
+                    ? '1 ficha selecionada'
+                    : `${selectedFichaIds.size} fichas selecionadas`;
+            } else {
+                selectionCounter.classList.add('hidden');
+            }
+        }
+        // Update card outlines
+        document.querySelectorAll('.ficha-card-wrapper').forEach(w => {
+            const id = parseInt(w.dataset.fichaId, 10);
+            w.classList.toggle('selected', selectedFichaIds.has(id));
+        });
+    }
+
+    // Individual checkboxes (fichas only, exclude spec checkboxes)
+    document.querySelectorAll('.ficha-card-select:not(.spec-card-select)').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const id = parseInt(cb.dataset.fichaId, 10);
+            if (cb.checked) {
+                selectedFichaIds.add(id);
+            } else {
+                selectedFichaIds.delete(id);
+            }
+            updateFluxState();
+            // Update select-all checkbox
+            if (fluxSelectAll) {
+                const allCbs = document.querySelectorAll('.ficha-card-select:not(.spec-card-select)');
+                fluxSelectAll.checked = allCbs.length > 0 && Array.from(allCbs).every(c => c.checked);
+            }
+        });
+    });
+
+    // Select all
+    if (fluxSelectAll) {
+        fluxSelectAll.addEventListener('change', () => {
+            document.querySelectorAll('.ficha-card-select:not(.spec-card-select)').forEach(cb => {
+                cb.checked = fluxSelectAll.checked;
                 const id = parseInt(cb.dataset.fichaId, 10);
-                if (cb.checked) {
+                if (fluxSelectAll.checked) {
                     selectedFichaIds.add(id);
                 } else {
                     selectedFichaIds.delete(id);
                 }
-                updateFluxState();
-                // Update select-all checkbox
-                if (fluxSelectAll) {
-                    const allCbs = document.querySelectorAll('.ficha-card-select:not(.spec-card-select)');
-                    fluxSelectAll.checked = allCbs.length > 0 && Array.from(allCbs).every(c => c.checked);
+            });
+            updateFluxState();
+        });
+    }
+
+    // Open modal
+    if (btnSendFlux) {
+        btnSendFlux.addEventListener('click', () => {
+            if (!selectedFichaIds.size) return;
+            const count = selectedFichaIds.size;
+
+            let listHtml = '<ul class="flux-item-list">';
+            document.querySelectorAll('.ficha-card-wrapper').forEach(w => {
+                const id = parseInt(w.dataset.fichaId, 10);
+                if (selectedFichaIds.has(id)) {
+                    const name = w.dataset.fichaName || `Ficha #${id}`;
+                    listHtml += `<li><i class="fas fa-file-excel" style="color:#34d399;"></i> <span class="item-ref">${name}</span></li>`;
                 }
             });
-        });
+            listHtml += '</ul>';
 
-        // Select all
-        if (fluxSelectAll) {
-            fluxSelectAll.addEventListener('change', () => {
-                document.querySelectorAll('.ficha-card-select:not(.spec-card-select)').forEach(cb => {
-                    cb.checked = fluxSelectAll.checked;
-                    const id = parseInt(cb.dataset.fichaId, 10);
-                    if (fluxSelectAll.checked) {
-                        selectedFichaIds.add(id);
-                    } else {
-                        selectedFichaIds.delete(id);
-                    }
-                });
-                updateFluxState();
-            });
-        }
-
-        // Open modal
-        if (btnSendFlux) {
-            btnSendFlux.addEventListener('click', () => {
-                if (!selectedFichaIds.size) return;
-                const count = selectedFichaIds.size;
-
-                let listHtml = '<ul class="flux-item-list">';
-                document.querySelectorAll('.ficha-card-wrapper').forEach(w => {
-                    const id = parseInt(w.dataset.fichaId, 10);
-                    if (selectedFichaIds.has(id)) {
-                        const name = w.dataset.fichaName || `Ficha #${id}`;
-                        listHtml += `<li><i class="fas fa-file-excel" style="color:#34d399;"></i> <span class="item-ref">${name}</span></li>`;
-                    }
-                });
-                listHtml += '</ul>';
-
-                fluxModalBody.innerHTML = `
+            fluxModalBody.innerHTML = `
                     <p class="flux-modal-count">
                         Você está prestes a enviar todos os itens de
                         <strong>${count}</strong> ${count === 1 ? 'ficha' : 'fichas'}
@@ -1005,193 +1046,193 @@
                     ${listHtml}
                 `;
 
-                btnFluxConfirm.disabled = !dashSubetapa.value;
-                btnFluxConfirm.style.opacity = dashSubetapa.value ? '1' : '0.5';
-                btnFluxConfirm.style.cursor = dashSubetapa.value ? 'pointer' : 'not-allowed';
-                btnFluxConfirm.style.display = '';
-                btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
-                btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
-                fluxModal.classList.add('active');
-            });
-        }
+            btnFluxConfirm.disabled = !dashSubetapa.value;
+            btnFluxConfirm.style.opacity = dashSubetapa.value ? '1' : '0.5';
+            btnFluxConfirm.style.cursor = dashSubetapa.value ? 'pointer' : 'not-allowed';
+            btnFluxConfirm.style.display = '';
+            btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
+            btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+            fluxModal.classList.add('active');
+        });
+    }
 
-        // Cancel
-        if (btnFluxCancel) {
-            btnFluxCancel.addEventListener('click', () => {
-                fluxModal.classList.remove('active');
-            });
-        }
-        if (fluxModal) {
-            fluxModal.addEventListener('click', (e) => {
-                if (e.target === fluxModal) fluxModal.classList.remove('active');
-            });
-        }
+    // Cancel
+    if (btnFluxCancel) {
+        btnFluxCancel.addEventListener('click', () => {
+            fluxModal.classList.remove('active');
+        });
+    }
+    if (fluxModal) {
+        fluxModal.addEventListener('click', (e) => {
+            if (e.target === fluxModal) fluxModal.classList.remove('active');
+        });
+    }
 
-        // Confirm send
-        if (btnFluxConfirm) {
-            btnFluxConfirm.addEventListener('click', async () => {
-                btnFluxConfirm.disabled = true;
-                btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
-                btnFluxCancel.style.display = 'none';
+    // Confirm send
+    if (btnFluxConfirm) {
+        btnFluxConfirm.addEventListener('click', async () => {
+            btnFluxConfirm.disabled = true;
+            btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
+            btnFluxCancel.style.display = 'none';
 
-                const fichaIds = Array.from(selectedFichaIds);
-                let allResults = [];
-                let totalSuccess = 0;
-                let totalError = 0;
+            const fichaIds = Array.from(selectedFichaIds);
+            let allResults = [];
+            let totalSuccess = 0;
+            let totalError = 0;
 
-                for (const fichaId of fichaIds) {
-                    try {
-                        // First, get items for this ficha
-                        const itemsResp = await fetch(`/api/fichas/${fichaId}/itens?per_page=999`, { credentials: 'same-origin' });
-                        const itemsData = await itemsResp.json();
-                        if (!itemsData.success || !itemsData.items || itemsData.items.length === 0) {
-                            allResults.push({ fichaId, ok: false, message: 'Sem itens ou erro ao carregar.' });
-                            totalError++;
-                            continue;
-                        }
+            for (const fichaId of fichaIds) {
+                try {
+                    // First, get items for this ficha
+                    const itemsResp = await fetch(`/api/fichas/${fichaId}/itens?per_page=999`, { credentials: 'same-origin' });
+                    const itemsData = await itemsResp.json();
+                    if (!itemsData.success || !itemsData.items || itemsData.items.length === 0) {
+                        allResults.push({ fichaId, ok: false, message: 'Sem itens ou erro ao carregar.' });
+                        totalError++;
+                        continue;
+                    }
 
-                        const itemIds = itemsData.items.map(it => it.id);
+                    const itemIds = itemsData.items.map(it => it.id);
 
-                        // Send batch
-                        const sendResp = await fetch(`/api/fluxogama/send-batch?${buildFluxParams().toString()}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ficha_id: fichaId, item_ids: itemIds }),
-                            credentials: 'same-origin',
+                    // Send batch
+                    const sendResp = await fetch(`/api/fluxogama/send-batch?${buildFluxParams().toString()}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ficha_id: fichaId, item_ids: itemIds }),
+                        credentials: 'same-origin',
+                    });
+                    const sendData = await sendResp.json();
+
+                    if (sendData.results) {
+                        const successes = sendData.results.filter(r => r.ok).length;
+                        const errors = sendData.results.filter(r => !r.ok).length;
+                        totalSuccess += successes;
+                        totalError += errors;
+                        allResults.push({
+                            fichaId,
+                            ok: errors === 0,
+                            message: errors === 0
+                                ? `${successes} itens enviados com sucesso.`
+                                : `${successes} OK, ${errors} com erro.`,
+                            details: sendData.results,
                         });
-                        const sendData = await sendResp.json();
-
-                        if (sendData.results) {
-                            const successes = sendData.results.filter(r => r.ok).length;
-                            const errors = sendData.results.filter(r => !r.ok).length;
-                            totalSuccess += successes;
-                            totalError += errors;
-                            allResults.push({
-                                fichaId,
-                                ok: errors === 0,
-                                message: errors === 0
-                                    ? `${successes} itens enviados com sucesso.`
-                                    : `${successes} OK, ${errors} com erro.`,
-                                details: sendData.results,
-                            });
-                        } else {
-                            allResults.push({ fichaId, ok: false, message: sendData.error || 'Erro desconhecido.' });
-                            totalError++;
-                        }
-                    } catch (err) {
-                        allResults.push({ fichaId, ok: false, message: `Erro de conexão: ${err.message}` });
+                    } else {
+                        allResults.push({ fichaId, ok: false, message: sendData.error || 'Erro desconhecido.' });
                         totalError++;
                     }
-                }
-
-                // Show results
-                let html = '';
-                if (totalError === 0) {
-                    html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> Todos os itens enviados com sucesso! (${totalSuccess} itens)</p>`;
-                } else {
-                    html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${totalSuccess} item(ns) enviados.</p>`;
-                    html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${totalError} com erro.</p>`;
-                }
-
-                html += '<ul class="flux-item-list" style="margin-top:12px;">';
-                allResults.forEach(r => {
-                    const wrapper = document.querySelector(`.ficha-card-wrapper[data-ficha-id="${r.fichaId}"]`);
-                    const name = wrapper ? wrapper.dataset.fichaName : `Ficha #${r.fichaId}`;
-                    const icon = r.ok
-                        ? '<i class="fas fa-check" style="color:#34d399"></i>'
-                        : '<i class="fas fa-times" style="color:#f87171"></i>';
-                    html += `<li>${icon} <span class="item-ref">${name}</span> <span>${r.message}</span></li>`;
-                });
-                html += '</ul>';
-
-                fluxModalBody.innerHTML = html;
-                btnFluxConfirm.style.display = 'none';
-                btnFluxCancel.style.display = '';
-                btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
-
-                // Clear only successful fichas from selection
-                allResults.forEach(r => {
-                    if (r.ok) {
-                        selectedFichaIds.delete(r.fichaId);
-                        const cb = document.querySelector(`.ficha-card-select[data-ficha-id="${r.fichaId}"]`);
-                        if (cb) cb.checked = false;
-                    }
-                });
-                if (fluxSelectAll) fluxSelectAll.checked = false;
-                updateFluxState();
-            });
-        }
-
-        // ─── Spec Selection & Send ───
-        const selectedSpecIds = new Set();
-        const btnSendFluxSpec = document.getElementById('btnSendFluxSpec');
-        const specSelectionCounter = document.getElementById('specSelectionCounter');
-        const specSelectAll = document.getElementById('specSelectAll');
-
-        function updateSpecFluxState() {
-            const has = selectedSpecIds.size > 0;
-            if (btnSendFluxSpec) btnSendFluxSpec.disabled = !has;
-            if (specSelectionCounter) {
-                if (has) {
-                    specSelectionCounter.classList.remove('hidden');
-                    specSelectionCounter.textContent = selectedSpecIds.size === 1
-                        ? '1 ficha selecionada'
-                        : `${selectedSpecIds.size} fichas selecionadas`;
-                } else {
-                    specSelectionCounter.classList.add('hidden');
+                } catch (err) {
+                    allResults.push({ fichaId, ok: false, message: `Erro de conexão: ${err.message}` });
+                    totalError++;
                 }
             }
-            document.querySelectorAll('.ficha-card-wrapper[data-spec-id]').forEach(w => {
-                const id = parseInt(w.dataset.specId, 10);
-                w.classList.toggle('selected', selectedSpecIds.has(id));
-            });
-        }
 
-        // Spec individual checkboxes
-        document.querySelectorAll('.spec-card-select').forEach(cb => {
-            cb.addEventListener('change', (e) => {
-                e.stopPropagation();
-                const id = parseInt(cb.dataset.specId, 10);
-                if (cb.checked) selectedSpecIds.add(id);
-                else selectedSpecIds.delete(id);
-                updateSpecFluxState();
-                if (specSelectAll) {
-                    const allCbs = document.querySelectorAll('.spec-card-select');
-                    specSelectAll.checked = allCbs.length > 0 && Array.from(allCbs).every(c => c.checked);
+            // Show results
+            let html = '';
+            if (totalError === 0) {
+                html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> Todos os itens enviados com sucesso! (${totalSuccess} itens)</p>`;
+            } else {
+                html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${totalSuccess} item(ns) enviados.</p>`;
+                html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${totalError} com erro.</p>`;
+            }
+
+            html += '<ul class="flux-item-list" style="margin-top:12px;">';
+            allResults.forEach(r => {
+                const wrapper = document.querySelector(`.ficha-card-wrapper[data-ficha-id="${r.fichaId}"]`);
+                const name = wrapper ? wrapper.dataset.fichaName : `Ficha #${r.fichaId}`;
+                const icon = r.ok
+                    ? '<i class="fas fa-check" style="color:#34d399"></i>'
+                    : '<i class="fas fa-times" style="color:#f87171"></i>';
+                html += `<li>${icon} <span class="item-ref">${name}</span> <span>${r.message}</span></li>`;
+            });
+            html += '</ul>';
+
+            fluxModalBody.innerHTML = html;
+            btnFluxConfirm.style.display = 'none';
+            btnFluxCancel.style.display = '';
+            btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
+
+            // Clear only successful fichas from selection
+            allResults.forEach(r => {
+                if (r.ok) {
+                    selectedFichaIds.delete(r.fichaId);
+                    const cb = document.querySelector(`.ficha-card-select[data-ficha-id="${r.fichaId}"]`);
+                    if (cb) cb.checked = false;
                 }
             });
+            if (fluxSelectAll) fluxSelectAll.checked = false;
+            updateFluxState();
         });
+    }
 
-        // Spec select all
-        if (specSelectAll) {
-            specSelectAll.addEventListener('change', () => {
-                document.querySelectorAll('.spec-card-select').forEach(cb => {
-                    cb.checked = specSelectAll.checked;
-                    const id = parseInt(cb.dataset.specId, 10);
-                    if (specSelectAll.checked) selectedSpecIds.add(id);
-                    else selectedSpecIds.delete(id);
-                });
-                updateSpecFluxState();
-            });
+    // ─── Spec Selection & Send ───
+    const selectedSpecIds = new Set();
+    const btnSendFluxSpec = document.getElementById('btnSendFluxSpec');
+    const specSelectionCounter = document.getElementById('specSelectionCounter');
+    const specSelectAll = document.getElementById('specSelectAll');
+
+    function updateSpecFluxState() {
+        const has = selectedSpecIds.size > 0;
+        if (btnSendFluxSpec) btnSendFluxSpec.disabled = !has;
+        if (specSelectionCounter) {
+            if (has) {
+                specSelectionCounter.classList.remove('hidden');
+                specSelectionCounter.textContent = selectedSpecIds.size === 1
+                    ? '1 ficha selecionada'
+                    : `${selectedSpecIds.size} fichas selecionadas`;
+            } else {
+                specSelectionCounter.classList.add('hidden');
+            }
         }
+        document.querySelectorAll('.ficha-card-wrapper[data-spec-id]').forEach(w => {
+            const id = parseInt(w.dataset.specId, 10);
+            w.classList.toggle('selected', selectedSpecIds.has(id));
+        });
+    }
 
-        // Spec send button → open modal
-        if (btnSendFluxSpec) {
-            btnSendFluxSpec.addEventListener('click', () => {
-                if (!selectedSpecIds.size) return;
-                const count = selectedSpecIds.size;
+    // Spec individual checkboxes
+    document.querySelectorAll('.spec-card-select').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const id = parseInt(cb.dataset.specId, 10);
+            if (cb.checked) selectedSpecIds.add(id);
+            else selectedSpecIds.delete(id);
+            updateSpecFluxState();
+            if (specSelectAll) {
+                const allCbs = document.querySelectorAll('.spec-card-select');
+                specSelectAll.checked = allCbs.length > 0 && Array.from(allCbs).every(c => c.checked);
+            }
+        });
+    });
 
-                let listHtml = '<ul class="flux-item-list">';
-                document.querySelectorAll('.ficha-card-wrapper[data-spec-id]').forEach(w => {
-                    const id = parseInt(w.dataset.specId, 10);
-                    if (selectedSpecIds.has(id)) {
-                        const name = w.dataset.specName || `Spec #${id}`;
-                        listHtml += `<li><i class="fas fa-file-pdf" style="color:#60a5fa;"></i> <span class="item-ref">${name}</span></li>`;
-                    }
-                });
-                listHtml += '</ul>';
+    // Spec select all
+    if (specSelectAll) {
+        specSelectAll.addEventListener('change', () => {
+            document.querySelectorAll('.spec-card-select').forEach(cb => {
+                cb.checked = specSelectAll.checked;
+                const id = parseInt(cb.dataset.specId, 10);
+                if (specSelectAll.checked) selectedSpecIds.add(id);
+                else selectedSpecIds.delete(id);
+            });
+            updateSpecFluxState();
+        });
+    }
 
-                fluxModalBody.innerHTML = `
+    // Spec send button → open modal
+    if (btnSendFluxSpec) {
+        btnSendFluxSpec.addEventListener('click', () => {
+            if (!selectedSpecIds.size) return;
+            const count = selectedSpecIds.size;
+
+            let listHtml = '<ul class="flux-item-list">';
+            document.querySelectorAll('.ficha-card-wrapper[data-spec-id]').forEach(w => {
+                const id = parseInt(w.dataset.specId, 10);
+                if (selectedSpecIds.has(id)) {
+                    const name = w.dataset.specName || `Spec #${id}`;
+                    listHtml += `<li><i class="fas fa-file-pdf" style="color:#60a5fa;"></i> <span class="item-ref">${name}</span></li>`;
+                }
+            });
+            listHtml += '</ul>';
+
+            fluxModalBody.innerHTML = `
                     <p class="flux-modal-count">
                         Você está prestes a enviar
                         <strong>${count}</strong> ${count === 1 ? 'ficha técnica' : 'fichas técnicas'}
@@ -1200,77 +1241,80 @@
                     ${listHtml}
                 `;
 
-                // Rebind confirm to spec send
-                btnFluxConfirm.disabled = !dashSubetapa.value;
-                btnFluxConfirm.style.opacity = dashSubetapa.value ? '1' : '0.5';
-                btnFluxConfirm.style.cursor = dashSubetapa.value ? 'pointer' : 'not-allowed';
-                btnFluxConfirm.style.display = '';
-                btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
-                btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
-                btnFluxConfirm.onclick = sendSpecBatch;
-                fluxModal.classList.add('active');
+            // Rebind confirm to spec send
+            btnFluxConfirm.disabled = !dashSubetapa.value;
+            btnFluxConfirm.style.opacity = dashSubetapa.value ? '1' : '0.5';
+            btnFluxConfirm.style.cursor = dashSubetapa.value ? 'pointer' : 'not-allowed';
+            btnFluxConfirm.style.display = '';
+            btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
+            btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+            btnFluxConfirm.onclick = sendSpecBatch;
+            fluxModal.classList.add('active');
+        });
+    }
+
+    async function sendSpecBatch() {
+        btnFluxConfirm.disabled = true;
+        btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
+        btnFluxCancel.style.display = 'none';
+
+        const specIds = Array.from(selectedSpecIds);
+        const dryRun = document.getElementById('fluxDashDryRun')?.checked ? '1' : '0';
+        const force = document.getElementById('fluxDashForce')?.checked ? '1' : '0';
+        const subetapa = dashSubetapa?.value || '14';
+        try {
+            const resp = await fetch(`/api/fluxogama/send-batch-specs?dry_run=${dryRun}&force=${force}&allow_create=1&subetapa=${subetapa}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spec_ids: specIds }),
+                credentials: 'same-origin',
             });
-        }
+            const data = await resp.json();
 
-        async function sendSpecBatch() {
-            btnFluxConfirm.disabled = true;
-            btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
-            btnFluxCancel.style.display = 'none';
-
-            const specIds = Array.from(selectedSpecIds);
-            try {
-                const resp = await fetch(`/api/fluxogama/send-batch-specs?${buildFluxParams().toString()}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ spec_ids: specIds }),
-                    credentials: 'same-origin',
-                });
-                const data = await resp.json();
-
-                let html = '';
-                if (data.results) {
-                    const ok = data.results.filter(r => r.ok).length;
-                    const fail = data.results.filter(r => !r.ok).length;
-                    if (fail === 0) {
-                        html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> Todas as ${ok} fichas enviadas com sucesso!</p>`;
-                    } else {
-                        html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${ok} enviada(s).</p>`;
-                        html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${fail} com erro.</p>`;
-                    }
-
-                    html += '<ul class="flux-item-list" style="margin-top:12px;">';
-                    data.results.forEach(r => {
-                        const wrapper = document.querySelector(`.ficha-card-wrapper[data-spec-id="${r.spec_id}"]`);
-                        const name = wrapper ? wrapper.dataset.specName : `Spec #${r.spec_id}`;
-                        const icon = r.ok
-                            ? '<i class="fas fa-check" style="color:#34d399"></i>'
-                            : '<i class="fas fa-times" style="color:#f87171"></i>';
-                        html += `<li>${icon} <span class="item-ref">${name}</span> <span>${r.message}</span></li>`;
-                    });
-                    html += '</ul>';
-
-                    // Clear only successes
-                    data.results.forEach(r => {
-                        if (r.ok) {
-                            selectedSpecIds.delete(r.spec_id);
-                            const cb = document.querySelector(`.spec-card-select[data-spec-id="${r.spec_id}"]`);
-                            if (cb) cb.checked = false;
-                        }
-                    });
+            let html = '';
+            if (data.results) {
+                const ok = data.results.filter(r => r.ok).length;
+                const fail = data.results.filter(r => !r.ok).length;
+                if (fail === 0) {
+                    html = `<p class="flux-result-ok"><i class="fas fa-check-circle"></i> Todas as ${ok} fichas enviadas com sucesso!</p>`;
                 } else {
-                    html = `<p class="flux-result-fail"><i class="fas fa-times-circle"></i> ${data.error || 'Erro desconhecido.'}</p>`;
+                    html = `<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${ok} enviada(s).</p>`;
+                    html += `<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${fail} com erro.</p>`;
                 }
 
-                fluxModalBody.innerHTML = html;
-            } catch (err) {
-                fluxModalBody.innerHTML = `<p class="flux-result-fail"><i class="fas fa-times-circle"></i> Erro de conexão: ${err.message}</p>`;
+                html += '<ul class="flux-item-list" style="margin-top:12px;">';
+                data.results.forEach(r => {
+                    const wrapper = document.querySelector(`.ficha-card-wrapper[data-spec-id="${r.spec_id}"]`);
+                    const name = wrapper ? wrapper.dataset.specName : `Spec #${r.spec_id}`;
+                    const icon = r.ok
+                        ? '<i class="fas fa-check" style="color:#34d399"></i>'
+                        : '<i class="fas fa-times" style="color:#f87171"></i>';
+                    html += `<li>${icon} <span class="item-ref">${name}</span> <span>${r.message}</span></li>`;
+                });
+                html += '</ul>';
+
+                // Clear only successes
+                data.results.forEach(r => {
+                    if (r.ok) {
+                        selectedSpecIds.delete(r.spec_id);
+                        const cb = document.querySelector(`.spec-card-select[data-spec-id="${r.spec_id}"]`);
+                        if (cb) cb.checked = false;
+                    }
+                });
+            } else {
+                html = `<p class="flux-result-fail"><i class="fas fa-times-circle"></i> ${data.error || 'Erro desconhecido.'}</p>`;
             }
 
-            btnFluxConfirm.style.display = 'none';
-            btnFluxCancel.style.display = '';
-            btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
-            if (specSelectAll) specSelectAll.checked = false;
-            updateSpecFluxState();
+            fluxModalBody.innerHTML = html;
+        } catch (err) {
+            fluxModalBody.innerHTML = `<p class="flux-result-fail"><i class="fas fa-times-circle"></i> Erro de conexão: ${err.message}</p>`;
         }
+
+        btnFluxConfirm.style.display = 'none';
+        btnFluxCancel.style.display = '';
+        btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
+        if (specSelectAll) specSelectAll.checked = false;
+        updateSpecFluxState();
+    }
 </script>
 {% endblock %}

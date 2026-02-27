@@ -116,21 +116,10 @@ def _guess_target_price(norm):
 
 
 def _guess_dates_from_text(norm):
-    """Heurística para encontrar datas DD/MM/YY no texto.
-    Retorna dict com 'tech_sheet_delivery_date', 'pilot_delivery_date' e 'showcase_for'.
-    No layout da ficha SOUQ, a ordem das datas é:
-      1ª = DATA ENTREGA FICHA-TÉCNICA
-      2ª = DATA ENTREGA PILOTO
-      3ª = MOSTRUÁRIO PARA"""
-    dates = re.findall(r"\b(\d{2}/\d{2}/\d{2,4})\b", norm["linear"])
-    result = {}
-    if len(dates) >= 1:
-        result["tech_sheet_delivery_date"] = dates[0]
-    if len(dates) >= 2:
-        result["pilot_delivery_date"] = dates[1]
-    if len(dates) >= 3:
-        result["showcase_for"] = dates[2]
-    return result
+    """Encontra todas as datas DD/MM/YY no texto.
+    Retorna LISTA de datas brutas (sem atribuir a campos).
+    A atribuição correta é feita pelo OpenAI que entende o contexto."""
+    return re.findall(r"\b(\d{2}/\d{2}/\d{2,4})\b", norm["linear"])
 
 
 def _parse_br_date(s):
@@ -712,23 +701,15 @@ def process_specification_with_openai(text_content):
                 robust_fallback["target_price"] = guessed_price
                 print(f"  [HEURISTIC] TARGET PRICE detectado: {guessed_price}")
 
-        # Heurística para datas (DD/MM/YY no texto)
-        # Para datas, override se o valor extraído por label não parece uma data
-        def _looks_like_date(val):
-            return bool(val and re.search(r'\d{2}/\d{2}/\d{2,4}', val))
+        # Coletar datas brutas encontradas no texto (sem atribuir a campos)
+        raw_dates_found = _guess_dates_from_text(norm)
+        if raw_dates_found:
+            print(f"  [DATES] Datas encontradas no texto (sem atribuicao): {raw_dates_found}")
 
-        guessed_dates = _guess_dates_from_text(norm)
-        if not _looks_like_date(robust_fallback.get("pilot_delivery_date")) and guessed_dates.get("pilot_delivery_date"):
-            robust_fallback["pilot_delivery_date"] = guessed_dates["pilot_delivery_date"]
-            print(f"  [HEURISTIC] DATA PILOTO detectada: {guessed_dates['pilot_delivery_date']}")
-        if not _looks_like_date(robust_fallback.get("tech_sheet_delivery_date")) and guessed_dates.get("tech_sheet_delivery_date"):
-            robust_fallback["tech_sheet_delivery_date"] = guessed_dates["tech_sheet_delivery_date"]
-            print(f"  [HEURISTIC] DATA FICHA detectada: {guessed_dates['tech_sheet_delivery_date']}")
-
-        # Normalizar datas BR para YYYY-MM-DD
+        # Normalizar datas BR para YYYY-MM-DD (quando extraídas por label)
         for date_field in ("pilot_delivery_date", "tech_sheet_delivery_date"):
             raw_date = robust_fallback.get(date_field)
-            if raw_date:
+            if raw_date and re.search(r'\d{2}/\d{2}/\d{2,4}', raw_date):
                 parsed = _parse_br_date(raw_date)
                 if parsed:
                     robust_fallback[date_field] = parsed
@@ -830,6 +811,17 @@ CAMPOS OBRIGATÓRIOS A EXTRAIR:
    - reference_photos: Referências de fotos
    - specific_details: Detalhes específicos
 
+**DATAS ENCONTRADAS NO TEXTO (em ordem de aparição):**
+{', '.join(raw_dates_found) if raw_dates_found else 'Nenhuma data encontrada'}
+
+ATENÇÃO SOBRE DATAS: As datas acima foram encontradas no texto mas NÃO sabemos qual corresponde a qual campo.
+Você DEVE analisar o contexto do texto (rótulos "DATA ENTREGA FICHA-TÉCNICA", "DATA ENTREGA PILOTO", "MOSTRUÁRIO PARA")
+para determinar CORRETAMENTE qual data pertence a qual campo.
+- A data mais PRÓXIMA ao mês da loja geralmente é a DATA ENTREGA FICHA-TÉCNICA (vem ANTES da piloto)
+- A DATA ENTREGA PILOTO é a entrega da amostra/peça piloto
+- MOSTRUÁRIO PARA é a última data (mostruário)
+Retorne as datas no formato YYYY-MM-DD.
+
 **TEXTO DA FICHA TÉCNICA:**
 {text_content}
 
@@ -896,30 +888,33 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                         flattened['corner'] = corner_fallback
 
                 # --- Aplicar fallback robusto (regex multi-estratégia) ---
-                # Sobrescreve campos vazios do OpenAI com valores do regex
-                fallback_fields = [
-                    'ref_souq', 'target_price', 'pilot_delivery_date',
-                    'tech_sheet_delivery_date', 'showcase_for',
+                # Para campos simples (não-datas), sobrescreve vazios com regex
+                fallback_fields_simple = [
+                    'ref_souq', 'target_price', 'showcase_for',
                     'supplier', 'corner', 'collection'
                 ]
-                for fb_key in fallback_fields:
+                for fb_key in fallback_fields_simple:
                     if _is_blank(flattened.get(fb_key)) and robust_fallback.get(fb_key):
                         flattened[fb_key] = robust_fallback[fb_key]
                         print(f"  🔄 Fallback regex aplicado: {fb_key} = {robust_fallback[fb_key]}")
 
-                # Datas: se OpenAI retornou algo mas não é YYYY-MM-DD válido, tenta regex
+                # --- DUPLA VALIDAÇÃO: Datas (OpenAI é autoridade) ---
+                # OpenAI decide qual data é qual. Regex só normaliza o formato.
                 for date_key in ('pilot_delivery_date', 'tech_sheet_delivery_date'):
                     ai_date = flattened.get(date_key)
                     if ai_date and isinstance(ai_date, str):
+                        # Normalizar formato: DD/MM/YY → YYYY-MM-DD
                         if not re.match(r'^\d{4}-\d{2}-\d{2}$', ai_date):
-                            # Tenta parsear data BR do valor do OpenAI
                             parsed_ai = _parse_br_date(ai_date)
                             if parsed_ai:
                                 flattened[date_key] = parsed_ai
                                 print(f"  📅 Data OpenAI normalizada: {date_key} = {parsed_ai}")
-                            elif robust_fallback.get(date_key):
-                                flattened[date_key] = robust_fallback[date_key]
-                                print(f"  📅 Data fallback regex: {date_key} = {robust_fallback[date_key]}")
+                    elif _is_blank(ai_date) and robust_fallback.get(date_key):
+                        # Só usa regex como fallback se OpenAI não retornou nada
+                        flattened[date_key] = robust_fallback[date_key]
+                        print(f"  📅 Data fallback regex (OpenAI vazio): {date_key} = {robust_fallback[date_key]}")
+
+                print(f"  📅 RESULTADO DATAS: pilot={flattened.get('pilot_delivery_date')}, ficha={flattened.get('tech_sheet_delivery_date')}")
 
                 if extra_fields:
                     flattened['extra_fields'] = extra_fields

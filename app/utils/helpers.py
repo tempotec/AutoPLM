@@ -1,6 +1,24 @@
 import json
 
 
+def normalize_wsid(x) -> str:
+    """Normalize a Fluxogama WSID to a clean string.
+    - None / '' → ''
+    - "None" (str) → ''
+    - "14.0" (Excel float) → "14"
+    - strips whitespace
+    """
+    s = str(x or '').strip()
+    if not s or s == 'None':
+        return ''
+    try:
+        if '.' in s:
+            s = str(int(float(s)))
+    except (ValueError, TypeError):
+        pass
+    return s
+
+
 def convert_value_to_string(value):
     if isinstance(value, (list, dict)):
         return json.dumps(value, ensure_ascii=False)
