@@ -9,12 +9,155 @@ def _normalize_text(value):
     return unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
 
 
+def _normalize_pdf_text(text):
+    """Normaliza texto extraído de PDF para facilitar extração por regex.
+    Retorna dict com versão 'raw', 'linear' e 'lines'."""
+    raw = (text or "").replace("\xa0", " ")
+    raw = _normalize_text(raw)
+    raw = re.sub(r"[ \t]+", " ", raw)
+    raw = re.sub(r"\n{2,}", "\n", raw).strip()
+    # Rejoin hyphenated labels split across lines: "FICHA- TECNICA" -> "FICHA-TECNICA"
+    raw = re.sub(r"-\s*\n\s*", "-", raw)
+    # Also fix inline: "FICHA- TECNICA" -> "FICHA-TECNICA"
+    raw = re.sub(r"-\s+(?=[A-Z])", "-", raw)
+
+    linear = raw.replace("\n", " ")
+    linear = re.sub(r"\s{2,}", " ", linear).strip()
+
+    lines = [ln.strip() for ln in raw.split("\n") if ln.strip()]
+    return {"raw": raw, "linear": linear, "lines": lines}
+
+
+# All known labels used in extraction — used to detect label boundaries
+_ALL_KNOWN_LABELS = [
+    "REF SOUQ", "REF. SOUQ", "CORNER", "TARGET PRICE", "PRECO ALVO",
+    "FORNECEDOR", "DESCRICAO", "DATA ENTREGA PILOTO",
+    "DATA ENTREGA FICHA-TECNICA", "DATA ENTREGA FICHA TECNICA",
+    "ESTILISTA", "MES LOJA", "COLECAO", "MOSTRUARIO PARA",
+    "MATERIA-PRIMA E COMPOSICAO", "MATERIA-PRIMA", "TECIDO PRINCIPAL",
+    "TECIDO", "TAM. DA PILOTO", "TAM. PILOTO", "MES ENTREGA CD",
+    "FICHA TECNICA SOUQ", "OBSERVACOES", "AVIAMENTOS", "CORES",
+    "DESENHO TECNICO", "COMPOSICAO",
+]
+
+
+def _trim_at_next_label(value):
+    """Remove tudo que vem depois do próximo rótulo conhecido no valor capturado."""
+    if not value:
+        return None
+    # Build pattern to detect next label boundary
+    sorted_labels = sorted(_ALL_KNOWN_LABELS, key=len, reverse=True)
+    label_pat = "|".join(re.escape(lb) for lb in sorted_labels)
+    # Cut at the first occurrence of a known label
+    m = re.search(rf"\b({label_pat})\s*:?", value, flags=re.I)
+    if m:
+        trimmed = value[:m.start()].strip()
+        return trimmed if trimmed else None
+    return value.strip() if value.strip() else None
+
+
+def _is_valid_extracted_value(val):
+    """Check if an extracted value is meaningful (not just colons, spaces, etc)."""
+    if not val:
+        return False
+    cleaned = val.strip().strip(":").strip()
+    if not cleaned:
+        return False
+    # Reject if it's just another label followed by colon
+    if re.fullmatch(r"[A-Z\s]+:", cleaned, flags=re.I):
+        return False
+    return True
+
+
+def _extract_label_value(norm, labels):
+    """Extrai valor associado a um rótulo usando 3 estratégias:
+    1) label: valor na mesma linha (trimmed at next label boundary)
+    2) label sozinho numa linha, valor na próxima
+    3) fallback no texto linear completo
+    """
+    # 1) tenta na mesma linha: LABEL: valor
+    for ln in norm["lines"]:
+        for lb in labels:
+            m = re.search(rf"\b{re.escape(lb)}\s*:\s*(.+)$", ln, flags=re.I)
+            if m:
+                val = _trim_at_next_label(m.group(1).strip())
+                if _is_valid_extracted_value(val):
+                    return val
+
+    # 2) tenta label sozinho e pega próxima linha
+    for i, ln in enumerate(norm["lines"]):
+        for lb in labels:
+            if re.fullmatch(rf"{re.escape(lb)}\s*:?\s*", ln, flags=re.I) and i + 1 < len(norm["lines"]):
+                val = _trim_at_next_label(norm["lines"][i + 1].strip())
+                if _is_valid_extracted_value(val):
+                    return val
+
+    # 3) fallback no texto linear (tenta capturar do texto corrido)
+    for lb in labels:
+        m = re.search(rf"\b{re.escape(lb)}\s*:\s*([^\n\r]+)", norm["linear"], flags=re.I)
+        if m:
+            val = _trim_at_next_label(m.group(1).strip())
+            if _is_valid_extracted_value(val):
+                return val
+    return None
+
+
+def _guess_ref_souq(norm):
+    """Heurística para encontrar REF SOUQ quando o rótulo vem vazio.
+    Procura padrões como S27TH026 (S + 2 dígitos + 2-3 letras + 3-4 dígitos)."""
+    m = re.search(r"\bS\d{2}[A-Z]{2,3}\d{3,4}\b", norm["linear"])
+    return m.group(0) if m else None
+
+
+def _guess_target_price(norm):
+    """Heurística para encontrar target price por padrão R$ no texto."""
+    m = re.search(r"R\$\s*[\d.,]+", norm["linear"])
+    return m.group(0) if m else None
+
+
+def _guess_dates_from_text(norm):
+    """Heurística para encontrar datas DD/MM/YY no texto.
+    Retorna dict com 'tech_sheet_delivery_date', 'pilot_delivery_date' e 'showcase_for'.
+    No layout da ficha SOUQ, a ordem das datas é:
+      1ª = DATA ENTREGA FICHA-TÉCNICA
+      2ª = DATA ENTREGA PILOTO
+      3ª = MOSTRUÁRIO PARA"""
+    dates = re.findall(r"\b(\d{2}/\d{2}/\d{2,4})\b", norm["linear"])
+    result = {}
+    if len(dates) >= 1:
+        result["tech_sheet_delivery_date"] = dates[0]
+    if len(dates) >= 2:
+        result["pilot_delivery_date"] = dates[1]
+    if len(dates) >= 3:
+        result["showcase_for"] = dates[2]
+    return result
+
+
+def _parse_br_date(s):
+    """Converte data brasileira DD/MM/YY ou DD/MM/YYYY para YYYY-MM-DD."""
+    if not s:
+        return None
+    m = re.search(r"\b(\d{2})/(\d{2})/(\d{2,4})\b", s)
+    if not m:
+        return None
+    dd, mm, yy = m.group(1), m.group(2), m.group(3)
+    if len(yy) == 2:
+        yy = "20" + yy
+    return f"{yy}-{mm}-{dd}"
+
+
+def _is_blank(v):
+    """Verifica se um valor é vazio/nulo/placeholder."""
+    return v is None or (isinstance(v, str) and v.strip().lower() in ("", "n/a", "na", "null", "none"))
+
+
 def _extract_labeled_fields(text):
     normalized = _normalize_text(text)
     results = {}
 
     label_map = {
         "REF SOUQ": "ref_souq",
+        "REF. SOUQ": "ref_souq",
         "REF": "ref_souq",
         "COLECAO": "collection",
         "FORNECEDOR": "supplier",
@@ -27,6 +170,12 @@ def _extract_labeled_fields(text):
         "TECIDO": "main_fabric",
         "TAM. PILOTO": "pilot_size",
         "TAM. DA PILOTO": "pilot_size",
+        "TARGET PRICE": "target_price",
+        "PRECO ALVO": "target_price",
+        "DATA ENTREGA PILOTO": "pilot_delivery_date",
+        "DATA ENTREGA FICHA-TECNICA": "tech_sheet_delivery_date",
+        "DATA ENTREGA FICHA TECNICA": "tech_sheet_delivery_date",
+        "MOSTRUARIO PARA": "showcase_for",
     }
     labels = sorted(label_map.keys(), key=len, reverse=True)
     label_pattern = "|".join(re.escape(label) for label in labels)
@@ -530,6 +679,62 @@ def process_specification_with_openai(text_content):
     try:
         labeled_fallback = _extract_labeled_fields(text_content)
         extra_fields = _extract_extra_fields(text_content)
+
+        # --- Extração robusta por label (multi-estratégia) ---
+        norm = _normalize_pdf_text(text_content)
+        ROBUST_LABELS = {
+            "ref_souq": ["REF SOUQ", "REF. SOUQ", "REF SOUQ (SOUQ)"],
+            "target_price": ["TARGET PRICE", "PRECO ALVO", "TARGET PRICE (R$)"],
+            "pilot_delivery_date": ["DATA ENTREGA PILOTO"],
+            "tech_sheet_delivery_date": ["DATA ENTREGA FICHA-TECNICA", "DATA ENTREGA FICHA TECNICA"],
+            "showcase_for": ["MOSTRUARIO PARA", "MOSTRUARIO PARA"],
+            "collection": ["COLECAO", "COLECAO"],
+            "corner": ["CORNER"],
+            "supplier": ["FORNECEDOR"],
+        }
+        robust_fallback = {}
+        for field, lbs in ROBUST_LABELS.items():
+            val = _extract_label_value(norm, lbs)
+            if val:
+                robust_fallback[field] = val
+
+        # Heurística para REF SOUQ quando o rótulo não captura
+        if not robust_fallback.get("ref_souq") and not labeled_fallback.get("ref_souq"):
+            guessed = _guess_ref_souq(norm)
+            if guessed:
+                robust_fallback["ref_souq"] = guessed
+                print(f"  [HEURISTIC] REF SOUQ detectada por padrao: {guessed}")
+
+        # Heurística para TARGET PRICE (R$ no texto)
+        if not robust_fallback.get("target_price"):
+            guessed_price = _guess_target_price(norm)
+            if guessed_price:
+                robust_fallback["target_price"] = guessed_price
+                print(f"  [HEURISTIC] TARGET PRICE detectado: {guessed_price}")
+
+        # Heurística para datas (DD/MM/YY no texto)
+        # Para datas, override se o valor extraído por label não parece uma data
+        def _looks_like_date(val):
+            return bool(val and re.search(r'\d{2}/\d{2}/\d{2,4}', val))
+
+        guessed_dates = _guess_dates_from_text(norm)
+        if not _looks_like_date(robust_fallback.get("pilot_delivery_date")) and guessed_dates.get("pilot_delivery_date"):
+            robust_fallback["pilot_delivery_date"] = guessed_dates["pilot_delivery_date"]
+            print(f"  [HEURISTIC] DATA PILOTO detectada: {guessed_dates['pilot_delivery_date']}")
+        if not _looks_like_date(robust_fallback.get("tech_sheet_delivery_date")) and guessed_dates.get("tech_sheet_delivery_date"):
+            robust_fallback["tech_sheet_delivery_date"] = guessed_dates["tech_sheet_delivery_date"]
+            print(f"  [HEURISTIC] DATA FICHA detectada: {guessed_dates['tech_sheet_delivery_date']}")
+
+        # Normalizar datas BR para YYYY-MM-DD
+        for date_field in ("pilot_delivery_date", "tech_sheet_delivery_date"):
+            raw_date = robust_fallback.get(date_field)
+            if raw_date:
+                parsed = _parse_br_date(raw_date)
+                if parsed:
+                    robust_fallback[date_field] = parsed
+
+        print(f"\n[FALLBACK] Fallback robusto (regex multi-estrategia): {robust_fallback}")
+
         prompt = f"""Você é um especialista em análise de fichas técnicas de vestuário da marca SOUQ. Extraia TODAS as informações disponíveis do texto abaixo e retorne em formato JSON estruturado.
 
 ESTRUTURA TÍPICA DA FICHA TÉCNICA SOUQ:
@@ -579,7 +784,7 @@ IMPORTANTE:
 CAMPOS OBRIGATÓRIOS A EXTRAIR:
 
 1. **Identificação da Peça:**
-   - ref_souq: Código/referência (campo "REF SOUQ:" ou "REF:")
+   - ref_souq: Código/referência (campo "REF SOUQ:" ou "REF:"). ATENÇÃO: Em PDFs com layout de tabela, a REF SOUQ pode aparecer LONGE do rótulo. Procure padrões como S27TH026 (S + 2 dígitos + 2-3 letras + 3-4 dígitos) em QUALQUER parte do texto.
    - description: Nome/descrição da peça (campo "DESCRIÇÃO:" ou "DESC:")
    - collection: Coleção (campo "COLEÇÃO:" ou "COL:")
    - supplier: Nome da EMPRESA fornecedora - NÃO é tecido/matéria-prima!
@@ -589,14 +794,14 @@ CAMPOS OBRIGATÓRIOS A EXTRAIR:
    - sub_group: Subgrupo - DEVE SER: BLAZER, BLUSA, BRINCO, CALÇA, CAMISA, CAMISA/CAMISÃO, CAMISETA, CARDIGÃ, JAQUETA, KAFTAN, REGATA, SAIA ou TÚNICA (MAIÚSCULAS)
 
 2. **Informações Comerciais:**
-   - target_price: Preço alvo (campo "Target Price:")
+   - target_price: Preço alvo (campo "Target Price:" ou "TARGET PRICE:"). É um valor monetário em R$ (ex: "R$ 35,00", "35,00"). Procure valores com R$ ou números próximos ao rótulo.
    - store_month: Mês de loja (campo "MÊS LOJA:")
    - delivery_cd_month: Mês de entrega CD (campo "MÊS ENTREGA CD:")
 
 3. **Prazos e Entregas:**
-   - tech_sheet_delivery_date: Data entrega ficha técnica
-   - pilot_delivery_date: Data entrega piloto
-   - showcase_for: Mostruário para
+   - tech_sheet_delivery_date: Data entrega FICHA TÉCNICA (campo "DATA ENTREGA FICHA-TÉCNICA:"). NÃO confundir com data da piloto!
+   - pilot_delivery_date: Data entrega PILOTO (campo "DATA ENTREGA PILOTO:"). NÃO confundir com data da ficha técnica! São DUAS datas DIFERENTES.
+   - showcase_for: Mostruário para (campo "MOSTRUÁRIO PARA:")
 
 4. **Equipe Envolvida:**
    - stylists: Estilista(s) responsável(is) (campo "ESTILISTA:")
@@ -689,6 +894,33 @@ Retorne um objeto JSON com TODOS os campos acima, usando null para informações
                         flattened['supplier'] = supplier_fallback
                     if corner_fallback:
                         flattened['corner'] = corner_fallback
+
+                # --- Aplicar fallback robusto (regex multi-estratégia) ---
+                # Sobrescreve campos vazios do OpenAI com valores do regex
+                fallback_fields = [
+                    'ref_souq', 'target_price', 'pilot_delivery_date',
+                    'tech_sheet_delivery_date', 'showcase_for',
+                    'supplier', 'corner', 'collection'
+                ]
+                for fb_key in fallback_fields:
+                    if _is_blank(flattened.get(fb_key)) and robust_fallback.get(fb_key):
+                        flattened[fb_key] = robust_fallback[fb_key]
+                        print(f"  🔄 Fallback regex aplicado: {fb_key} = {robust_fallback[fb_key]}")
+
+                # Datas: se OpenAI retornou algo mas não é YYYY-MM-DD válido, tenta regex
+                for date_key in ('pilot_delivery_date', 'tech_sheet_delivery_date'):
+                    ai_date = flattened.get(date_key)
+                    if ai_date and isinstance(ai_date, str):
+                        if not re.match(r'^\d{4}-\d{2}-\d{2}$', ai_date):
+                            # Tenta parsear data BR do valor do OpenAI
+                            parsed_ai = _parse_br_date(ai_date)
+                            if parsed_ai:
+                                flattened[date_key] = parsed_ai
+                                print(f"  📅 Data OpenAI normalizada: {date_key} = {parsed_ai}")
+                            elif robust_fallback.get(date_key):
+                                flattened[date_key] = robust_fallback[date_key]
+                                print(f"  📅 Data fallback regex: {date_key} = {robust_fallback[date_key]}")
+
                 if extra_fields:
                     flattened['extra_fields'] = extra_fields
 
