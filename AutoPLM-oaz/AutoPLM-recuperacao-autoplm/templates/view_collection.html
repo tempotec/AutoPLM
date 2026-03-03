@@ -1,0 +1,306 @@
+{%- extends "layout.html" -%}
+
+{% block title %}{{ collection.name }} - StyleFlow{% endblock %}
+
+{% block styles %}
+<style>
+/* Sidebar */
+
+
+
+
+
+
+
+
+
+        /* Settings & Logout Section */
+
+
+
+
+
+
+
+
+
+
+
+
+        /* Main Content */
+
+        .collection-header {
+            margin-bottom: 2rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            color: #8b92b0;
+            font-size: 0.9rem;
+        }
+
+        .breadcrumb a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .collection-header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .collection-description {
+            color: #8b92b0;
+            font-size: 0.95rem;
+            margin-bottom: 1rem;
+        }
+
+        .collection-stats {
+            display: flex;
+            gap: 1.5rem;
+            padding: 1rem 0;
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #8b92b0;
+            font-size: 0.9rem;
+        }
+
+        .stat-item i {
+            color: #3b82f6;
+        }
+
+        /* Products Grid */
+        .products-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .product-card {
+            background: #1e2538;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+
+        .product-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #2a3348 0%, #1e2538 100%);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .product-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .product-image i {
+            font-size: 3rem;
+            color: #4a5072;
+        }
+
+        .product-info {
+            padding: 1.25rem;
+        }
+
+        .product-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .product-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-supplier {
+            background-color: #1e3a8a;
+            color: #93c5fd;
+        }
+
+        .badge-draft {
+            background-color: #334155;
+            color: #94a3b8;
+        }
+
+        .badge-development {
+            background-color: #854d0e;
+            color: #fbbf24;
+        }
+
+        .badge-approved {
+            background-color: #065f46;
+            color: #34d399;
+        }
+
+        .badge-production {
+            background-color: #1e40af;
+            color: #60a5fa;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: #1e2538;
+            border-radius: 12px;
+            border: 2px dashed #2a3348;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            color: #4a5072;
+            margin-bottom: 1.5rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            color: #fff;
+            margin-bottom: 0.75rem;
+        }
+
+        .empty-state p {
+            color: #8b92b0;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-primary {
+            padding: 0.75rem 1.5rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="collection-header">
+    <div class="breadcrumb">
+        <a href="{{ url_for('collections.index') }}">Coleções</a>
+        <i class="fas fa-chevron-right"></i>
+        <span>{{ collection.name }}</span>
+    </div>
+
+    <h1>{{ collection.name }}</h1>
+
+    {% if collection.description %}
+    <p class="collection-description">{{ collection.description }}</p>
+    {% endif %}
+
+    <div class="collection-stats">
+        <div class="stat-item">
+            <i class="fas fa-tshirt"></i>
+            <span>{{ specifications|length }} peças</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-calendar"></i>
+            <span>Criada em {{ collection.created_at.strftime('%d/%m/%Y') }}</span>
+        </div>
+        <div class="stat-item">
+            <i class="fas fa-info-circle"></i>
+            <span>{{ 'Em desenvolvimento' if collection.status == 'em_desenvolvimento' else 'Finalizada'
+                }}</span>
+        </div>
+    </div>
+</div>
+
+{% if specifications %}
+<div class="products-grid">
+    {% for spec in specifications %}
+    <a href="{{ url_for('specifications.view', id=spec.id) }}" class="product-card">
+        <div class="product-image">
+            {% if spec.pdf_thumbnail %}
+            <img src="{{ spec.pdf_thumbnail }}" alt="{{ spec.description or 'Produto' }}">
+            {% elif spec.technical_drawing_url %}
+            <img src="{{ url_for('drawings.view_drawing', id=spec.id) }}" alt="Desenho Técnico">
+            {% else %}
+            <i class="fas fa-image"></i>
+            {% endif %}
+        </div>
+        <div class="product-info">
+            <div class="product-name">{{ spec.description or spec.ref_souq or 'Sem título' }}</div>
+            <div class="product-meta">
+                {% if spec.supplier %}
+                <span class="badge badge-supplier">{{ spec.supplier }}</span>
+                {% endif %}
+                {% if spec.status == 'draft' %}
+                <span class="badge badge-draft">Rascunho</span>
+                {% elif spec.status == 'in_development' %}
+                <span class="badge badge-development">Em Desenvolvimento</span>
+                {% elif spec.status == 'approved' %}
+                <span class="badge badge-approved">Aprovado</span>
+                {% elif spec.status == 'in_production' %}
+                <span class="badge badge-production">Em Produ????o</span>
+                {% elif spec.status == 'completed' %}
+                <span class="badge badge-completed">Concluido</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fas fa-tshirt"></i>
+    <h3>Nenhuma peça nesta coleção</h3>
+    <p>Comece adicionando peças a esta coleção através do upload.</p>
+    <a href="{{ url_for('specifications.upload') }}" class="btn-primary">
+        <i class="fas fa-upload"></i>
+        Fazer Upload
+    </a>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,949 @@
+{%- extends "layout.html" -%}
+
+{% block title %}Ficha Tecnica - Itens{% endblock %}
+
+{% block styles %}
+<style>
+.btn {
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary {
+            background-color: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #334155;
+        }
+
+        .btn-secondary:hover {
+            background-color: #374151;
+        }
+
+        .btn-danger {
+            background-color: #7f1d1d;
+            color: #fee2e2;
+        }
+
+        .btn-danger:hover {
+            background-color: #991b1b;
+        }
+
+        .btn-ghost {
+            background-color: #1e293b;
+            color: #cbd5f5;
+        }
+
+        .btn-ghost:hover {
+            background-color: #334155;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+            min-width: 220px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 12px 10px 38px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 13px;
+        }
+
+        .search-box i {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .select-input {
+            min-width: 160px;
+            padding: 10px 12px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 13px;
+        }
+
+        .table-card {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 16px;
+        }
+
+        .table-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .action-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .status-line {
+            font-size: 13px;
+            margin-top: 8px;
+        }
+
+        .status-line.success {
+            color: #34d399;
+        }
+
+        .status-line.error {
+            color: #f87171;
+        }
+
+        .table-wrapper {
+            overflow: auto;
+            border: 1px solid #1f2937;
+            border-radius: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+
+        thead {
+            background-color: #1f2937;
+        }
+
+        th,
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #1f2937;
+            color: #cbd5f5;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            font-weight: 600;
+            color: #e2e8f0;
+            cursor: pointer;
+        }
+
+        tr:hover td {
+            background-color: #0f172a;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .page-btn {
+            padding: 8px 12px;
+            background-color: #1e293b;
+            color: #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .checkbox {
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Flux button */
+        .btn-flux {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: #fff;
+        }
+
+        .btn-flux:hover:not(:disabled) {
+            background: linear-gradient(135deg, #6d28d9, #5b21b6);
+        }
+
+        .btn-flux:disabled {
+            background: #1e293b;
+            color: #475569;
+            cursor: not-allowed;
+        }
+
+        .selection-counter {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #a78bfa;
+            font-weight: 500;
+            padding: 0 8px;
+        }
+
+        .selection-counter.hidden {
+            display: none;
+        }
+
+        /* Modal overlay */
+        .flux-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .flux-modal-overlay.active {
+            display: flex;
+        }
+
+        .flux-modal {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            padding: 32px;
+            width: 480px;
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        }
+
+        .flux-modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .flux-modal-header i {
+            font-size: 24px;
+            color: #a78bfa;
+        }
+
+        .flux-modal-header h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin: 0;
+        }
+
+        .flux-modal-body {
+            flex: 1;
+            overflow-y: auto;
+            margin-bottom: 24px;
+        }
+
+        .flux-modal-count {
+            font-size: 15px;
+            color: #cbd5e1;
+            margin-bottom: 16px;
+        }
+
+        .flux-modal-count strong {
+            color: #a78bfa;
+        }
+
+        .flux-item-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background: #0f172a;
+            border-radius: 8px;
+            border: 1px solid #1f2937;
+        }
+
+        .flux-item-list li {
+            padding: 8px 12px;
+            font-size: 12px;
+            color: #94a3b8;
+            border-bottom: 1px solid #1f2937;
+            display: flex;
+            gap: 8px;
+        }
+
+        .flux-item-list li:last-child {
+            border-bottom: none;
+        }
+
+        .flux-item-list .item-ref {
+            color: #e2e8f0;
+            font-weight: 600;
+            min-width: 100px;
+        }
+
+        .flux-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Result states */
+        .flux-result-ok {
+            color: #34d399;
+        }
+
+        .flux-result-fail {
+            color: #f87171;
+        }
+
+        .flux-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            color: #a78bfa;
+            font-size: 14px;
+        }
+
+        .flux-spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid #334155;
+            border-top-color: #a78bfa;
+            border-radius: 50%;
+            animation: fluxSpin 0.6s linear infinite;
+        }
+
+        @keyframes fluxSpin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Flux status badges */
+        .flux-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .flux-badge.sent {
+            background: rgba(52, 211, 153, 0.15);
+            color: #34d399;
+        }
+
+        .flux-badge.error {
+            background: rgba(248, 113, 113, 0.15);
+            color: #f87171;
+        }
+
+        .flux-badge.pending {
+            color: #64748b;
+        }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div class="header-top">
+        <div>
+            <h1 class="page-title">Itens da Ficha Tecnica</h1>
+            <p class="page-subtitle">Gerencie os itens importados do Excel.</p>
+        </div>
+        <div class="action-group">
+            <button class="btn btn-danger" id="btnDeleteFicha" title="Excluir esta ficha inteira">
+                <i class="fas fa-trash-alt"></i>
+                Excluir Ficha
+            </button>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+</header>
+
+<div class="controls">
+    <div class="search-box">
+        <i class="fas fa-search"></i>
+        <input type="text" id="searchInput" placeholder="Buscar por referencia, descricao ou item">
+    </div>
+    <input class="select-input" type="text" id="filterGrupo" placeholder="Filtro grupo">
+    <input class="select-input" type="text" id="filterLinha" placeholder="Filtro linha">
+    <input class="select-input" type="text" id="filterCor" placeholder="Filtro cor">
+    <select class="select-input" id="perPage">
+        <option value="25">25 por pagina</option>
+        <option value="50">50 por pagina</option>
+        <option value="100">100 por pagina</option>
+    </select>
+</div>
+
+<section class="table-card">
+    <div class="table-actions">
+        <div class="action-group">
+            <label style="display:flex;align-items:center;gap:8px;">
+                <input type="checkbox" id="selectAll" class="checkbox">
+                Selecionar pagina
+            </label>
+            <button class="btn btn-danger" id="btnBulkDelete" disabled>
+                <i class="fas fa-trash"></i>
+                Excluir selecionados
+            </button>
+            <button class="btn btn-ghost" id="btnClearAll">
+                <i class="fas fa-broom"></i>
+                Limpar tudo
+            </button>
+            <button class="btn btn-flux" id="btnSendFlux" disabled>
+                <i class="fas fa-paper-plane"></i>
+                Enviar para o Flux
+            </button>
+            <span class="selection-counter hidden" id="selectionCounter">0 itens selecionados</span>
+        </div>
+        <div class="action-group">
+            <button class="btn btn-primary" id="btnExport">
+                <i class="fas fa-file-export"></i>
+                Exportar CSV
+            </button>
+        </div>
+    </div>
+    <div class="status-line" id="statusLine"></div>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr id="tableHeader"></tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+    <div class="pagination">
+        <button class="page-btn" id="prevPage">Anterior</button>
+        <button class="page-btn" id="nextPage">Proxima</button>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+        // ─── Subetapa Options (easy to maintain) ───
+        const SUBETAPA_OPTIONS = [
+            { label: 'Ficha do desenvolvimento', wsid: '14' },
+            { label: 'Entrada do mix Souq', wsid: '54' },
+            { label: 'Tabela de Medidas', wsid: '70' },
+            { label: 'Fluxogama', wsid: '11' },
+        ];
+
+        const fichaId = {{ ficha.id }};
+        const searchInput = document.getElementById('searchInput');
+        const filterGrupo = document.getElementById('filterGrupo');
+        const filterLinha = document.getElementById('filterLinha');
+        const filterCor = document.getElementById('filterCor');
+        const perPageSelect = document.getElementById('perPage');
+        const selectAll = document.getElementById('selectAll');
+        const btnBulkDelete = document.getElementById('btnBulkDelete');
+        const btnClearAll = document.getElementById('btnClearAll');
+        const btnExport = document.getElementById('btnExport');
+        const btnSendFlux = document.getElementById('btnSendFlux');
+        const selectionCounter = document.getElementById('selectionCounter');
+        const fluxModal = document.getElementById('fluxModal');
+        const fluxModalBody = document.getElementById('fluxModalBody');
+        const btnFluxCancel = document.getElementById('btnFluxCancel');
+        const btnFluxConfirm = document.getElementById('btnFluxConfirm');
+        const statusLine = document.getElementById('statusLine');
+        const tableHeader = document.getElementById('tableHeader');
+        const tableBody = document.getElementById('tableBody');
+        const prevPage = document.getElementById('prevPage');
+        const nextPage = document.getElementById('nextPage');
+
+        let columns = [];
+        let currentPage = 1;
+        let totalItems = 0;
+        let selectedIds = new Set();
+        let currentSort = 'item_no_ref_supplier';
+        let currentOrder = 'asc';
+
+        function setStatus(message, type) {
+            statusLine.textContent = message || '';
+            statusLine.className = 'status-line' + (type ? ' ' + type : '');
+        }
+
+        function buildHeader() {
+            tableHeader.innerHTML = '';
+            const selectTh = document.createElement('th');
+            selectTh.textContent = '';
+            tableHeader.appendChild(selectTh);
+
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col.sourceColumnName || col.name;
+                th.addEventListener('click', () => {
+                    if (currentSort === col.name) {
+                        currentOrder = currentOrder === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort = col.name;
+                        currentOrder = 'asc';
+                    }
+                    loadItems();
+                });
+                tableHeader.appendChild(th);
+            });
+
+            const fluxTh = document.createElement('th');
+            fluxTh.textContent = 'Flux';
+            fluxTh.title = 'Status Fluxogama';
+            tableHeader.appendChild(fluxTh);
+
+            const actionTh = document.createElement('th');
+            actionTh.textContent = 'Acoes';
+            tableHeader.appendChild(actionTh);
+        }
+
+        function renderRows(items) {
+            tableBody.innerHTML = '';
+            items.forEach(item => {
+                const tr = document.createElement('tr');
+                const tdSelect = document.createElement('td');
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.className = 'checkbox';
+                checkbox.dataset.id = item.id;
+                checkbox.checked = selectedIds.has(item.id);
+                checkbox.addEventListener('change', () => {
+                    if (checkbox.checked) {
+                        selectedIds.add(item.id);
+                    } else {
+                        selectedIds.delete(item.id);
+                    }
+                    updateBulkState();
+                });
+                tdSelect.appendChild(checkbox);
+                tr.appendChild(tdSelect);
+
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    const value = item[col.name];
+                    td.textContent = value === null || value === undefined ? '' : value;
+                    tr.appendChild(td);
+                });
+
+                // Flux status badge
+                const tdFlux = document.createElement('td');
+                const fs = item.fluxogama_status;
+                if (fs === 'sent') {
+                    tdFlux.innerHTML = '<span class="flux-badge sent"><i class="fas fa-check-circle"></i> Integrado</span>';
+                    tdFlux.title = item.fluxogama_sent_at ? `Enviado em ${new Date(item.fluxogama_sent_at).toLocaleString('pt-BR')}` : '';
+                } else if (fs === 'error') {
+                    tdFlux.innerHTML = '<span class="flux-badge error"><i class="fas fa-exclamation-circle"></i> Erro</span>';
+                } else {
+                    tdFlux.innerHTML = '<span class="flux-badge pending">—</span>';
+                }
+                tr.appendChild(tdFlux);
+
+                const tdAction = document.createElement('td');
+                const editLink = document.createElement('a');
+                editLink.href = `/fichas/${fichaId}/itens/${item.id}/editar`;
+                editLink.className = 'btn btn-ghost';
+                editLink.style.padding = '6px 10px';
+                editLink.style.fontSize = '12px';
+                editLink.innerHTML = '<i class="fas fa-edit"></i> Editar';
+                tdAction.appendChild(editLink);
+                tr.appendChild(tdAction);
+                tableBody.appendChild(tr);
+            });
+            const checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
+            const allChecked = checkboxes.length > 0 && Array.from(checkboxes).every(box => selectedIds.has(parseInt(box.dataset.id, 10)));
+            selectAll.checked = allChecked;
+        }
+
+        function updateBulkState() {
+            const hasSelection = selectedIds.size > 0;
+            btnBulkDelete.disabled = !hasSelection;
+            btnSendFlux.disabled = !hasSelection;
+            if (hasSelection) {
+                selectionCounter.classList.remove('hidden');
+                selectionCounter.textContent = selectedIds.size === 1
+                    ? '1 item selecionado'
+                    : `${selectedIds.size} itens selecionados`;
+            } else {
+                selectionCounter.classList.add('hidden');
+            }
+        }
+
+        async function loadColumns() {
+            const response = await fetch(`/api/fichas/${fichaId}`, { credentials: 'same-origin' });
+            const data = await response.json();
+            if (!data.success) {
+                setStatus(data.error || 'Falha ao carregar colunas.', 'error');
+                return;
+            }
+            columns = data.columns || [];
+            buildHeader();
+            loadItems();
+        }
+
+        async function loadItems() {
+            setStatus('Carregando itens...', '');
+            const params = new URLSearchParams({
+                page: currentPage,
+                per_page: perPageSelect.value,
+                q: searchInput.value.trim(),
+                grupo: filterGrupo.value.trim(),
+                linha: filterLinha.value.trim(),
+                cor: filterCor.value.trim(),
+                sort: currentSort,
+                order: currentOrder
+            });
+            const response = await fetch(`/api/fichas/${fichaId}/itens?${params.toString()}`, { credentials: 'same-origin' });
+            const data = await response.json();
+            if (!data.success) {
+                setStatus(data.error || 'Falha ao carregar itens.', 'error');
+                return;
+            }
+            totalItems = data.total || 0;
+            renderRows(data.items || []);
+            updateBulkState();
+            setStatus(`Total de itens: ${totalItems}`, 'success');
+        }
+
+        searchInput.addEventListener('input', () => {
+            currentPage = 1;
+            loadItems();
+        });
+
+        [filterGrupo, filterLinha, filterCor, perPageSelect].forEach(el => {
+            el.addEventListener('change', () => {
+                currentPage = 1;
+                loadItems();
+            });
+        });
+
+        selectAll.addEventListener('change', () => {
+            const checkboxes = tableBody.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(box => {
+                const rowId = parseInt(box.dataset.id, 10);
+                if (Number.isNaN(rowId)) {
+                    return;
+                }
+                box.checked = selectAll.checked;
+                if (selectAll.checked) {
+                    selectedIds.add(rowId);
+                } else {
+                    selectedIds.delete(rowId);
+                }
+            });
+            updateBulkState();
+        });
+
+        btnBulkDelete.addEventListener('click', async () => {
+            if (!selectedIds.size) {
+                return;
+            }
+            if (!confirm('Tem certeza que deseja excluir os itens selecionados?')) {
+                return;
+            }
+            const response = await fetch(`/api/fichas/${fichaId}/itens/bulk-delete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: Array.from(selectedIds) }),
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+            if (!data.success) {
+                setStatus(data.error || 'Falha ao excluir itens.', 'error');
+                return;
+            }
+            selectedIds.clear();
+            selectAll.checked = false;
+            updateBulkState();
+            setStatus('Itens excluidos.', 'success');
+            loadItems();
+        });
+
+        btnClearAll.addEventListener('click', async () => {
+            if (!confirm('Tem certeza que deseja limpar todos os itens da ficha?')) {
+                return;
+            }
+            const response = await fetch(`/api/fichas/${fichaId}/itens/clear`, {
+                method: 'POST',
+                credentials: 'same-origin'
+            });
+            const data = await response.json();
+            if (!data.success) {
+                setStatus(data.error || 'Falha ao limpar itens.', 'error');
+                return;
+            }
+            selectedIds.clear();
+            selectAll.checked = false;
+            updateBulkState();
+            setStatus('Itens removidos.', 'success');
+            loadItems();
+        });
+
+        btnExport.addEventListener('click', () => {
+            const params = new URLSearchParams({
+                export: 1,
+                q: searchInput.value.trim(),
+                grupo: filterGrupo.value.trim(),
+                linha: filterLinha.value.trim(),
+                cor: filterCor.value.trim(),
+                sort: currentSort,
+                order: currentOrder
+            });
+            window.location.href = `/api/fichas/${fichaId}/itens?${params.toString()}`;
+        });
+
+        // ─── Flux Send Flow ───
+
+        // Cache item data for modal display
+        let currentItemsCache = [];
+
+        // Patch renderRows to also cache items for the modal
+        const _origRenderRows = renderRows;
+        renderRows = function (items) {
+            currentItemsCache = items;
+            _origRenderRows(items);
+        };
+
+        // Populate batch subetapa dropdown
+        const batchSubetapaSelect = document.getElementById('fluxBatchSubetapa');
+        const batchDryRunCheck = document.getElementById('fluxBatchDryRun');
+        const batchForceCheck = document.getElementById('fluxBatchForce');
+        SUBETAPA_OPTIONS.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.wsid;
+            o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
+            batchSubetapaSelect.appendChild(o);
+        });
+
+        // Enable/disable confirm based on subetapa selection
+        batchSubetapaSelect.addEventListener('change', () => {
+            const hasVal = batchSubetapaSelect.value !== '';
+            btnFluxConfirm.disabled = !hasVal;
+            btnFluxConfirm.style.opacity = hasVal ? '1' : '0.5';
+            btnFluxConfirm.style.cursor = hasVal ? 'pointer' : 'not-allowed';
+        });
+
+        btnSendFlux.addEventListener('click', () => {
+            if (!selectedIds.size) return;
+            showFluxConfirmation();
+        });
+
+        function showFluxConfirmation() {
+            const count = selectedIds.size;
+            const selectedItems = currentItemsCache.filter(it => selectedIds.has(it.id));
+
+            let listHtml = '';
+            if (selectedItems.length > 0) {
+                const items = selectedItems.slice(0, 30);
+                listHtml = '<ul class="flux-item-list">';
+                items.forEach(it => {
+                    const ref = it.oaz_reference || it.item_no_ref_supplier || `#${it.id}`;
+                    const desc = it.nome_desc_produto || it.description_item || '';
+                    listHtml += `<li><span class="item-ref">${ref}</span><span>${desc}</span></li>`;
+                });
+                if (selectedItems.length > 30) {
+                    listHtml += `<li style="color:#64748b;">…e mais ${selectedItems.length - 30} itens</li>`;
+                }
+                listHtml += '</ul>';
+            }
+
+            fluxModalBody.innerHTML = `
+                <p class="flux-modal-count">
+                    Você está prestes a enviar <strong>${count}</strong>
+                    ${count === 1 ? 'item' : 'itens'} desta ficha para o Fluxogama.
+                </p>
+                ${listHtml}
+            `;
+
+            btnFluxConfirm.disabled = !batchSubetapaSelect.value;
+            btnFluxConfirm.style.opacity = batchSubetapaSelect.value ? '1' : '0.5';
+            btnFluxConfirm.style.cursor = batchSubetapaSelect.value ? 'pointer' : 'not-allowed';
+            btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
+            btnFluxCancel.style.display = '';
+            fluxModal.classList.add('active');
+        }
+
+        btnFluxCancel.addEventListener('click', () => {
+            fluxModal.classList.remove('active');
+        });
+
+        // Close on overlay click
+        fluxModal.addEventListener('click', (e) => {
+            if (e.target === fluxModal) fluxModal.classList.remove('active');
+        });
+
+        btnFluxConfirm.addEventListener('click', async () => {
+            btnFluxConfirm.disabled = true;
+            btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
+            btnFluxCancel.style.display = 'none';
+
+            try {
+                // Build query with subetapa
+                const batchParams = new URLSearchParams({
+                    allow_create: '1',
+                    subetapa: batchSubetapaSelect.value,
+                });
+                if (batchDryRunCheck.checked) batchParams.set('dry_run', '1');
+                if (batchForceCheck.checked) batchParams.set('force', '1');
+
+                const resp = await fetch(`/api/fluxogama/send-batch?${batchParams.toString()}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ficha_id: fichaId,
+                        item_ids: Array.from(selectedIds),
+                    }),
+                    credentials: 'same-origin',
+                });
+
+                const data = await resp.json();
+
+                if (!resp.ok && !data.results) {
+                    showFluxResult(null, data.error || 'Erro ao enviar.');
+                    return;
+                }
+
+                showFluxResult(data, null);
+
+                // Clear only IDs that succeeded; keep failures selected for retry
+                if (data.results) {
+                    data.results.forEach(r => {
+                        if (r.ok) selectedIds.delete(r.item_id);
+                    });
+                    updateBulkState();
+                    // Update checkbox visuals in the table
+                    tableBody.querySelectorAll('input[type="checkbox"]').forEach(box => {
+                        const id = parseInt(box.dataset.id, 10);
+                        box.checked = selectedIds.has(id);
+                    });
+                    selectAll.checked = false;
+                }
+
+                loadItems();
+            } catch (err) {
+                showFluxResult(null, `Erro de conexão: ${err.message}`);
+            }
+        });
+
+        function showFluxResult(data, errorMsg) {
+            let html = '';
+            if (errorMsg) {
+                html = `<p class="flux-result-fail"><i class="fas fa-exclamation-triangle"></i> ${errorMsg}</p>`;
+            } else if (data) {
+                const { success_count, error_count, skipped_count, results } = data;
+                const parts = [];
+                if (success_count > 0) parts.push(`<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${success_count} ${success_count === 1 ? 'enviado' : 'enviados'} com sucesso.</p>`);
+                if (skipped_count > 0) parts.push(`<p style="color:#a78bfa;margin-bottom:8px;"><i class="fas fa-forward"></i> ${skipped_count} ${skipped_count === 1 ? 'já enviado — pulado' : 'já enviados — pulados'}.</p>`);
+                if (error_count > 0) parts.push(`<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${error_count} com erro.</p>`);
+                if (parts.length === 0 && data.dry_run) parts.push(`<p class="flux-result-ok"><i class="fas fa-vial"></i> Dry-run concluído.</p>`);
+                html = parts.join('');
+
+                // Show per-item details
+                if (results && results.length > 0) {
+                    html += '<ul class="flux-item-list" style="margin-top:12px;">';
+                    results.forEach(r => {
+                        let icon;
+                        if (r.skipped) icon = '<i class="fas fa-forward" style="color:#a78bfa"></i>';
+                        else if (r.ok) icon = '<i class="fas fa-check" style="color:#34d399"></i>';
+                        else icon = '<i class="fas fa-times" style="color:#f87171"></i>';
+                        html += `<li>${icon} <span class="item-ref">Item #${r.item_id}</span><span>${r.message}</span></li>`;
+                    });
+                    html += '</ul>';
+                }
+
+                // Status line update
+                if (error_count === 0 && !data.dry_run) {
+                    setStatus(`Envio concluído: ${success_count} enviados ao Flux.`, 'success');
+                } else if (data.dry_run) {
+                    setStatus(`Dry-run: ${success_count} OK, ${error_count} com erro.`, 'success');
+                } else {
+                    setStatus(`Envio parcial: ${success_count} OK, ${error_count} com erro.`, 'error');
+                }
+            }
+
+            fluxModalBody.innerHTML = html;
+            btnFluxConfirm.disabled = true;
+            btnFluxConfirm.style.display = 'none';
+            btnFluxCancel.style.display = '';
+            btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
+        }
+
+        prevPage.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage -= 1;
+                loadItems();
+            }
+        });
+
+        nextPage.addEventListener('click', () => {
+            const totalPages = Math.ceil(totalItems / parseInt(perPageSelect.value, 10));
+            if (currentPage < totalPages) {
+                currentPage += 1;
+                loadItems();
+            }
+        });
+
+        // ─── Delete entire ficha ───
+        document.getElementById('btnDeleteFicha').addEventListener('click', async () => {
+            if (!confirm('⚠️ Tem certeza que deseja EXCLUIR esta ficha inteira e todos os seus itens? Esta ação não pode ser desfeita.')) {
+                return;
+            }
+            try {
+                const resp = await fetch(`/api/fichas/${fichaId}`, {
+                    method: 'DELETE',
+                    credentials: 'same-origin',
+                });
+                const data = await resp.json();
+                if (data.success) {
+                    window.location.href = '{{ url_for("dashboard.index") }}';
+                } else {
+                    alert(data.error || 'Erro ao excluir ficha.');
+                }
+            } catch (err) {
+                alert('Erro de conexão: ' + err.message);
+            }
+        });
+
+        loadColumns();
+</script>
+{% endblock %}

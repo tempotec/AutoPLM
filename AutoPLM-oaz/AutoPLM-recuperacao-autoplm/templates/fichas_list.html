@@ -1,0 +1,412 @@
+{%- extends "layout.html" -%}
+{% block title %}Fichas Técnicas — OAZ AutoPLM{% endblock %}
+
+{% block styles %}
+<style>
+    /* ─── Page ─── */
+    .fichas-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+    }
+
+    /* ─── Search / filter bar ─── */
+    .filter-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 22px;
+        flex-wrap: wrap;
+    }
+
+    .search-wrap {
+        position: relative;
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .search-wrap i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--text-dim);
+        font-size: 13px;
+        pointer-events: none;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 10px 14px 10px 38px;
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-default);
+        border-radius: var(--radius-md);
+        font-size: 13.5px;
+        font-family: var(--font-body);
+        color: var(--text-primary);
+        transition: all var(--transition-fast);
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.12);
+    }
+
+    .filter-select {
+        padding: 10px 14px;
+        background: var(--bg-card);
+        border: 1.5px solid var(--border-default);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-family: var(--font-body);
+        color: var(--text-secondary);
+        min-width: 160px;
+        transition: all var(--transition-fast);
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: var(--brand-primary);
+    }
+
+    /* ─── Grid ─── */
+    .fichas-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        gap: 18px;
+    }
+
+    /* ─── Single card ─── */
+    .ficha-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        transition: all var(--transition-fast);
+        text-decoration: none;
+        position: relative;
+    }
+
+    .ficha-card:hover {
+        border-color: var(--brand-primary);
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+
+    /* Thumbnail */
+    .ficha-thumb {
+        width: 100%;
+        height: 160px;
+        background: var(--bg-card-alt);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-bottom: 1px solid var(--border-default);
+        overflow: hidden;
+    }
+
+    .ficha-thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .ficha-thumb .no-thumb {
+        font-size: 38px;
+        color: var(--brand-primary);
+        opacity: 0.4;
+    }
+
+    /* Body */
+    .ficha-body {
+        padding: 14px 16px;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .ficha-ref {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-gold-dark);
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
+    .ficha-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .ficha-meta {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-top: 4px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .ficha-meta span {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ─── Status badge ─── */
+    .status-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 3px 9px;
+        border-radius: 999px;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .status-badge.completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .status-badge.processing {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .status-badge.error {
+        background: #fee2e2;
+        color: #7f1d1d;
+    }
+
+    .status-badge.pending {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    /* ─── Upload CTA button in filter bar ─── */
+    .btn-nova {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 22px;
+        background: var(--brand-gradient);
+        color: #1a1410;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 700;
+        font-family: var(--font-body);
+        letter-spacing: 0.5px;
+        text-decoration: none;
+        cursor: pointer;
+        box-shadow: 0 3px 14px rgba(185, 150, 106, 0.28);
+        transition: all var(--transition-fast);
+        white-space: nowrap;
+    }
+
+    .btn-nova:hover {
+        background: linear-gradient(135deg, #d4b47a 0%, #a58048 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 5px 18px rgba(185, 150, 106, 0.38);
+    }
+
+    /* ─── Empty state ─── */
+    .empty-state {
+        grid-column: 1 / -1;
+        padding: 60px 24px;
+        text-align: center;
+    }
+
+    .empty-state i {
+        font-size: 48px;
+        color: var(--brand-primary);
+        opacity: 0.35;
+        margin-bottom: 16px;
+        display: block;
+    }
+
+    .empty-state h3 {
+        font-family: var(--font-heading);
+        font-size: 22px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 8px;
+    }
+
+    .empty-state p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin-bottom: 24px;
+    }
+
+    /* ─── Results line ─── */
+    .results-line {
+        font-size: 12.5px;
+        color: var(--text-dim);
+        margin-bottom: 12px;
+    }
+
+    /* loading spinner for processing */
+    .spin {
+        animation: fichasSpin 0.7s linear infinite;
+    }
+
+    @keyframes fichasSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="fichas-header">
+    <div>
+        <h1 class="page-title">Fichas Técnicas</h1>
+        <p class="page-subtitle">Visualize e gerencie todas as suas fichas de produto</p>
+    </div>
+    <a href="{{ url_for('specifications.upload') }}" class="btn-nova">
+        <i class="fas fa-plus"></i> Nova Ficha
+    </a>
+</div>
+
+<!-- Filter bar -->
+<div class="filter-bar">
+    <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" class="search-input" id="fichasSearch" placeholder="Buscar por nome, REF ou coleção...">
+    </div>
+
+    <select class="filter-select" id="statusFilter">
+        <option value="">Todos os Status</option>
+        <option value="completed">Processado</option>
+        <option value="processing">Processando</option>
+        <option value="pending">Pendente</option>
+        <option value="error">Erro</option>
+    </select>
+
+    {% if collections %}
+    <select class="filter-select" id="colecaoFilter">
+        <option value="">Todas as Coleções</option>
+        {% for col in collections %}
+        <option value="{{ col.id }}">{{ col.name }}</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+</div>
+
+<div class="results-line" id="resultsLine">
+    {{ specifications|length }} ficha(s) encontrada(s)
+</div>
+
+<!-- Cards Grid -->
+<div class="fichas-grid" id="fichasGrid">
+    {% for spec in specifications %}
+    <a href="{{ url_for('specifications.view', id=spec.id) }}" class="ficha-card"
+        data-name="{{ (spec.description or '') | lower }}" data-ref="{{ (spec.ref_souq or '') | lower }}"
+        data-status="{{ spec.processing_status or '' }}" data-colecao="{{ spec.collection_id or '' }}">
+
+        <!-- Status badge -->
+        {% if spec.processing_status == 'completed' %}
+        <span class="status-badge completed">Pronto</span>
+        {% elif spec.processing_status == 'processing' %}
+        <span class="status-badge processing"><i class="fas fa-cog spin"></i> Processando</span>
+        {% elif spec.processing_status == 'error' %}
+        <span class="status-badge error">Erro</span>
+        {% else %}
+        <span class="status-badge pending">Pendente</span>
+        {% endif %}
+
+        <!-- Thumbnail -->
+        <div class="ficha-thumb">
+            {% if spec.pdf_thumbnail %}
+            <img src="{{ spec.pdf_thumbnail }}" alt="Thumbnail">
+            {% else %}
+            <i class="fas fa-file-alt no-thumb"></i>
+            {% endif %}
+        </div>
+
+        <!-- Body -->
+        <div class="ficha-body">
+            {% if spec.ref_souq %}
+            <div class="ficha-ref">REF {{ spec.ref_souq }}</div>
+            {% endif %}
+            <div class="ficha-name">
+                {{ spec.description or spec.pdf_filename or 'Sem descrição' }}
+            </div>
+            <div class="ficha-meta">
+                {% if spec.collection %}
+                <span><i class="fas fa-layer-group"></i> {{ spec.collection.name if spec.collection else '—' }}</span>
+                {% endif %}
+                {% if spec.supplier %}
+                <span><i class="fas fa-industry"></i> {{ spec.supplier }}</span>
+                {% endif %}
+                {% if spec.created_at %}
+                <span><i class="fas fa-calendar"></i> {{ spec.created_at.strftime('%d/%m/%y') }}</span>
+                {% endif %}
+            </div>
+        </div>
+    </a>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-file-alt"></i>
+        <h3>Nenhuma ficha ainda</h3>
+        <p>Faça o upload da sua primeira ficha técnica para começar.</p>
+        <a href="{{ url_for('specifications.upload') }}" class="btn-nova">
+            <i class="fas fa-plus"></i> Enviar Ficha Técnica
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const searchInput = document.getElementById('fichasSearch');
+    const statusFilter = document.getElementById('statusFilter');
+    const colecaoFilter = document.getElementById('colecaoFilter');
+    const grid = document.getElementById('fichasGrid');
+    const resultsLine = document.getElementById('resultsLine');
+
+    function applyFilters() {
+        const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
+        const status = statusFilter ? statusFilter.value : '';
+        const colecao = colecaoFilter ? colecaoFilter.value : '';
+
+        let visible = 0;
+        grid.querySelectorAll('.ficha-card').forEach(card => {
+            const name = card.dataset.name || '';
+            const ref = card.dataset.ref || '';
+            const cardSt = card.dataset.status || '';
+            const cardCol = card.dataset.colecao || '';
+
+            const matchQ = !q || name.includes(q) || ref.includes(q);
+            const matchSt = !status || cardSt === status;
+            const matchCol = !colecao || cardCol === colecao;
+
+            const show = matchQ && matchSt && matchCol;
+            card.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+
+        if (resultsLine) resultsLine.textContent = visible + ' ficha(s) encontrada(s)';
+    }
+
+    if (searchInput) searchInput.addEventListener('input', applyFilters);
+    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+    if (colecaoFilter) colecaoFilter.addEventListener('change', applyFilters);
+</script>
+{% endblock %}

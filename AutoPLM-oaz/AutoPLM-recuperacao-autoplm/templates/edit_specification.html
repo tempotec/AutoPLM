@@ -1,0 +1,675 @@
+{%- extends "layout.html" -%}
+{% block title %}Editar Ficha Técnica — OAZ AutoPLM{% endblock %}
+
+{% block styles %}
+<style>
+    /* ─── Decorative SVG ─── */
+    .deco-svg {
+        position: fixed;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.45;
+    }
+
+    .deco-left {
+        left: 0;
+        bottom: 0;
+    }
+
+    .deco-right {
+        right: 0;
+        top: 0;
+    }
+
+    /* ─── Page wrapper ─── */
+    .edit-page {
+        padding: 28px 32px 40px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ─── Header bar ─── */
+    .edit-topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 28px;
+    }
+
+    .edit-heading {
+        font-family: var(--font-heading);
+        font-size: 26px;
+        font-weight: 700;
+        color: var(--text-gold-dark);
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    /* User chip (top right) */
+    .user-chip {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: 999px;
+        padding: 6px 16px 6px 8px;
+    }
+
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--bg-icon);
+        color: var(--text-gold-dark);
+        font-size: 13px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .user-info-small {
+        line-height: 1.25;
+    }
+
+    .user-info-small .uname {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .user-info-small .urole {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    /* ─── Action buttons (below user chip) ─── */
+    .edit-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-bottom: 24px;
+    }
+
+    .btn-cancel {
+        padding: 9px 20px;
+        border: 1.5px solid var(--border-default);
+        background: transparent;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 600;
+        font-family: var(--font-body);
+        color: var(--text-secondary);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .btn-cancel:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    .btn-save {
+        padding: 9px 22px;
+        border: none;
+        background: var(--brand-gradient);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 700;
+        font-family: var(--font-body);
+        color: #1a1410;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 3px 12px rgba(185, 150, 106, 0.25);
+        letter-spacing: 0.3px;
+    }
+
+    .btn-save:hover {
+        background: linear-gradient(135deg, #d4b47a 0%, #a58048 100%);
+        transform: translateY(-1px);
+        box-shadow: 0 5px 16px rgba(185, 150, 106, 0.35);
+    }
+
+    /* ─── Two-column layout ─── */
+    .edit-layout {
+        display: grid;
+        grid-template-columns: 1fr 320px;
+        gap: 20px;
+        align-items: start;
+    }
+
+    /* ─── Form column ─── */
+    .form-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Card section */
+    .form-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 22px 24px;
+    }
+
+    .form-card-title {
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text-gold-dark);
+        text-transform: uppercase;
+        letter-spacing: 0.6px;
+        margin-bottom: 18px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-default);
+    }
+
+    /* Form grid */
+    .fg {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+
+    .fg-full {
+        grid-column: span 2;
+    }
+
+    /* Form group */
+    .fgroup {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .fgroup label {
+        font-size: 11.5px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    /* Inputs */
+    .fgroup input[type="text"],
+    .fgroup input[type="date"],
+    .fgroup input[type="number"],
+    .fgroup select,
+    .fgroup textarea {
+        width: 100%;
+        padding: 10px 12px;
+        background: var(--bg-card-alt);
+        border: 1.5px solid var(--border-default);
+        border-radius: var(--radius-md);
+        font-size: 13.5px;
+        font-family: var(--font-body);
+        color: var(--text-primary);
+        transition: all var(--transition-fast);
+        -webkit-appearance: none;
+    }
+
+    .fgroup input[readonly] {
+        background: var(--bg-hover);
+        color: var(--text-muted);
+        cursor: not-allowed;
+    }
+
+    .fgroup input:focus,
+    .fgroup select:focus,
+    .fgroup textarea:focus {
+        outline: none;
+        border-color: var(--brand-primary);
+        box-shadow: 0 0 0 3px rgba(201, 169, 110, 0.12);
+    }
+
+    .fgroup textarea {
+        resize: vertical;
+        min-height: 88px;
+        font-family: var(--font-body);
+    }
+
+    .fgroup select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b5a07a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+        cursor: pointer;
+    }
+
+    /* ─── Right: sticky image card ─── */
+    .preview-col {
+        position: sticky;
+        top: 80px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .preview-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    .preview-card-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 11px 16px;
+        border-bottom: 1px solid var(--border-default);
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+
+    .preview-card-label i {
+        color: var(--brand-primary);
+    }
+
+    .preview-img-box {
+        background: var(--bg-card-alt);
+        min-height: 260px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .preview-img-box img {
+        width: 100%;
+        height: auto;
+        object-fit: contain;
+        display: block;
+    }
+
+    .preview-img-box .no-preview {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--text-dim);
+    }
+
+    .preview-img-box .no-preview i {
+        font-size: 36px;
+        display: block;
+        margin-bottom: 10px;
+        opacity: 0.3;
+    }
+
+    .preview-note {
+        padding: 12px 14px;
+        font-size: 11.5px;
+        color: var(--text-muted);
+        border-top: 1px solid var(--border-default);
+        display: flex;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .preview-note i {
+        color: var(--brand-primary);
+        margin-top: 1px;
+        flex-shrink: 0;
+    }
+
+    /* Flash messages */
+    .flash-bar {
+        margin-bottom: 16px;
+        padding: 12px 16px;
+        border-radius: var(--radius-md);
+        background: #fef3c7;
+        border: 1px solid #fcd34d;
+        color: #78350f;
+        font-size: 13px;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+        .edit-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .preview-col {
+            position: static;
+        }
+
+        .fg {
+            grid-template-columns: 1fr;
+        }
+
+        .fg-full {
+            grid-column: span 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Decorative curves -->
+<svg class="deco-svg deco-left" width="240" height="340" viewBox="0 0 240 340" fill="none">
+    <path d="M-30 300 Q 50 230 10 140 Q -20 50 70 10" stroke="#c9a96e" stroke-width="1.2" fill="none" />
+    <path d="M-50 320 Q 70 240 20 130 Q -25 30 90 -5" stroke="#b8a870" stroke-width="0.8" fill="none" />
+    <path d="M5 330 Q 80 260 40 160 Q 10 70 90 25" stroke="#a07040" stroke-width="0.7" fill="none" />
+</svg>
+<svg class="deco-svg deco-right" width="240" height="340" viewBox="0 0 240 340" fill="none">
+    <path d="M270 40 Q 190 110 230 200 Q 270 290 170 330" stroke="#c9a96e" stroke-width="1.2" fill="none" />
+    <path d="M290 20 Q 180 100 220 210 Q 270 310 160 350" stroke="#b8a870" stroke-width="0.8" fill="none" />
+    <path d="M250 60 Q 170 130 200 220 Q 230 300 140 340" stroke="#a07040" stroke-width="0.7" fill="none" />
+</svg>
+
+<div class="edit-page">
+
+    <!-- Top bar: title + user chip -->
+    <div class="edit-topbar">
+        <h1 class="edit-heading">Editar Ficha Técnica</h1>
+
+        <div class="user-chip">
+            <div class="user-avatar">
+                {{ current_user.username[0].upper() if current_user else '?' }}
+            </div>
+            <div class="user-info-small">
+                <div class="uname">{{ current_user.username if current_user else 'Usuário' }}</div>
+                <div class="urole">{% if current_user and current_user.is_admin %}Admin{% else %}Estilista{% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash messages -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <div class="flash-bar">{{ messages|join(' | ') }}</div>
+    {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+        {{ form.hidden_tag() }}
+
+        <!-- Action buttons (right side, above layout) -->
+        <div class="edit-actions">
+            <a href="{{ url_for('specifications.view', id=specification.id) }}" class="btn-cancel">
+                Cancelar
+            </a>
+            <button type="submit" class="btn-save">
+                <i class="fas fa-check"></i> Salvar Alterações
+            </button>
+        </div>
+
+        <!-- Two-column layout -->
+        <div class="edit-layout">
+
+            <!-- ── LEFT: form sections ── -->
+            <div class="form-col">
+
+                <!-- Informações Gerais -->
+                <div class="form-card">
+                    <div class="form-card-title">Informações Gerais</div>
+                    <div class="fg">
+                        <div class="fgroup">
+                            <label>Nome da Peça</label>
+                            {{ form.description(placeholder="Ex: Blusa de Seda") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Referência</label>
+                            {{ form.ref_souq(placeholder="Ex: BLS-001-24") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Coleção (texto)</label>
+                            {{ form.collection(placeholder="Ex: Inverno 26") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Vincular à Coleção</label>
+                            {{ form.collection_id() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Designer Responsável</label>
+                            <input type="text" value="{{ specification.user.username }}" readonly>
+                        </div>
+                        <div class="fgroup">
+                            <label>Fornecedor</label>
+                            {{ form.supplier(placeholder="Ex: Têxtil ABC") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Corner</label>
+                            {{ form.corner() }}
+                        </div>
+                        <div class="fgroup fg-full">
+                            <label>Matéria-prima e composição (tecido principal)</label>
+                            {{ form.main_fabric(placeholder="Ex: Crepe, Seda, Viscose") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Grupo</label>
+                            {{ form.main_group() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Subgrupo</label>
+                            {{ form.sub_group() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Faixa de Preço</label>
+                            {{ form.price_range() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Status do Produto</label>
+                            {{ form.status() }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detalhes e Materiais -->
+                <div class="form-card">
+                    <div class="form-card-title">Detalhes e Materiais</div>
+                    <div class="fg">
+                        <div class="fgroup fg-full">
+                            <label>Descrição da Peça</label>
+                            {{ form.specific_details(placeholder="Detalhes específicos da peça...", rows="3") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Composição</label>
+                            {{ form.composition(placeholder="Ex: 100% Seda") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Estampa / Padrão</label>
+                            {{ form.pattern(placeholder="Ex: Listrado, Floral, Liso") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Cores</label>
+                            {{ form.colors() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Observações e Aviamentos</label>
+                            {{ form.tags_kit() }}
+                        </div>
+                        <div class="fgroup fg-full">
+                            <label>Acabamentos</label>
+                            {{ form.finishes() }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Medidas -->
+                <div class="form-card">
+                    <div class="form-card-title">Medidas (Tamanho Piloto)</div>
+                    <div class="fg">
+                        <div class="fgroup">
+                            <label>Tamanho Piloto</label>
+                            {{ form.pilot_size() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Busto (cm)</label>
+                            {{ form.bust() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Cintura (cm)</label>
+                            {{ form.waist() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Comp. Corpo (cm)</label>
+                            {{ form.body_length() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Comp. Manga (cm)</label>
+                            {{ form.sleeve_length() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Larg. Barra (cm)</label>
+                            {{ form.hem_width() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Ombro a Ombro (cm)</label>
+                            {{ form.shoulder_to_shoulder() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Cava Reta (cm)</label>
+                            {{ form.straight_armhole() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Prof. Decote (cm)</label>
+                            {{ form.neckline_depth() }}
+                        </div>
+                        <div class="fgroup fg-full">
+                            <label>Aberturas / Detalhes</label>
+                            {{ form.openings_details() }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Informações Comerciais -->
+                <div class="form-card">
+                    <div class="form-card-title">Informações Comerciais</div>
+                    <div class="fg">
+                        <div class="fgroup">
+                            <label>Target Price</label>
+                            {{ form.target_price() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Mês Loja</label>
+                            {{ form.store_month() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Mês Entrega CD</label>
+                            {{ form.delivery_cd_month() }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Mostruário Para</label>
+                            {{ form.showcase_for() }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prazos -->
+                <div class="form-card">
+                    <div class="form-card-title">Prazos e Entregas</div>
+                    <div class="fg">
+                        <div class="fgroup">
+                            <label>Data Ficha Técnica</label>
+                            {{ form.tech_sheet_delivery_date(type="date") }}
+                        </div>
+                        <div class="fgroup">
+                            <label>Data Piloto</label>
+                            {{ form.pilot_delivery_date(type="date") }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Equipe -->
+                <div class="form-card">
+                    <div class="form-card-title">Equipe e Design</div>
+                    <div class="fg">
+                        <div class="fgroup fg-full">
+                            <label>Estilista(s)</label>
+                            {{ form.stylists() }}
+                        </div>
+                        <div class="fgroup fg-full">
+                            <label>Desenho Técnico (URL)</label>
+                            {{ form.technical_drawing(rows="3") }}
+                        </div>
+                        <div class="fgroup fg-full">
+                            <label>Fotos de Referência</label>
+                            {{ form.reference_photos(rows="3") }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Extra PDF fields (read-only) -->
+                {% if extra_fields %}
+                <div class="form-card">
+                    <div class="form-card-title">Campos Detectados no PDF</div>
+                    <div class="fg">
+                        {% for label, value in extra_fields|dictsort %}
+                        <div class="fgroup">
+                            <label>{{ label }}</label>
+                            <input type="text" value="{{ value }}" readonly>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Bottom save bar -->
+                <div style="display:flex; justify-content:flex-end; gap:10px; padding-top:4px;">
+                    <a href="{{ url_for('specifications.view', id=specification.id) }}" class="btn-cancel">
+                        Cancelar
+                    </a>
+                    <button type="submit" class="btn-save">
+                        <i class="fas fa-check"></i> Salvar Alterações
+                    </button>
+                </div>
+            </div>
+
+            <!-- ── RIGHT: sticky image preview ── -->
+            <div class="preview-col">
+                <div class="preview-card">
+                    <div class="preview-card-label">
+                        <i class="fas fa-image"></i> Visualização da Peça
+                    </div>
+                    <div class="preview-img-box">
+                        {% if specification.pdf_thumbnail %}
+                        <img src="{{ specification.pdf_thumbnail }}" alt="{{ specification.description or 'Produto' }}">
+                        {% elif specification.technical_drawing_url %}
+                        <img src="{{ url_for('drawings.view_drawing', id=specification.id) }}" alt="Desenho Técnico">
+                        {% else %}
+                        <div class="no-preview">
+                            <i class="fas fa-file-alt"></i>
+                            <p>Sem imagem disponível</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="preview-note">
+                        <i class="fas fa-info-circle"></i>
+                        A imagem é gerada automaticamente do arquivo enviado.
+                    </div>
+                </div>
+
+                <!-- Quick info -->
+                <div class="form-card" style="font-size:12.5px; color:var(--text-secondary); line-height:1.8;">
+                    <div class="form-card-title">Informações</div>
+                    <div><strong style="color:var(--text-primary);">Arquivo:</strong> {{ specification.pdf_filename }}
+                    </div>
+                    <div><strong style="color:var(--text-primary);">Enviado por:</strong> {{ specification.user.username
+                        }}</div>
+                    <div><strong style="color:var(--text-primary);">Data:</strong> {{
+                        specification.created_at.strftime('%d/%m/%Y') }}</div>
+                    <div style="margin-top:10px;">
+                        <a href="{{ url_for('specifications.view', id=specification.id) }}"
+                            style="font-size:12px; color:var(--text-gold-dark); font-weight:600; text-decoration:none;">
+                            <i class="fas fa-eye"></i> Ver Ficha Completa
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </form>
+</div>
+{% endblock %}

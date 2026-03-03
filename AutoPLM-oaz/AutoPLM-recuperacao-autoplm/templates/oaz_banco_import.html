@@ -1,0 +1,905 @@
+{%- extends "layout.html" -%}
+
+{% block title %}Importar Banco de Dados OAZ - StyleFlow{% endblock %}
+
+{% block styles %}
+<style>
+/* Sidebar */
+
+
+
+
+
+
+
+
+
+
+
+
+
+        /* Main */
+
+
+
+
+
+        /* Cards */
+        .card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Stats row */
+        .stats-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .stat-box {
+            flex: 1;
+            min-width: 120px;
+            background: #1e293b;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .stat-box .value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #3b82f6;
+        }
+
+        .stat-box .label {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Form */
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: #0f1420;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 14px;
+        }
+
+        /* Dropzone */
+        .dropzone {
+            border: 2px dashed #334155;
+            border-radius: 12px;
+            padding: 48px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .dropzone:hover,
+        .dropzone.drag-over {
+            border-color: #3b82f6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .dropzone i {
+            font-size: 48px;
+            color: #475569;
+            margin-bottom: 16px;
+        }
+
+        .dropzone h3 {
+            font-size: 18px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+
+        .dropzone p {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .dropzone input {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* File list */
+        .file-list {
+            margin-top: 16px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #0f1420;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .file-item .file-icon {
+            color: #22c55e;
+            font-size: 20px;
+        }
+
+        .file-item .file-name {
+            flex: 1;
+            font-size: 14px;
+            color: #e5e7eb;
+        }
+
+        .file-item .file-size {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .file-item .remove-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-primary:disabled {
+            background: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .btn-success {
+            background: #059669;
+            color: #fff;
+        }
+
+        .btn-success:hover {
+            background: #047857;
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #e5e7eb;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Preview table */
+        .preview-table,
+        .progress-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .preview-table th,
+        .progress-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            border-bottom: 1px solid #334155;
+        }
+
+        .preview-table td,
+        .progress-table td {
+            padding: 12px 16px;
+            font-size: 14px;
+            border-bottom: 1px solid #1e293b;
+        }
+
+        /* Preview stats */
+        .preview-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .preview-stat {
+            flex: 1;
+            padding: 16px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .preview-stat.valid {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .preview-stat.invalid {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .preview-stat.total {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .preview-stat .num {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .preview-stat.valid .num {
+            color: #34d399;
+        }
+
+        .preview-stat.invalid .num {
+            color: #f87171;
+        }
+
+        .preview-stat.total .num {
+            color: #60a5fa;
+        }
+
+        .preview-stat .lbl {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* Badges */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-queued {
+            background: #334155;
+            color: #94a3b8;
+        }
+
+        .badge-processing {
+            background: #854d0e;
+            color: #fbbf24;
+        }
+
+        .badge-done {
+            background: #065f46;
+            color: #34d399;
+        }
+
+        .badge-error {
+            background: #7f1d1d;
+            color: #f87171;
+        }
+
+        .badge-empty {
+            background: #1e3a5f;
+            color: #60a5fa;
+        }
+
+        .badge-partial {
+            background: #78350f;
+            color: #fbbf24;
+        }
+
+        /* Summary bar */
+        .summary-bar {
+            display: flex;
+            gap: 24px;
+            padding: 16px 20px;
+            background: #065f46;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .summary-bar .item {
+            text-align: center;
+        }
+
+        .summary-bar .item .num {
+            font-size: 24px;
+            font-weight: 700;
+            color: #34d399;
+        }
+
+        .summary-bar .item .lbl {
+            font-size: 12px;
+            color: #a7f3d0;
+        }
+
+        /* Admin badge */
+        .admin-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            color: #f87171;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* File results in preview */
+        .file-results {
+            margin-bottom: 16px;
+        }
+
+        .file-result-item {
+            padding: 12px 16px;
+            background: #0f1420;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-result-item .fname {
+            font-weight: 500;
+            color: #e5e7eb;
+        }
+
+        .file-result-item .fmeta {
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .wsid-col {
+            font-family: 'JetBrains Mono', 'Fira Code', monospace;
+            color: #fbbf24;
+        }
+
+        .text-muted {
+            color: #64748b;
+        }
+
+        /* Hidden */
+        .hidden {
+            display: none !important;
+        }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div class="header-top">
+        <div>
+            <h1 class="page-title"><i class="fas fa-database" style="color: #3b82f6;"></i> Banco de Dados
+                OAZ</h1>
+            <p class="page-subtitle">Importe XLSX do Fluxogama para popular o De/Para de WSIDs.
+                <span class="admin-badge"><i class="fas fa-shield-alt"></i> Admin Only</span>
+            </p>
+        </div>
+        <a href="{{ url_for('dashboard.index') }}" class="btn btn-secondary"><i
+                class="fas fa-arrow-left"></i> Voltar</a>
+    </div>
+</header>
+
+<!-- Current mapping stats -->
+<div class="stats-row">
+    {% for key, label in field_options %}
+    <div class="stat-box">
+        <div class="value">{{ mapping_counts.get(key, 0) }}</div>
+        <div class="label">{{ label }} ({{ key }})</div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- ═══ Step 1: Upload Card ═══ -->
+<div class="card" id="uploadCard">
+    <div class="card-title"><i class="fas fa-upload"></i> Importar Banco de Dados</div>
+    <p style="color:#94a3b8;font-size:13px;margin-bottom:16px">
+        <i class="fas fa-magic" style="color:#60a5fa"></i>
+        O tipo de banco (field_key) é detectado automaticamente pelo nome do arquivo.
+        Arraste vários arquivos de uma vez.
+    </p>
+
+    <div class="dropzone" id="dropzone">
+        <input type="file" id="fileInput" multiple accept=".xlsx">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <h3>Arraste arquivos XLSX aqui</h3>
+        <p>ou clique para selecionar • Múltiplos arquivos aceitos • Máx. 50MB cada</p>
+    </div>
+
+    <div class="file-list" id="fileList"></div>
+
+    <div class="btn-group">
+        <button class="btn btn-primary" id="btnPreview" disabled>
+            <i class="fas fa-search"></i> Preview
+        </button>
+        <button class="btn btn-secondary hidden" id="btnClear">
+            <i class="fas fa-times"></i> Limpar
+        </button>
+    </div>
+</div>
+
+<!-- ═══ Step 2: Preview Card ═══ -->
+<div class="card hidden" id="previewCard">
+    <div class="card-title"><i class="fas fa-eye"></i> Preview da Importação</div>
+
+    <!-- Preview stats -->
+    <div class="preview-stats">
+        <div class="preview-stat total">
+            <div class="num" id="pvTotal">0</div>
+            <div class="lbl">Total de Linhas</div>
+        </div>
+        <div class="preview-stat valid">
+            <div class="num" id="pvValid">0</div>
+            <div class="lbl">Válidas</div>
+        </div>
+        <div class="preview-stat invalid">
+            <div class="num" id="pvInvalid">0</div>
+            <div class="lbl">Inválidas</div>
+        </div>
+    </div>
+
+    <!-- Per-file results -->
+    <div class="file-results" id="pvFiles"></div>
+
+    <!-- Example rows: valid -->
+    <div style="margin-top: 16px;">
+        <h4 style="color: #94a3b8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase;">
+            <i class="fas fa-check-circle" style="color:#34d399"></i> Exemplos válidos (até 10)
+        </h4>
+        <table class="preview-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Descrição</th>
+                    <th>text_norm</th>
+                    <th>WSID</th>
+                    <th>Arquivo</th>
+                </tr>
+            </thead>
+            <tbody id="pvExamples"></tbody>
+        </table>
+    </div>
+
+    <!-- Example rows: invalid -->
+    <div style="margin-top: 16px;" id="pvInvalidSection" class="hidden">
+        <h4 style="color: #94a3b8; font-size: 13px; margin-bottom: 8px; text-transform: uppercase;">
+            <i class="fas fa-exclamation-triangle" style="color:#f87171"></i> Exemplos inválidos (até 10)
+        </h4>
+        <table class="preview-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Descrição</th>
+                    <th>WSID</th>
+                    <th>Motivo</th>
+                    <th>Arquivo</th>
+                </tr>
+            </thead>
+            <tbody id="pvInvalidExamples"></tbody>
+        </table>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn btn-success" id="btnConfirm">
+            <i class="fas fa-check"></i> Confirmar Importação
+        </button>
+        <button class="btn btn-secondary" id="btnBackToUpload">
+            <i class="fas fa-arrow-left"></i> Voltar
+        </button>
+    </div>
+</div>
+
+<!-- ═══ Step 3: Progress Card ═══ -->
+<div class="card hidden" id="progressCard">
+    <div class="card-title"><i class="fas fa-spinner fa-spin"></i> <span
+            id="progressTitle">Importando...</span></div>
+
+    <table class="progress-table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Arquivo</th>
+                <th>Tipo</th>
+                <th>Linhas</th>
+                <th>Válidos</th>
+                <th>Criados</th>
+                <th>Atualizados</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody id="progressBody"></tbody>
+    </table>
+
+    <div class="summary-bar hidden" id="summaryBar">
+        <div class="item">
+            <div class="num" id="sumCreated">0</div>
+            <div class="lbl">Criados</div>
+        </div>
+        <div class="item">
+            <div class="num" id="sumUpdated">0</div>
+            <div class="lbl">Atualizados</div>
+        </div>
+        <div class="item">
+            <div class="num" id="sumTotal">0</div>
+            <div class="lbl">Total</div>
+        </div>
+    </div>
+
+    <div class="btn-group hidden" id="doneActions">
+        <button class="btn btn-primary" onclick="location.reload()">
+            <i class="fas fa-redo"></i> Nova Importação
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+        // ── DOM refs ────────────────────────────────────────────────
+        const dropzone = document.getElementById('dropzone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const btnPreview = document.getElementById('btnPreview');
+        const btnClear = document.getElementById('btnClear');
+        const btnConfirm = document.getElementById('btnConfirm');
+        const btnBackToUpload = document.getElementById('btnBackToUpload');
+
+        // Field key options for manual override dropdowns
+        const FIELD_OPTIONS = [
+            {% for key, label in field_options %}
+        { key: '{{ key }}', label: '{{ label }}' },
+        {% endfor %}
+        ];
+
+        let selectedFiles = [];
+        let previewToken = null;
+        let previewData = null;  // store for overrides
+
+        // ── Step 1: File Upload ─────────────────────────────────────
+        dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('drag-over'); });
+        dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
+        dropzone.addEventListener('drop', e => {
+            e.preventDefault();
+            dropzone.classList.remove('drag-over');
+            addFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener('change', () => addFiles(fileInput.files));
+
+        function addFiles(files) {
+            for (const f of files) {
+                if (!f.name.toLowerCase().endsWith('.xlsx')) continue;
+                if (selectedFiles.some(sf => sf.name === f.name)) continue;
+                selectedFiles.push(f);
+            }
+            renderFileList();
+        }
+
+        function renderFileList() {
+            fileList.innerHTML = '';
+            selectedFiles.forEach((f, idx) => {
+                const size = (f.size / 1024).toFixed(1);
+                fileList.innerHTML += `
+                    <div class="file-item">
+                        <i class="fas fa-file-excel file-icon"></i>
+                        <span class="file-name">${f.name}</span>
+                        <span class="file-size">${size} KB</span>
+                        <button class="remove-btn" onclick="removeFile(${idx})"><i class="fas fa-times"></i></button>
+                    </div>`;
+            });
+            btnClear.classList.toggle('hidden', selectedFiles.length === 0);
+            btnPreview.disabled = selectedFiles.length === 0;
+        }
+
+        function removeFile(idx) {
+            selectedFiles.splice(idx, 1);
+            renderFileList();
+        }
+
+        btnClear.addEventListener('click', () => { selectedFiles = []; renderFileList(); });
+
+        // ── Step 2: Preview ─────────────────────────────────────────
+        btnPreview.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return;
+            btnPreview.disabled = true;
+            btnPreview.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Analisando...';
+
+            const formData = new FormData();
+            selectedFiles.forEach(f => formData.append('files[]', f));
+
+            try {
+                const resp = await fetch('/api/admin/bancos/preview', { method: 'POST', body: formData });
+                const data = await resp.json();
+
+                if (!data.success) {
+                    toast(data.error, 'error');
+                    btnPreview.disabled = false;
+                    btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
+                    return;
+                }
+
+                previewToken = data.token;
+                previewData = data;
+                showPreview(data);
+            } catch (err) {
+                toast('Erro de rede: ' + err.message, 'error');
+                btnPreview.disabled = false;
+                btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
+            }
+        });
+
+        function buildOverrideSelect(filename) {
+            let opts = '<option value="">-- Selecione --</option>';
+            FIELD_OPTIONS.forEach(o => {
+                opts += `<option value="${o.key}">${o.label} (${o.key})</option>`;
+            });
+            return `<select class="form-select" style="font-size:12px;padding:4px 8px;background:#0f1420;color:#e2e8f0;border:1px solid #f87171;border-radius:6px;max-width:220px" data-override-for="${esc(filename)}">${opts}</select>`;
+        }
+
+        function showPreview(data) {
+            document.getElementById('uploadCard').classList.add('hidden');
+            document.getElementById('previewCard').classList.remove('hidden');
+
+            // Stats
+            document.getElementById('pvTotal').textContent = data.total_rows;
+            document.getElementById('pvValid').textContent = data.total_valid;
+            document.getElementById('pvInvalid').textContent = data.total_invalid;
+
+            // Per-file results with auto-detect info
+            const pvFiles = document.getElementById('pvFiles');
+            pvFiles.innerHTML = '';
+            let hasUndetected = false;
+            (data.files || []).forEach(f => {
+                // Build detected columns string
+                const dc = f.detected_columns || {};
+                const cols = [];
+                if (dc.wsid) cols.push(`WSID → "${dc.wsid}"`);
+                if (dc.codigo) cols.push(`Código → "${dc.codigo}"`);
+                if (dc.descricao) cols.push(`Descrição → "${dc.descricao}"`);
+                if (dc.status) cols.push(`Status → "${dc.status}"`);
+                const colsStr = cols.length ? cols.join(' · ') : '';
+
+                // Field key detection badge
+                let fkBadge;
+                if (f.field_key) {
+                    const src = f.detect_source === 'filename' ? 'nome do arquivo' : (f.detect_source === 'sheet_name' ? 'aba da planilha' : 'override');
+                    fkBadge = `<span class="badge badge-done" style="font-size:11px">${f.field_key} — ${f.field_key_label}</span>
+                               <span style="font-size:10px;color:#94a3b8;margin-left:4px">(via ${src})</span>`;
+                } else {
+                    hasUndetected = true;
+                    fkBadge = `<span class="badge badge-error" style="font-size:11px">Não detectado</span>
+                               <span style="margin-left:8px">${buildOverrideSelect(f.filename)}</span>`;
+                }
+
+                pvFiles.innerHTML += `
+                    <div class="file-result-item" style="flex-wrap:wrap;gap:8px">
+                        <div style="flex:1;min-width:200px">
+                            <div class="fname"><i class="fas fa-file-excel" style="color:#22c55e;margin-right:8px"></i>${f.filename}</div>
+                            <div class="fmeta">Planilha: ${f.sheet_name || '-'} · ${f.total_rows} linhas · ${f.valid_items} válidas · ${f.skipped_invalid || 0} inválidas</div>
+                            ${colsStr ? `<div class="fmeta" style="margin-top:4px;color:#60a5fa"><i class="fas fa-columns" style="margin-right:4px"></i>${colsStr}</div>` : ''}
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            ${fkBadge}
+                        </div>
+                    </div>`;
+            });
+
+            // Valid example rows
+            const tbody = document.getElementById('pvExamples');
+            tbody.innerHTML = '';
+            (data.examples_valid || []).forEach((ex, i) => {
+                tbody.innerHTML += `<tr>
+                    <td>${i + 1}</td>
+                    <td>${esc(ex.descricao)}</td>
+                    <td class="text-muted">${esc(ex.text_norm)}</td>
+                    <td class="wsid-col">${esc(ex.wsid)}</td>
+                    <td class="text-muted">${esc(ex.source)}</td>
+                </tr>`;
+            });
+
+            if (!data.examples_valid || data.examples_valid.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#64748b">Nenhum item válido encontrado</td></tr>';
+            }
+
+            // Enable confirm only if there are importable files
+            btnConfirm.disabled = !(data.total_importable > 0);
+
+            // Invalid example rows
+            const invSection = document.getElementById('pvInvalidSection');
+            const invBody = document.getElementById('pvInvalidExamples');
+            invBody.innerHTML = '';
+            if (data.examples_invalid && data.examples_invalid.length > 0) {
+                invSection.classList.remove('hidden');
+                data.examples_invalid.forEach((ex, i) => {
+                    invBody.innerHTML += `<tr>
+                        <td>${i + 1}</td>
+                        <td>${esc(ex.descricao) || '<em style="color:#64748b">vazio</em>'}</td>
+                        <td class="wsid-col">${esc(ex.wsid) || '<em style="color:#64748b">vazio</em>'}</td>
+                        <td style="color:#f87171">${esc(ex.reason)}</td>
+                        <td class="text-muted">${esc(ex.source)}</td>
+                    </tr>`;
+                });
+            } else {
+                invSection.classList.add('hidden');
+            }
+        }
+
+        btnBackToUpload.addEventListener('click', () => {
+            document.getElementById('previewCard').classList.add('hidden');
+            document.getElementById('uploadCard').classList.remove('hidden');
+            btnPreview.disabled = false;
+            btnPreview.innerHTML = '<i class="fas fa-search"></i> Preview';
+            previewToken = null;
+            previewData = null;
+        });
+
+        // ── Step 3: Confirm ─────────────────────────────────────────
+        btnConfirm.addEventListener('click', async () => {
+            if (!previewToken) return;
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gravando...';
+
+            // Collect overrides from manual selectors
+            const overrides = {};
+            document.querySelectorAll('[data-override-for]').forEach(sel => {
+                if (sel.value) overrides[sel.dataset.overrideFor] = sel.value;
+            });
+
+            try {
+                const resp = await fetch('/api/admin/bancos/confirm', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token: previewToken, overrides }),
+                });
+                const data = await resp.json();
+
+                if (!data.success) {
+                    toast(data.error, 'error');
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar Importação';
+                    return;
+                }
+
+                document.getElementById('previewCard').classList.add('hidden');
+                startPolling(data.job_id);
+            } catch (err) {
+                toast('Erro: ' + err.message, 'error');
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar Importação';
+            }
+        });
+
+        // ── Polling ─────────────────────────────────────────────────
+        function startPolling(jobId) {
+            const card = document.getElementById('progressCard');
+            card.classList.remove('hidden');
+
+            const poll = async () => {
+                try {
+                    const resp = await fetch(`/api/admin/bancos/status/${jobId}`);
+                    const data = await resp.json();
+                    if (!data.success) return;
+
+                    updateProgress(data);
+
+                    if (data.status === 'done') {
+                        document.getElementById('progressTitle').innerHTML =
+                            '<i class="fas fa-check-circle" style="color:#34d399"></i> Importação concluída!';
+                        const spinner = document.querySelector('#progressCard .card-title .fa-spinner');
+                        if (spinner) spinner.remove();
+                        document.getElementById('summaryBar').classList.remove('hidden');
+                        document.getElementById('sumCreated').textContent = data.total_created;
+                        document.getElementById('sumUpdated').textContent = data.total_updated;
+                        document.getElementById('sumTotal').textContent = data.total_created + data.total_updated;
+                        document.getElementById('doneActions').classList.remove('hidden');
+                        return;
+                    }
+                    setTimeout(poll, 1000);
+                } catch { setTimeout(poll, 2000); }
+            };
+            poll();
+        }
+
+        function updateProgress(data) {
+            const tbody = document.getElementById('progressBody');
+            let html = '';
+            (data.files || []).forEach((f, i) => {
+                const statusBadge = {
+                    queued: '<span class="badge badge-queued">Aguardando</span>',
+                    processing: '<span class="badge badge-processing">Processando</span>',
+                    done: '<span class="badge badge-done">Concluído</span>',
+                    error: '<span class="badge badge-error">Erro</span>',
+                    empty: '<span class="badge badge-empty">Vazio</span>',
+                    partial: '<span class="badge badge-partial">Parcial</span>',
+                }[f.status] || `<span class="badge badge-queued">${f.status}</span>`;
+
+                const isActive = data.status === 'processing' && i === data.current_file_index;
+                const rowStyle = isActive ? 'background: rgba(59,130,246,0.08);' : '';
+
+                html += `<tr style="${rowStyle}">
+                    <td>${i + 1}</td>
+                    <td>${f.filename || ''}</td>
+                    <td><span style="color:#60a5fa;font-size:12px">${f.field_key || '?'}</span> <span style="color:#94a3b8;font-size:11px">${f.field_key_label || ''}</span></td>
+                    <td>${f.total_rows ?? '-'}</td>
+                    <td>${f.valid_items ?? '-'}</td>
+                    <td>${f.created ?? '-'}</td>
+                    <td>${f.updated ?? '-'}</td>
+                    <td>${statusBadge}${f.error ? `<br><small style="color:#f87171">${f.error}</small>` : ''}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // ── Utils ───────────────────────────────────────────────────
+        function esc(s) {
+            if (!s) return '';
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function toast(msg, type) {
+            if (typeof showToast === 'function') showToast(msg, type);
+            else alert(msg);
+        }
+</script>
+{% endblock %}

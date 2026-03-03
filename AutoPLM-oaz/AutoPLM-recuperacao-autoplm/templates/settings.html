@@ -1,0 +1,109 @@
+{% extends "layout.html" %}
+
+{% block title %}Configurações - StyleFlow{% endblock %}
+
+{% block styles %}
+<style>
+    /* ─── Settings-specific CSS (only what's unique to this page) ─── */
+    .settings-card {
+        background-color: var(--bg-card-alt);
+        border-radius: var(--radius-lg);
+        padding: 32px;
+        border: 1px solid #2a3348;
+        margin-bottom: 24px;
+    }
+
+    .profile-photo-section {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+
+    .profile-photo-large {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: var(--brand-gradient);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 32px;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .photo-info {
+        font-size: 14px;
+        color: var(--text-label);
+        margin-bottom: 8px;
+    }
+
+    .photo-hint {
+        font-size: 12px;
+        color: var(--text-dim);
+        margin-bottom: 16px;
+    }
+
+    .photo-buttons {
+        display: flex;
+        gap: 12px;
+    }
+</style>
+{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <h1 class="page-title">Meu Perfil</h1>
+    <p class="page-subtitle">Gerencie suas informações pessoais e foto de perfil.</p>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Profile Photo Card -->
+<div class="settings-card">
+    <h2 class="card-title">Sua Foto de Perfil</h2>
+    <div class="profile-photo-section">
+        <div class="profile-photo-large">{{ user.username[0].upper() }}</div>
+        <div>
+            <p class="photo-info">Use uma imagem PNG ou JPG de até 5MB.</p>
+            <p class="photo-hint">Recomendado: 400x400px</p>
+            <div class="photo-buttons">
+                <button class="btn btn-primary">Fazer Upload</button>
+                <button class="btn btn-secondary">Remover</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Personal Information Card -->
+<div class="settings-card">
+    <h2 class="card-title">Informações Pessoais</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div class="form-grid">
+            <div class="form-group">
+                <label class="form-label">Nome Completo</label>
+                {{ form.username(class="form-input") }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">E-mail</label>
+                {{ form.email(class="form-input") }}
+            </div>
+            <div class="form-group">
+                <label class="form-label">Nome da Marca/Ateliê</label>
+                <input type="text" class="form-input" placeholder="Ex: Ateliê Costa" value="{{ user.username }}">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Profissão</label>
+                <input type="text" class="form-input" value="{{ user.role|capitalize }}" readonly>
+            </div>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

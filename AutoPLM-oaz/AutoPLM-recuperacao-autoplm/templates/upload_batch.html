@@ -1,0 +1,340 @@
+{% extends "layout.html" %}
+
+{% block title %}Upload em Lote - StyleFlow{% endblock %}
+
+{% block page_header %}
+<div class="page-header">
+    <div class="header-top">
+        <h1 class="page-title"><i class="fas fa-upload" style="margin-right:8px;"></i>Upload em Lote</h1>
+        <a href="{{ url_for('specifications.upload') }}" class="btn btn-secondary"><i class="fas fa-file"></i> Upload
+            Individual</a>
+    </div>
+    <p class="page-subtitle">Envie múltiplos arquivos PDF ou imagens de uma vez</p>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    .drop-zone {
+        border: 2px dashed var(--border-subtle);
+        border-radius: var(--radius-lg);
+        padding: 48px;
+        text-align: center;
+        cursor: pointer;
+        transition: border-color var(--transition-fast), background var(--transition-fast);
+    }
+
+    .drop-zone:hover,
+    .drop-zone.active {
+        border-color: var(--brand-primary);
+        background: rgba(37, 99, 235, 0.05);
+    }
+
+    .drop-zone i {
+        font-size: 48px;
+        color: var(--text-dim);
+        margin-bottom: 16px;
+    }
+
+    .file-list-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 10px 16px;
+        border-bottom: 1px solid var(--border-default);
+    }
+
+    .file-list-item:last-child {
+        border-bottom: none;
+    }
+
+    .progress-bar-wrapper {
+        height: 24px;
+        background: var(--bg-input);
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .progress-bar-fill {
+        height: 100%;
+        background: var(--brand-primary);
+        transition: width 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        color: white;
+    }
+
+    .spec-status-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:900px;">
+    <form id="batchUploadForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Vincular a Coleção</label>
+                        <select name="collection_id" class="form-input">
+                            {% for value, label in form.collection_id.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fornecedor</label>
+                        <select name="supplier_id" class="form-input">
+                            {% for value, label in form.supplier_id.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Estilista</label>
+                        <input type="text" name="stylist" class="form-input" value="{{ form.stylist.data or '' }}">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Faixa de Preço</label>
+                        <select name="price_range" class="form-input">
+                            {% for value, label in form.price_range.choices %}
+                            <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label"><i class="fas fa-paper-plane"
+                                style="margin-right:6px;color:#60a5fa;"></i>Subetapa Fluxogama</label>
+                        <select name="fluxogama_subetapa" id="fluxogamaSubetapa" class="form-input">
+                            <option value="">-- Sem subetapa (não cria no Fluxogama) --</option>
+                            {% for sub in subetapas %}
+                            <option value="{{ sub.wsid }}">{{ sub.nome }} (wsid: {{ sub.wsid }})</option>
+                            {% endfor %}
+                        </select>
+                        <small style="color:#f59e0b;font-size:11px;margin-top:4px;display:block;">Sem subetapa — você
+                            poderá enviar, mas o Fluxogama vai exigir subetapa para criar o modelo.</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="drop-zone mb-3" id="dropZone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p style="margin-bottom:8px;">Arraste arquivos aqui ou clique para selecionar</p>
+            <p class="text-muted" style="font-size:13px;">Suporta PDF, JPG, JPEG, PNG - Sem limite de arquivos</p>
+            <input type="file" id="fileInput" name="files" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none;">
+        </div>
+
+        <div id="fileList" class="card mb-3" style="display:none;">
+            <div class="card-header">
+                <h3 class="card-title" style="font-size:15px;margin:0;"><i class="fas fa-list"
+                        style="margin-right:8px;"></i>Arquivos Selecionados (<span id="fileCount">0</span>)</h3>
+            </div>
+            <div class="card-body" style="padding:0;max-height:300px;overflow-y:auto;" id="fileListItems"></div>
+        </div>
+
+        <div class="d-flex gap-2">
+            <button type="submit" id="uploadBtn" class="btn btn-primary" disabled>
+                <i class="fas fa-upload"></i> Iniciar Upload
+            </button>
+            <button type="button" id="clearBtn" class="btn btn-secondary" style="display:none;">
+                <i class="fas fa-times"></i> Limpar
+            </button>
+        </div>
+    </form>
+
+    <div id="progressSection" class="mt-4" style="display:none;">
+        <h3 style="color:var(--text-primary);font-size:18px;margin-bottom:16px;"><i class="fas fa-tasks"
+                style="margin-right:8px;"></i>Progresso do Lote</h3>
+        <div class="progress-bar-wrapper">
+            <div id="progressBar" class="progress-bar-fill" style="width:0%;">0%</div>
+        </div>
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:16px;">
+            <div class="stat-card" style="padding:12px;">
+                <div class="stat-value" style="font-size:20px;" id="badgePending">0</div>
+                <div class="stat-label">Aguardando</div>
+            </div>
+            <div class="stat-card" style="padding:12px;">
+                <div class="stat-value" style="font-size:20px;color:var(--brand-primary);" id="badgeProcessing">0</div>
+                <div class="stat-label">Processando</div>
+            </div>
+            <div class="stat-card" style="padding:12px;">
+                <div class="stat-value" style="font-size:20px;color:var(--color-success);" id="badgeCompleted">0</div>
+                <div class="stat-label">Concluído</div>
+            </div>
+            <div class="stat-card" style="padding:12px;">
+                <div class="stat-value" style="font-size:20px;color:var(--color-error);" id="badgeErrors">0</div>
+                <div class="stat-label">Erros</div>
+            </div>
+        </div>
+        <div id="specsList" class="spec-status-list"></div>
+        <div id="completionMessage" class="flash-message success mt-3" style="display:none;">
+            <i class="fas fa-check-circle"></i>
+            <span>Processamento concluído!</span>
+            <a href="{{ url_for('dashboard.index') }}" class="btn btn-sm btn-primary" style="margin-left:auto;">Ver
+                Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const fileListItems = document.getElementById('fileListItems');
+        const fileCount = document.getElementById('fileCount');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const form = document.getElementById('batchUploadForm');
+        const progressSection = document.getElementById('progressSection');
+        let selectedFiles = [];
+        let currentBatchId = null;
+        let statusInterval = null;
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('active'); });
+        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('active'); });
+        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('active'); handleFiles(e.dataTransfer.files); });
+        fileInput.addEventListener('change', (e) => { handleFiles(e.target.files); });
+
+        function handleFiles(files) {
+            for (let file of files) {
+                const ext = file.name.split('.').pop().toLowerCase();
+                if (['pdf', 'jpg', 'jpeg', 'png'].includes(ext)) {
+                    if (!selectedFiles.find(f => f.name === file.name && f.size === file.size)) {
+                        selectedFiles.push(file);
+                    }
+                }
+            }
+            updateFileList();
+        }
+
+        function updateFileList() {
+            if (selectedFiles.length > 0) {
+                fileList.style.display = 'block';
+                clearBtn.style.display = 'inline-flex';
+                uploadBtn.disabled = false;
+                fileCount.textContent = selectedFiles.length;
+                fileListItems.innerHTML = selectedFiles.map((file, idx) => `
+                <div class="file-list-item">
+                    <div>
+                        <i class="fas fa-file-${file.name.endsWith('.pdf') ? 'pdf' : 'image'}" style="margin-right:8px;color:${file.name.endsWith('.pdf') ? 'var(--color-error)' : 'var(--color-info)'};"></i>
+                        <span>${file.name}</span>
+                        <small class="text-muted" style="margin-left:8px;">(${(file.size / 1024 / 1024).toFixed(2)} MB)</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeFile(${idx})" style="padding:4px 8px;"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+            } else {
+                fileList.style.display = 'none';
+                clearBtn.style.display = 'none';
+                uploadBtn.disabled = true;
+            }
+        }
+
+        window.removeFile = function (index) { selectedFiles.splice(index, 1); updateFileList(); };
+        clearBtn.addEventListener('click', () => { selectedFiles = []; fileInput.value = ''; updateFileList(); });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (selectedFiles.length === 0) return;
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando...';
+            const formData = new FormData();
+            formData.append('csrf_token', document.querySelector('[name="csrf_token"]').value);
+            formData.append('collection_id', document.querySelector('[name="collection_id"]').value);
+            formData.append('supplier_id', document.querySelector('[name="supplier_id"]').value);
+            formData.append('stylist', document.querySelector('[name="stylist"]').value);
+            formData.append('price_range', document.querySelector('[name="price_range"]').value);
+            formData.append('fluxogama_subetapa', document.querySelector('[name="fluxogama_subetapa"]').value);
+            for (let file of selectedFiles) formData.append('files', file);
+            try {
+                const response = await fetch('{{ url_for("specifications.upload_batch_files") }}', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.success) {
+                    currentBatchId = data.batch_id;
+                    progressSection.style.display = 'block';
+                    uploadBtn.innerHTML = '<i class="fas fa-check"></i> Enviado!';
+                    startStatusPolling();
+                } else {
+                    alert('Erro: ' + (data.error || 'Falha no upload'));
+                    uploadBtn.disabled = false;
+                    uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Iniciar Upload';
+                }
+            } catch (error) {
+                alert('Erro de conexão: ' + error.message);
+                uploadBtn.disabled = false;
+                uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Iniciar Upload';
+            }
+        });
+
+        function startStatusPolling() { updateStatus(); statusInterval = setInterval(updateStatus, 2000); }
+
+        async function updateStatus() {
+            if (!currentBatchId) return;
+            try {
+                const response = await fetch(`/batch_status/${currentBatchId}`);
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById('progressBar').style.width = data.progress_percent + '%';
+                    document.getElementById('progressBar').textContent = data.progress_percent + '%';
+                    document.getElementById('badgePending').textContent = data.pending;
+                    document.getElementById('badgeProcessing').textContent = data.processing;
+                    document.getElementById('badgeCompleted').textContent = data.completed;
+                    document.getElementById('badgeErrors').textContent = data.errors;
+                    document.getElementById('specsList').innerHTML = data.specs.map(spec => `
+                    <div class="file-list-item">
+                        <div><i class="fas fa-file" style="margin-right:8px;"></i><span>${spec.filename}</span>
+                            ${spec.description ? `<small class="text-muted" style="margin-left:8px;">(${spec.description})</small>` : ''}
+                        </div>
+                        <div>${getStatusBadge(spec)}
+                            ${spec.status === 'error' ? `<button class="btn btn-sm btn-secondary" onclick="retrySpec(${spec.id})" style="margin-left:6px;padding:4px 8px;"><i class="fas fa-redo"></i></button>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                    if (data.is_complete) {
+                        clearInterval(statusInterval);
+                        document.getElementById('completionMessage').style.display = 'flex';
+                    }
+                }
+            } catch (error) { console.error('Erro ao atualizar status:', error); }
+        }
+
+        function getStatusBadge(spec) {
+            const badges = {
+                'pending': `<span class="badge badge-draft">${spec.stage_name}</span>`,
+                'processing': `<span class="badge badge-processing"><i class="fas fa-spinner fa-spin" style="margin-right:4px;"></i>${spec.stage_name}</span>`,
+                'completed': `<span class="badge badge-success"><i class="fas fa-check" style="margin-right:4px;"></i>Concluído</span>`,
+                'error': `<span class="badge badge-error" title="${spec.error || 'Erro desconhecido'}"><i class="fas fa-exclamation-triangle" style="margin-right:4px;"></i>Erro</span>`
+            };
+            return badges[spec.status] || `<span class="badge badge-draft">${spec.status}</span>`;
+        }
+
+        window.retrySpec = async function (specId) {
+            try {
+                const response = await fetch(`/retry_spec/${specId}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': document.querySelector('[name="csrf_token"]').value }
+                });
+                const data = await response.json();
+                if (data.success) updateStatus();
+                else alert('Erro: ' + data.error);
+            } catch (error) { alert('Erro ao reprocessar: ' + error.message); }
+        };
+    });
+</script>
+{% endblock %}

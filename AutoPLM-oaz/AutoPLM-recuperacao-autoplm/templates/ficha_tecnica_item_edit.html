@@ -1,0 +1,329 @@
+{%- extends "layout.html" -%}
+
+{% block title %}Editar Item - Ficha Tecnica{% endblock %}
+
+{% block styles %}
+<style>
+.btn {
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn-secondary {
+            background-color: #1f2937;
+            color: #e5e7eb;
+            border: 1px solid #334155;
+        }
+
+        .btn-secondary:hover {
+            background-color: #374151;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+        }
+
+        .card {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 12px;
+            color: #cbd5f5;
+        }
+
+        input[type="text"] {
+            padding: 10px 12px;
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            color: #e5e7eb;
+            font-size: 13px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+</style>
+{% endblock %}
+
+{% block content %}
+<header class="page-header">
+    <div class="header-top">
+        <div>
+            <h1 class="page-title">Editar Item</h1>
+            <p class="page-subtitle">Atualize os dados desta linha da planilha.</p>
+        </div>
+        <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i>
+            Voltar
+        </a>
+    </div>
+</header>
+
+<section class="card">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <div class="form-grid">
+            {% for field in fields %}
+            <div class="form-group">
+                <label for="field_{{ field.name }}">{{ field.label }}</label>
+                <input type="text" id="field_{{ field.name }}" name="field_{{ field.name }}"
+                    value="{{ field.value }}">
+            </div>
+            {% endfor %}
+        </div>
+        <div class="action-row">
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i>
+                Salvar
+            </button>
+            <a href="{{ url_for('fichas.tabela', ficha_id=ficha.id) }}" class="btn btn-secondary">
+                Cancelar
+            </a>
+        </div>
+    </form>
+</section>
+
+<!-- Fluxogama Integration -->
+<section class="card" style="margin-top:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:12px;">
+            <i class="fas fa-paper-plane" style="color:#a78bfa;font-size:18px;"></i>
+            <h2 style="font-size:16px;font-weight:700;color:#fff;margin:0;">Fluxogama</h2>
+        </div>
+        <div id="fluxBadge">
+            {% if item.fluxogama_status == 'sent' %}
+            <span
+                style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(52,211,153,0.15);color:#34d399;">
+                <i class="fas fa-check-circle"></i> Integrado
+            </span>
+            {% elif item.fluxogama_status == 'error' %}
+            <span
+                style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(248,113,113,0.15);color:#f87171;">
+                <i class="fas fa-exclamation-circle"></i> Erro
+            </span>
+            {% else %}
+            <span style="color:#64748b;font-size:12px;">Não enviado</span>
+            {% endif %}
+        </div>
+    </div>
+    <div style="display:flex;gap:10px;">
+        <button class="btn btn-secondary" id="btnFluxPreview" type="button">
+            <i class="fas fa-eye"></i> Preview
+        </button>
+        <button class="btn" id="btnFluxSend" type="button"
+            style="background:linear-gradient(135deg,#7c3aed,#6d28d9);color:#fff;">
+            <i class="fas fa-paper-plane"></i> Enviar
+        </button>
+    </div>
+    <div id="fluxMsg" style="margin-top:12px;font-size:13px;"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+        // ─── Subetapa Options (easy to maintain) ───
+        const SUBETAPA_OPTIONS = [
+            { label: 'Ficha do desenvolvimento', wsid: '14' },
+            { label: 'Entrada do mix Souq', wsid: '54' },
+            { label: 'Tabela de Medidas', wsid: '70' },
+            { label: 'Fluxogama', wsid: '11' },
+        ];
+
+        const fichaId = {{ ficha.id }};
+        const itemId = {{ item.id }};
+
+        // ─── Preview Modal ───
+        const overlay = document.getElementById('fluxPreviewOverlay');
+        const previewBody = document.getElementById('fluxPreviewBody');
+        const previewTitle = document.getElementById('fluxPreviewTitle');
+        const fluxMsg = document.getElementById('fluxMsg');
+
+        function showMsg(text, type) {
+            const colors = { success: '#34d399', error: '#f87171', info: '#a78bfa' };
+            fluxMsg.innerHTML = `<span style="color:${colors[type] || '#cbd5e1'}">${text}</span>`;
+        }
+
+        // Preview button
+        document.getElementById('btnFluxPreview').addEventListener('click', async () => {
+            previewBody.innerHTML = '<p style="color:#a78bfa;">Carregando…</p>';
+            previewTitle.textContent = 'Preview Fluxogama';
+            overlay.style.display = 'flex';
+            try {
+                const r = await fetch(`/api/fluxogama/payload/ficha/${fichaId}/item/${itemId}`, { credentials: 'same-origin' });
+                const d = await r.json();
+                let html = '';
+                if (d.errors && d.errors.length > 0) {
+                    html += '<div style="background:rgba(248,113,113,0.1);border:1px solid #7f1d1d;border-radius:8px;padding:10px;margin-bottom:12px;">';
+                    html += '<p style="color:#f87171;font-weight:600;font-size:13px;margin-bottom:6px;"><i class="fas fa-exclamation-triangle"></i> Erros de validação</p>';
+                    d.errors.forEach(e => html += `<p style="color:#fca5a5;font-size:12px;margin:2px 0;">• ${e}</p>`);
+                    html += '</div>';
+                }
+                if (d.warnings && d.warnings.length > 0) {
+                    html += '<div style="background:rgba(251,191,36,0.1);border:1px solid #78350f;border-radius:8px;padding:10px;margin-bottom:12px;">';
+                    html += '<p style="color:#fbbf24;font-weight:600;font-size:13px;margin-bottom:6px;"><i class="fas fa-info-circle"></i> Avisos</p>';
+                    d.warnings.forEach(w => html += `<p style="color:#fde68a;font-size:12px;margin:2px 0;">• ${w}</p>`);
+                    html += '</div>';
+                }
+                html += `<pre style="background:#0f172a;border:1px solid #1f2937;border-radius:8px;padding:14px;color:#e2e8f0;font-size:12px;overflow-x:auto;white-space:pre-wrap;">${JSON.stringify(d.payload, null, 2)}</pre>`;
+                previewBody.innerHTML = html;
+            } catch (err) {
+                previewBody.innerHTML = `<p style="color:#f87171;">Erro: ${err.message}</p>`;
+            }
+        });
+
+        document.getElementById('btnClosePreview').addEventListener('click', () => overlay.style.display = 'none');
+        overlay.addEventListener('click', e => { if (e.target === overlay) overlay.style.display = 'none'; });
+
+        // ─── Subetapa Send Modal ───
+        const sendOverlay = document.getElementById('fluxSendOverlay');
+        const subetapaSelect = document.getElementById('fluxSubetapaSelect');
+        const dryRunCheck = document.getElementById('fluxDryRunCheck');
+        const forceCheck = document.getElementById('fluxForceCheck');
+        const sendMsg = document.getElementById('fluxSendMsg');
+        const btnConfirm = document.getElementById('btnFluxSendConfirm');
+        const btnCancel = document.getElementById('btnFluxSendCancel');
+
+        // Populate subetapa dropdown
+        SUBETAPA_OPTIONS.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt.wsid;
+            o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
+            subetapaSelect.appendChild(o);
+        });
+
+        // Enable/disable confirm button based on subetapa selection
+        subetapaSelect.addEventListener('change', () => {
+            const hasValue = subetapaSelect.value !== '';
+            btnConfirm.disabled = !hasValue;
+            btnConfirm.style.opacity = hasValue ? '1' : '0.5';
+            btnConfirm.style.cursor = hasValue ? 'pointer' : 'not-allowed';
+        });
+
+        // Open modal on "Enviar" click
+        document.getElementById('btnFluxSend').addEventListener('click', () => {
+            sendMsg.innerHTML = '';
+            btnConfirm.disabled = !subetapaSelect.value;
+            btnConfirm.style.opacity = subetapaSelect.value ? '1' : '0.5';
+            btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
+            sendOverlay.style.display = 'flex';
+        });
+
+        // Close modal
+        btnCancel.addEventListener('click', () => sendOverlay.style.display = 'none');
+        sendOverlay.addEventListener('click', e => { if (e.target === sendOverlay) sendOverlay.style.display = 'none'; });
+
+        // ─── Confirm Send ───
+        btnConfirm.addEventListener('click', async () => {
+            const subetapa = subetapaSelect.value;
+            if (!subetapa) return;
+
+            const dryRun = dryRunCheck.checked;
+            const force = forceCheck.checked;
+
+            // Build query string
+            const params = new URLSearchParams({ allow_create: '1', subetapa });
+            if (dryRun) params.set('dry_run', '1');
+            if (force) params.set('force', '1');
+
+            const url = `/api/fluxogama/send/ficha/${fichaId}/item/${itemId}?${params.toString()}`;
+
+            btnConfirm.disabled = true;
+            btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Enviando…';
+            sendMsg.innerHTML = '';
+
+            try {
+                const resp = await fetch(url, {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const data = await resp.json();
+
+                if (resp.status === 409) {
+                    sendMsg.innerHTML = '<span style="color:#f59e0b;"><i class="fas fa-info-circle"></i> Este item já foi enviado. Marque "Force" e tente novamente.</span>';
+                    forceCheck.checked = true;
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
+                    return;
+                }
+
+                if (resp.status === 422) {
+                    const errList = (data.errors || [data.error || 'Erro de validação']).join('; ');
+                    sendMsg.innerHTML = `<span style="color:#f87171;"><i class="fas fa-exclamation-triangle"></i> ${errList}</span>`;
+                    btnConfirm.disabled = false;
+                    btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
+                    return;
+                }
+
+                // Handle result
+                if (data.fluxogama_status === 'sent' || data.fluxogama_status === 'success') {
+                    sendMsg.innerHTML = '<span style="color:#34d399;"><i class="fas fa-check-circle"></i> Enviado com sucesso!</span>';
+                    document.getElementById('fluxBadge').innerHTML =
+                        '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(52,211,153,0.15);color:#34d399;"><i class="fas fa-check-circle"></i> Integrado</span>';
+                    showMsg('<i class="fas fa-check-circle"></i> Enviado com sucesso!', 'success');
+                } else if (data.fluxogama_status === 'dry_run') {
+                    sendMsg.innerHTML = '<span style="color:#a78bfa;"><i class="fas fa-vial"></i> Dry-run concluído (nada foi enviado).</span>';
+                    showMsg('<i class="fas fa-vial"></i> Dry-run OK.', 'info');
+                } else {
+                    const errMsg = data.fluxogama_error || data.error || 'Erro desconhecido';
+                    const httpSt = data.fluxogama_http_status ? ` (HTTP ${data.fluxogama_http_status})` : '';
+                    sendMsg.innerHTML = `<span style="color:#f87171;"><i class="fas fa-exclamation-triangle"></i> ${errMsg}${httpSt}</span>`;
+                    document.getElementById('fluxBadge').innerHTML =
+                        '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600;background:rgba(248,113,113,0.15);color:#f87171;"><i class="fas fa-exclamation-circle"></i> Erro</span>';
+                    showMsg(`<i class="fas fa-exclamation-triangle"></i> ${errMsg}`, 'error');
+                }
+
+                // Show response details if available
+                if (data.fluxogama_response && typeof data.fluxogama_response === 'string') {
+                    try {
+                        const parsed = JSON.parse(data.fluxogama_response);
+                        if (parsed.mensagens) {
+                            sendMsg.innerHTML += `<div style="margin-top:8px;background:#0f172a;border:1px solid #1f2937;border-radius:6px;padding:10px;font-size:11px;color:#94a3b8;max-height:120px;overflow-y:auto;">${parsed.mensagens.map(m => `<div>• ${m}</div>`).join('')}</div>`;
+                        }
+                    } catch (_) { }
+                }
+
+                btnConfirm.innerHTML = '<i class="fas fa-check"></i> Concluído';
+                // Don't re-enable — user should close or retry
+            } catch (err) {
+                sendMsg.innerHTML = `<span style="color:#f87171;"><i class="fas fa-exclamation-triangle"></i> Erro de conexão: ${err.message}</span>`;
+                btnConfirm.disabled = false;
+                btnConfirm.innerHTML = '<i class="fas fa-paper-plane"></i> Confirmar e Enviar';
+            }
+        });
+</script>
+{% endblock %}

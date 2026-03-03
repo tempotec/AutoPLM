@@ -1,0 +1,1037 @@
+{%- extends "layout.html" -%}
+{% block title %}{{ specification.description or specification.ref_souq or 'Ficha Técnica' }} — OAZ AutoPLM{% endblock
+%}
+
+{% block styles %}
+<style>
+    /* ─── Page wrapper ─── */
+    .ficha-page {
+        padding: 28px 32px 32px;
+        position: relative;
+    }
+
+    /* ─── Decorative lines (same style as login) ─── */
+    .deco-svg {
+        position: fixed;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.45;
+    }
+
+    .deco-left {
+        left: 0;
+        bottom: 0;
+    }
+
+    .deco-right {
+        right: 0;
+        top: 0;
+    }
+
+    /* ─── Page header ─── */
+    .spec-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .spec-heading {
+        font-family: var(--font-heading);
+        font-size: 28px;
+        font-weight: 700;
+        color: var(--text-gold-dark);
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+
+    .spec-meta-row {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-top: 6px;
+        flex-wrap: wrap;
+    }
+
+    .spec-meta-sep {
+        color: var(--text-dim);
+    }
+
+    /* action buttons */
+    .spec-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    .spec-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 18px;
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        font-weight: 600;
+        font-family: var(--font-body);
+        cursor: pointer;
+        text-decoration: none;
+        border: 1.5px solid transparent;
+        transition: all var(--transition-fast);
+    }
+
+    .spec-btn-edit {
+        border-color: var(--brand-primary);
+        color: var(--text-gold-dark);
+        background: transparent;
+    }
+
+    .spec-btn-edit:hover {
+        background: var(--brand-primary);
+        color: #1a1410;
+    }
+
+    .spec-btn-delete {
+        border-color: #d9534f;
+        color: #d9534f;
+        background: transparent;
+    }
+
+    .spec-btn-delete:hover {
+        background: #d9534f;
+        color: #fff;
+    }
+
+    .spec-btn-back {
+        border-color: var(--border-default);
+        color: var(--text-secondary);
+        background: transparent;
+    }
+
+    .spec-btn-back:hover {
+        background: var(--bg-hover);
+        color: var(--text-primary);
+    }
+
+    /* ─── Status badges ─── */
+    .status-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+    }
+
+    .pill-draft {
+        background: #e0e7ff;
+        color: #3730a3;
+    }
+
+    .pill-in_dev {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+
+    .pill-approved {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .pill-completed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+
+    .pill-in_prod {
+        background: #fee2e2;
+        color: #7f1d1d;
+    }
+
+    .pill-imported {
+        background: #ede9fe;
+        color: #4c1d95;
+    }
+
+    .pill-price {
+        background: var(--bg-icon);
+        color: var(--text-gold-dark);
+    }
+
+    /* ─── Two-column layout ─── */
+    .spec-layout {
+        display: grid;
+        grid-template-columns: 340px 1fr;
+        gap: 20px;
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ─── Left: Image card ─── */
+    .image-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        position: sticky;
+        top: 80px;
+        height: fit-content;
+    }
+
+    .image-card-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--border-default);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+    }
+
+    .image-card-label i {
+        color: var(--brand-primary);
+    }
+
+    .image-box {
+        background: var(--bg-card-alt);
+        min-height: 280px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .image-box img {
+        width: 100%;
+        height: auto;
+        display: block;
+        object-fit: contain;
+    }
+
+    .image-box iframe {
+        width: 100%;
+        height: 320px;
+        border: 0;
+    }
+
+    .image-box .no-img {
+        text-align: center;
+        padding: 40px;
+        color: var(--text-dim);
+    }
+
+    .image-box .no-img i {
+        font-size: 40px;
+        margin-bottom: 10px;
+        display: block;
+        opacity: 0.3;
+    }
+
+    /* Image actions below */
+    .image-actions {
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        border-top: 1px solid var(--border-default);
+    }
+
+    .btn-img-action {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 7px;
+        padding: 9px 14px;
+        background: var(--bg-card-alt);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        color: var(--text-secondary);
+        font-size: 12.5px;
+        font-weight: 500;
+        font-family: var(--font-body);
+        text-decoration: none;
+        cursor: pointer;
+        transition: all var(--transition-fast);
+        width: 100%;
+        text-align: center;
+    }
+
+    .btn-img-action:hover {
+        border-color: var(--brand-primary);
+        color: var(--text-gold-dark);
+        background: var(--bg-hover);
+    }
+
+    .btn-img-action.primary {
+        background: var(--brand-gradient);
+        color: #1a1410;
+        border-color: transparent;
+        font-weight: 600;
+    }
+
+    .btn-img-action.primary:hover {
+        background: linear-gradient(135deg, #d4b47a 0%, #a58048 100%);
+    }
+
+    .btn-img-action.danger-action {
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+
+    .btn-img-action.danger-action:hover {
+        background: #fee2e2;
+    }
+
+    /* File info */
+    .file-info-box {
+        margin: 10px 14px 14px;
+        padding: 12px;
+        background: var(--bg-card-alt);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.7;
+    }
+
+    .file-info-box strong {
+        color: var(--text-primary);
+    }
+
+    /* ─── Right: details column ─── */
+    .details-col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    /* Main details card */
+    .detail-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 24px 28px;
+    }
+
+    .detail-card-title {
+        font-family: var(--font-heading);
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 20px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--border-default);
+    }
+
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px 28px;
+    }
+
+    .detail-field label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .detail-field .val {
+        font-size: 14px;
+        color: var(--text-primary);
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--border-default);
+    }
+
+    /* ─── Tabs card ─── */
+    .tabs-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 20px 28px 24px;
+    }
+
+    .tab-nav {
+        display: flex;
+        gap: 0;
+        border-bottom: 2px solid var(--border-default);
+        margin-bottom: 20px;
+    }
+
+    .tab-btn {
+        padding: 10px 22px;
+        background: none;
+        border: none;
+        font-size: 14px;
+        font-weight: 500;
+        font-family: var(--font-body);
+        color: var(--text-muted);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        margin-bottom: -2px;
+        transition: all var(--transition-fast);
+    }
+
+    .tab-btn.active {
+        color: var(--text-gold-dark);
+        border-bottom-color: var(--brand-primary);
+        font-weight: 600;
+    }
+
+    .tab-btn:hover:not(.active) {
+        color: var(--text-primary);
+    }
+
+    .tab-pane {
+        display: none;
+    }
+
+    .tab-pane.active {
+        display: block;
+    }
+
+    /* Measurements table */
+    .mea-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13.5px;
+    }
+
+    .mea-table thead th {
+        background: var(--bg-card-alt);
+        color: var(--text-muted);
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        padding: 10px 14px;
+        text-align: center;
+        border-bottom: 2px solid var(--border-default);
+    }
+
+    .mea-table thead th:first-child {
+        text-align: left;
+    }
+
+    .mea-table tbody td {
+        padding: 10px 14px;
+        text-align: center;
+        border-bottom: 1px solid var(--border-default);
+        color: var(--text-primary);
+    }
+
+    .mea-table tbody td:first-child {
+        text-align: left;
+        font-weight: 500;
+        color: var(--text-gold-dark);
+    }
+
+    .mea-table tbody tr:hover {
+        background: var(--bg-hover);
+    }
+
+    .mea-empty {
+        text-align: center;
+        padding: 32px 0;
+        color: var(--text-dim);
+        font-size: 13.5px;
+    }
+
+    /* Info blocks for Materiais / Detalhes tabs */
+    .info-block {
+        background: var(--bg-card-alt);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        padding: 14px 18px;
+        margin-bottom: 12px;
+    }
+
+    .info-block h6 {
+        font-size: 11px;
+        font-weight: 700;
+        color: var(--text-gold-dark);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+
+    .info-block p {
+        font-size: 13.5px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+        margin-bottom: 4px;
+    }
+
+    .info-block p strong {
+        color: var(--text-primary);
+    }
+
+    /* Pilot size badge */
+    .pilot-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 14px;
+        padding: 7px 14px;
+        background: var(--bg-icon);
+        border-radius: var(--radius-md);
+        font-size: 13px;
+        color: var(--text-gold-dark);
+        font-weight: 600;
+    }
+
+    /* ─── Viewer modal ─── */
+    .viewer-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(26, 20, 16, 0.6);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .viewer-overlay.open {
+        display: flex;
+    }
+
+    .viewer-box {
+        background: var(--bg-card);
+        border-radius: var(--radius-xl);
+        padding: 28px;
+        width: 90vw;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow: auto;
+        position: relative;
+        border: 1px solid var(--border-default);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .viewer-close {
+        position: absolute;
+        top: 14px;
+        right: 16px;
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: color var(--transition-fast);
+    }
+
+    .viewer-close:hover {
+        color: var(--text-primary);
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+        .spec-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .image-card {
+            position: static;
+        }
+
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Decorative curves -->
+<svg class="deco-svg deco-left" width="240" height="340" viewBox="0 0 240 340" fill="none">
+    <path d="M-30 300 Q 50 230 10 140 Q -20 50 70 10" stroke="#c9a96e" stroke-width="1.2" fill="none" />
+    <path d="M-50 320 Q 70 240 20 130 Q -25 30 90 -5" stroke="#b8a870" stroke-width="0.8" fill="none" />
+    <path d="M5 330 Q 80 260 40 160 Q 10 70 90 25" stroke="#a07040" stroke-width="0.7" fill="none" />
+</svg>
+<svg class="deco-svg deco-right" width="240" height="340" viewBox="0 0 240 340" fill="none">
+    <path d="M270 40 Q 190 110 230 200 Q 270 290 170 330" stroke="#c9a96e" stroke-width="1.2" fill="none" />
+    <path d="M290 20 Q 180 100 220 210 Q 270 310 160 350" stroke="#b8a870" stroke-width="0.8" fill="none" />
+    <path d="M250 60 Q 170 130 200 220 Q 230 300 140 340" stroke="#a07040" stroke-width="0.7" fill="none" />
+</svg>
+
+<div class="ficha-page">
+
+    <!-- Header -->
+    <div class="spec-header">
+        <div>
+            <!-- Status pills -->
+            <div style="display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px;">
+                {% if specification.status %}
+                <span
+                    class="status-pill pill-{{ specification.status.replace('in_development','in_dev').replace('in_production','in_prod') }}">
+                    {% if specification.status == 'draft' %}Rascunho
+                    {% elif specification.status == 'in_development' %}Em Desenvolvimento
+                    {% elif specification.status == 'approved' %}Aprovado
+                    {% elif specification.status == 'in_production' %}Em Produção
+                    {% elif specification.status == 'completed' %}Concluído
+                    {% else %}{{ specification.status }}{% endif %}
+                </span>
+                {% endif %}
+                {% if specification.is_imported %}
+                <span class="status-pill pill-imported">
+                    Importado{% if specification.import_category %}: {{ specification.import_category|capitalize }}{%
+                    endif %}
+                </span>
+                {% endif %}
+                {% if specification.price_range %}
+                <span class="status-pill pill-price">
+                    <i class="fas fa-tag"></i> {{ specification.price_range }}
+                </span>
+                {% endif %}
+            </div>
+
+            <h1 class="spec-heading">Ficha Técnica</h1>
+
+            <div class="spec-meta-row">
+                <span>Ref: {{ specification.ref_souq or 'N/A' }}</span>
+                <span class="spec-meta-sep">/</span>
+                <span>Coleção: {{ specification.collection or 'Sem coleção' }}</span>
+                <span class="spec-meta-sep">/</span>
+                <span>Fornecedor: {{ specification.supplier or 'Sem fornecedor' }}</span>
+            </div>
+        </div>
+
+        <!-- Action buttons -->
+        <div class="spec-actions">
+            <a href="{{ url_for('specifications.edit', id=specification.id) }}" class="spec-btn spec-btn-edit">
+                <i class="fas fa-edit"></i> Editar Ficha
+            </a>
+            <form method="POST" action="{{ url_for('specifications.delete', id=specification.id) }}"
+                style="display:inline;" onsubmit="return confirm('Tem certeza que deseja excluir esta ficha?');">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="spec-btn spec-btn-delete">
+                    <i class="fas fa-trash"></i> Excluir
+                </button>
+            </form>
+            <a href="{{ url_for('specifications.index') }}" class="spec-btn spec-btn-back">
+                <i class="fas fa-arrow-left"></i> Voltar
+            </a>
+        </div>
+    </div>
+
+    {% set is_image = specification.pdf_filename and specification.pdf_filename.lower().endswith(('.jpg', '.jpeg',
+    '.png')) %}
+
+    <!-- Two-column layout -->
+    <div class="spec-layout">
+
+        <!-- ── LEFT: Image card ── -->
+        <div class="image-card">
+            <div class="image-card-label">
+                <i class="fas fa-image"></i> Imagem Original
+            </div>
+
+            <div class="image-box">
+                {% if specification.pdf_thumbnail %}
+                <img src="{{ specification.pdf_thumbnail }}" alt="{{ specification.description or 'Produto' }}">
+                {% elif specification.technical_drawing_url %}
+                <img src="{{ specification.technical_drawing_url }}" alt="Imagem Original">
+                {% elif is_image %}
+                <img src="{{ url_for('specifications.view_image', id=specification.id) }}"
+                    alt="{{ specification.description or 'Produto' }}">
+                {% elif specification.pdf_filename %}
+                <iframe src="{{ url_for('specifications.view_pdf', id=specification.id) }}"
+                    title="{{ specification.description or 'PDF' }}"></iframe>
+                {% else %}
+                <div class="no-img">
+                    <i class="fas fa-file-alt"></i>
+                    <p>Sem imagem disponível</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Technical drawing section -->
+            {% if specification.technical_drawing_url %}
+            <div class="image-card-label" style="border-top:1px solid var(--border-default);">
+                <i class="fas fa-pencil-ruler"></i> Desenho Técnico
+            </div>
+            <div class="image-box">
+                {% if specification.technical_drawing_url.startswith('/static/') %}
+                <img src="{{ specification.technical_drawing_url }}" alt="Desenho Técnico">
+                {% else %}
+                <img src="{{ url_for('drawings.view_drawing', id=specification.id) }}" alt="Desenho Técnico">
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="image-actions">
+                <a href="{{ url_for('specifications.download_pdf', id=specification.id) }}" class="btn-img-action">
+                    <i class="fas fa-download"></i> Baixar {{ 'Imagem' if is_image else 'PDF' }} Original
+                </a>
+                <button type="button" class="btn-img-action" onclick="openViewer()">
+                    <i class="fas fa-eye"></i> Visualizar {{ 'Imagem' if is_image else 'PDF' }}
+                </button>
+                {% if specification.technical_drawing_url %}
+                {% if specification.technical_drawing_url.startswith('/static/') %}
+                <a href="{{ specification.technical_drawing_url }}" target="_blank" class="btn-img-action">
+                    <i class="fas fa-pencil-ruler"></i> Ver Desenho Técnico
+                </a>
+                {% else %}
+                <a href="{{ url_for('drawings.view_drawing', id=specification.id) }}" target="_blank"
+                    class="btn-img-action">
+                    <i class="fas fa-pencil-ruler"></i> Ver Desenho Técnico
+                </a>
+                {% endif %}
+                <a href="{{ url_for('drawings.download', id=specification.id) }}" class="btn-img-action primary">
+                    <i class="fas fa-download"></i> Baixar Desenho Técnico
+                </a>
+                <form method="POST" action="{{ url_for('drawings.generate', id=specification.id) }}"
+                    onsubmit="return handleDrawingSubmit(event, this, true);">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn-img-action">
+                        <i class="fas fa-sync-alt"></i> Gerar Novo Desenho
+                    </button>
+                </form>
+                {% else %}
+                <form method="POST" action="{{ url_for('drawings.generate', id=specification.id) }}"
+                    onsubmit="return handleDrawingSubmit(event, this, false);">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <button type="submit" class="btn-img-action primary">
+                        <i class="fas fa-magic"></i> Gerar Desenho Técnico
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+
+            <!-- File info -->
+            <div class="file-info-box">
+                <div><strong>Arquivo:</strong> {{ specification.pdf_filename }}</div>
+                <div><strong>Enviado por:</strong> {{ specification.user.username }}</div>
+                <div><strong>Data:</strong> {{ specification.created_at.strftime('%d/%m/%Y às %H:%M') }}</div>
+            </div>
+        </div>
+
+        <!-- ── RIGHT: Details column ── -->
+        <div class="details-col">
+
+            <!-- Main Details -->
+            <div class="detail-card">
+                <div class="detail-card-title">Detalhes Principais</div>
+                <div class="detail-grid">
+                    <div class="detail-field">
+                        <label>Coleção</label>
+                        <div class="val">{{ specification.collection or '-' }}</div>
+                    </div>
+                    <div class="detail-field">
+                        <label>Designer</label>
+                        <div class="val">{{ specification.stylists or specification.user.username or '-' }}</div>
+                    </div>
+                    <div class="detail-field">
+                        <label>Fornecedor</label>
+                        <div class="val">{{ specification.supplier or '-' }}</div>
+                    </div>
+                    <div class="detail-field">
+                        <label>Matéria-prima e composição (tecido principal)</label>
+                        <div class="val">{{ specification.main_fabric or specification.composition or '-' }}</div>
+                    </div>
+                    {% if specification.price_range %}
+                    <div class="detail-field">
+                        <label>Faixa de Preço</label>
+                        <div class="val">{{ specification.price_range }}</div>
+                    </div>
+                    {% endif %}
+                    {% if specification.main_group or specification.sub_group %}
+                    <div class="detail-field">
+                        <label>Grupo / Subgrupo</label>
+                        <div class="val">{{ specification.main_group or '-' }} / {{ specification.sub_group or '-' }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tabs card -->
+            <div class="tabs-card">
+                <div class="tab-nav">
+                    <button class="tab-btn active" onclick="switchTab('medidas', event)">Medidas</button>
+                    <button class="tab-btn" onclick="switchTab('materiais', event)">Materiais</button>
+                    <button class="tab-btn" onclick="switchTab('detalhes', event)">Detalhes</button>
+                </div>
+
+                <!-- Medidas -->
+                <div class="tab-pane active" id="tab-medidas">
+                    <table class="mea-table">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;">Ponto de Medida</th>
+                                <th>P</th>
+                                <th>M</th>
+                                <th>G</th>
+                                <th>GG</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if specification.bust %}
+                            <tr>
+                                <td>Busto</td>
+                                <td>{{ specification.bust }} cm</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            {% endif %}
+                            {% if specification.waist %}
+                            <tr>
+                                <td>Cintura</td>
+                                <td>{{ specification.waist }} cm</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            {% endif %}
+                            {% if specification.body_length %}
+                            <tr>
+                                <td>Comprimento</td>
+                                <td>{{ specification.body_length }} cm</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            {% endif %}
+                            {% if specification.sleeve_length %}
+                            <tr>
+                                <td>Manga</td>
+                                <td>{{ specification.sleeve_length }} cm</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            {% endif %}
+                            {% if specification.shoulder_to_shoulder %}
+                            <tr>
+                                <td>Ombro a Ombro</td>
+                                <td>{{ specification.shoulder_to_shoulder }} cm</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            {% endif %}
+                            {% if specification.hem_width %}
+                            <tr>
+                                <td>Largura da Barra</td>
+                                <td>{{ specification.hem_width }} cm</td>
+                                <td>-</td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            {% endif %}
+                            {% if not specification.bust and not specification.waist and not specification.body_length
+                            and not specification.sleeve_length and not specification.shoulder_to_shoulder and not
+                            specification.hem_width %}
+                            <tr>
+                                <td colspan="5" class="mea-empty">Nenhuma medida disponível</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                    {% if specification.pilot_size %}
+                    <div class="pilot-badge"><i class="fas fa-ruler"></i> Tamanho Piloto: {{ specification.pilot_size }}
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Materiais -->
+                <div class="tab-pane" id="tab-materiais">
+                    {% if specification.corner %}
+                    <div class="info-block">
+                        <h6>Corner</h6>
+                        <p>{{ specification.corner }}</p>
+                    </div>
+                    {% endif %}
+                    {% if specification.pattern %}
+                    <div class="info-block">
+                        <h6>Estampa / Padrão</h6>
+                        <p>{{ specification.pattern }}</p>
+                    </div>
+                    {% endif %}
+                    {% if specification.colors %}
+                    <div class="info-block">
+                        <h6>Cores</h6>
+                        <p>{{ specification.colors }}</p>
+                    </div>
+                    {% endif %}
+                    {% if specification.tags_kit %}
+                    <div class="info-block">
+                        <h6>Observações e Aviamentos</h6>
+                        <p>{{ specification.tags_kit }}</p>
+                    </div>
+                    {% endif %}
+                    {% if specification.finishes %}
+                    <div class="info-block">
+                        <h6>Acabamentos</h6>
+                        <p>{{ specification.finishes }}</p>
+                    </div>
+                    {% endif %}
+                    {% if not specification.corner and not specification.pattern and not specification.colors and not
+                    specification.tags_kit and not specification.finishes %}
+                    <div class="mea-empty"><i class="fas fa-info-circle"></i> Nenhum material registrado</div>
+                    {% endif %}
+                </div>
+
+                <!-- Detalhes -->
+                <div class="tab-pane" id="tab-detalhes">
+                    {% if specification.specific_details %}
+                    <div class="info-block">
+                        <h6>Detalhes Específicos</h6>
+                        <p>{{ specification.specific_details }}</p>
+                    </div>
+                    {% endif %}
+                    {% if specification.openings_details %}
+                    <div class="info-block">
+                        <h6>Aberturas e Detalhes</h6>
+                        <p>{{ specification.openings_details }}</p>
+                    </div>
+                    {% endif %}
+                    <div class="info-block">
+                        <h6>Informações Comerciais</h6>
+                        <p><strong>Target Price:</strong> {{ specification.target_price or '-' }}</p>
+                        <p><strong>Mês Loja:</strong> {{ specification.store_month or '-' }}</p>
+                        <p><strong>Mês Entrega CD:</strong> {{ specification.delivery_cd_month or '-' }}</p>
+                    </div>
+                    <div class="info-block">
+                        <h6>Prazos</h6>
+                        <p><strong>Data Ficha Técnica:</strong> {{
+                            specification.tech_sheet_delivery_date.strftime('%d/%m/%Y') if
+                            specification.tech_sheet_delivery_date else '-' }}</p>
+                        <p><strong>Data Piloto:</strong> {{ specification.pilot_delivery_date.strftime('%d/%m/%Y') if
+                            specification.pilot_delivery_date else '-' }}</p>
+                        <p><strong>Mostruário Para:</strong> {{ specification.showcase_for or '-' }}</p>
+                    </div>
+                    {% if specification.stylists %}
+                    <div class="info-block">
+                        <h6>Equipe</h6>
+                        <p><strong>Estilista(s):</strong> {{ specification.stylists }}</p>
+                    </div>
+                    {% endif %}
+                    {% if extra_fields %}
+                    <div class="info-block">
+                        <h6>Campos Detectados no PDF</h6>
+                        {% for label, value in extra_fields|dictsort %}
+                        <p><strong>{{ label }}:</strong> {{ value }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Viewer modal -->
+<div class="viewer-overlay" id="viewerOverlay" onclick="if(event.target===this) closeViewer()">
+    <div class="viewer-box">
+        <button class="viewer-close" onclick="closeViewer()"><i class="fas fa-times"></i></button>
+        {% if is_image %}
+        <img id="viewerImg" src="" alt="Visualização" style="width:100%; height:auto; border-radius:8px; display:none;">
+        <div id="viewerImgError" style="display:none; text-align:center; padding:40px; color:var(--text-muted);">
+            <i class="fas fa-exclamation-circle" style="font-size:32px; margin-bottom:12px; display:block;"></i>
+            Não foi possível carregar a imagem.
+        </div>
+        {% else %}
+        <iframe id="viewerFrame" src="" title="{{ specification.description or 'PDF' }}"
+            style="width:100%; height:70vh; border:0; border-radius:8px;"></iframe>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    /* ── Tabs ── */
+    function switchTab(name, e) {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        e.target.classList.add('active');
+        document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    /* ── Viewer modal ── */
+    const isImage = {{ 'true' if specification.pdf_filename and specification.pdf_filename.lower().endswith(('.jpg', '.jpeg', '.png')) else 'false' }};
+
+    function openViewer() {
+        const overlay = document.getElementById('viewerOverlay');
+        overlay.classList.add('open');
+        if (isImage) {
+            const img = document.getElementById('viewerImg');
+            const err = document.getElementById('viewerImgError');
+            img.style.display = 'block';
+            img.src = '{{ url_for("specifications.view_image", id=specification.id) }}';
+            img.onerror = () => { img.style.display = 'none'; err.style.display = 'block'; };
+        } else {
+            document.getElementById('viewerFrame').src = '{{ url_for("specifications.view_pdf", id=specification.id) }}';
+        }
+    }
+
+    function closeViewer() {
+        document.getElementById('viewerOverlay').classList.remove('open');
+        if (isImage) {
+            const img = document.getElementById('viewerImg');
+            img.src = '';
+        } else {
+            document.getElementById('viewerFrame').src = '';
+        }
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeViewer(); });
+
+    /* ── Drawing generation ── */
+    function handleDrawingSubmit(event, form, isRegenerate) {
+        event.preventDefault();
+        if (isRegenerate && !confirm('Deseja gerar um novo desenho técnico? Isso substituirá o atual.')) return false;
+
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Iniciando...'; }
+
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    if (typeof Toast !== 'undefined') Toast.processing('Processando desenho técnico...');
+                    if (typeof pollSpecStatus !== 'undefined') {
+                        pollSpecStatus(data.spec_id, s => { if (s.status === 'completed') setTimeout(() => location.reload(), 1000); });
+                    } else {
+                        const iv = setInterval(() => {
+                            fetch(`/api/spec/status/${data.spec_id}`).then(r => r.json()).then(s => {
+                                if (s.status === 'completed' || s.status === 'error') { clearInterval(iv); location.reload(); }
+                            });
+                        }, 3000);
+                    }
+                } else {
+                    if (typeof Toast !== 'undefined') Toast.error(data.error || 'Erro ao iniciar geração');
+                    if (btn) { btn.disabled = false; btn.innerHTML = (isRegenerate ? '<i class="fas fa-sync-alt"></i> Gerar Novo Desenho' : '<i class="fas fa-magic"></i> Gerar Desenho Técnico'); }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                if (typeof Toast !== 'undefined') Toast.error('Erro de conexão.');
+                if (btn) { btn.disabled = false; btn.innerHTML = (isRegenerate ? '<i class="fas fa-sync-alt"></i> Gerar Novo Desenho' : '<i class="fas fa-magic"></i> Gerar Desenho Técnico'); }
+            });
+
+        return false;
+    }
+</script>
+{% endblock %}

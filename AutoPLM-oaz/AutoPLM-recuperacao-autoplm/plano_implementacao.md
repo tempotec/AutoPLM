@@ -1,0 +1,27 @@
+# OAZ AutoPLM — Plano de Implementação [02/03/2026]
+
+- [x] **Análise**: Verificar estrutura de templates existentes (`layout.html`, `sidebar.html`, `global.css`) para planejar reorganização do design [02/03/2026]
+- [x] **Renomeação**: Trocar nome do sistema de "StyleFlow" para "OAZ - AutoPLM" em todos os arquivos de template e CSS [02/03/2026]
+- [x] **Backend – Rota Painel**: Verificar rota `dashboard.index` e garantir que passa variáveis `specifications` e `collections` para o template [02/03/2026]
+- [x] **Frontend – Topnav**: Criar partial `templates/partials/topnav.html` substituindo a sidebar lateral por barra de navegação superior com links (Painel, Fichas, Coleções, Desenhos, Fornecedores, Banco OAZ) [02/03/2026]
+- [x] **Frontend – Layout Base**: Atualizar `templates/layout.html` removendo referência à sidebar, incluindo `topnav.html`, atualizando fontes Google (Playfair Display + Outfit) e título padrão [02/03/2026]
+- [x] **Frontend – CSS Global**: Reescrever `static/css/global.css` completamente com tema luxury light (paleta bege/dourado, variáveis CSS, tipografia, componentes de navtop e painéis) [02/03/2026]
+- [x] **Frontend – Painel (Dashboard)**: Remover toda a seção de listagem de fichas do `user_dashboard.html`, deixando apenas os 4 cards de navegação rápida (Fichas Técnicas, Coleções, Desenhos Técnicos, Fornecedores) [02/03/2026]
+- [x] **Frontend – Login**: Reescrever `templates/login.html` do zero com tema light: fundo creme, curvas SVG decorativas douradas nas laterais, card centralizado, branding OAZ AutoPLM, inputs bege e botão dourado [02/03/2026]
+- [x] **Frontend – Upload de Fichas**: Reescrever `templates/upload_pdf.html` do zero com layout de duas colunas (zona de upload à esquerda + metadados à direita), sem scroll, modal de progresso no lugar do painel inline; todo o JavaScript funcional preservado [02/03/2026]
+- [x] **Backend – Rota Smart Fichas**: Adicionar rota `GET /fichas` (`specifications.index`) em `app/routes/specifications.py` com lógica: se existem fichas → renderiza lista; se não existem → redireciona para `/upload_pdf` [02/03/2026]
+- [x] **Frontend – Lista de Fichas**: Criar `templates/fichas_list.html` com grid de cards (thumbnail, REF, nome, fornecedor, coleção, data, badge de status), barra de busca por texto/status/coleção e botão "Nova Ficha" [02/03/2026]
+- [x] **Frontend – Topnav (Fichas)**: Atualizar link "Fichas" no `topnav.html` de `specifications.upload` para `specifications.index` (rota smart) [02/03/2026]
+- [x] **Frontend – Painel Card (Fichas)**: Atualizar link do card "Fichas Técnicas" no `user_dashboard.html` de `specifications.upload` para `specifications.index` [02/03/2026]
+- [ ] **Análise**: Verificar templates restantes com tema dark antigo (`collections.html`, `suppliers.html`, `view_specification.html`, `edit_specification.html`, `technical_drawings.html`) e listar conflitos de estilo
+- [ ] **Frontend – Coleções**: Atualizar `templates/collections.html` extendendo `layout.html` corretamente e removendo CSS inline dark
+- [ ] **Frontend – Fornecedores**: Atualizar `templates/suppliers.html` extendendo `layout.html` corretamente e removendo CSS inline dark
+- [ ] **Frontend – Visualizar Ficha**: Atualizar `templates/view_specification.html` extendendo `layout.html` e adaptando layout para o tema light
+- [ ] **Frontend – Editar Ficha**: Atualizar `templates/edit_specification.html` extendendo `layout.html` e adaptando formulário para o tema light (inputs bege/dourado)
+- [ ] **Frontend – Desenhos Técnicos**: Atualizar `templates/technical_drawings.html` extendendo `layout.html` e removendo estilos dark
+- [ ] **Frontend – Banco OAZ**: Verificar `templates/oaz_banco_import.html` e adaptar ao tema light se necessário
+- [ ] **Backend – Contadores Dashboard**: Implementar contagem real de Desenhos Técnicos e Fornecedores na rota `dashboard.index` para exibir números corretos nos cards do painel
+- [ ] **Frontend – Fichas: Filtro por Coleção**: Garantir que o dropdown "Todas as Coleções" no `fichas_list.html` popula corretamente via `data-colecao` nos cards
+- [ ] **Verificação**: Testar fluxo completo — Login → Painel → Fichas (lista) → Upload → Processamento → Visualizar ficha
+- [ ] **Verificação**: Testar responsividade mobile (topnav hamburger, cards do painel e grid de fichas em telas < 768px)
+- [ ] **Verificação**: Confirmar que todas as rotas existentes (Coleções, Fornecedores, Desenhos, Banco OAZ) não retornam erros 500 após a mudança de layout base
