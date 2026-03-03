@@ -88,6 +88,13 @@ def create_app(config_name=None):
             print(f"RPA Monitor initialization skipped: {e}")
     
     register_blueprints(app)
+
+    # Fluxogama token auto-renewal
+    try:
+        from app.integrations.fluxogama.token_manager import start_auto_renewal
+        start_auto_renewal()
+    except Exception as e:
+        print(f"Fluxogama token manager skipped: {e}")
     
     def _from_json(value):
         if not value:

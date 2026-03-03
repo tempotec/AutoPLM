@@ -369,14 +369,28 @@ def send_batch_specs():
     Body JSON: { "spec_ids": [int, ...] }
     Query: ?dry_run=1 para teste sem enviar.
     """
+    print('\n' + '='*60)
+    print('[FLUX-BATCH-SPECS] Início do envio em lote')
+    print('='*60)
+
     user = User.query.get(session.get('user_id'))
     if not user:
+        print('[FLUX-BATCH-SPECS] ❌ Sessão inválida')
         return jsonify({'error': 'Sessão inválida.'}), 401
 
     data = request.get_json(silent=True) or {}
     spec_ids = data.get('spec_ids', [])
+    print(f'[FLUX-BATCH-SPECS] User: {user.username} | spec_ids: {spec_ids}')
+    print(f'[FLUX-BATCH-SPECS] Params: dry_run={request.args.get("dry_run","0")} force={request.args.get("force","0")} allow_create={request.args.get("allow_create","1")} subetapa={request.args.get("subetapa","")}')
+
+    # Log config
+    base_url = os.environ.get('OAZ_BASE_URL') or os.environ.get('FLUXOGAMA_BASE_URL', '')
+    chave_preview = (os.environ.get('OAZ_CHAVE') or os.environ.get('FLUXOGAMA_CHAVE', ''))[:20]
+    endpoint = os.environ.get('OAZ_MODELO_PUSH_PATH') or os.environ.get('FLUXOGAMA_ENDPOINT_ENVIO', '/remessa/envio')
+    print(f'[FLUX-BATCH-SPECS] Config: base_url={base_url} | endpoint={endpoint} | chave={chave_preview}...')
 
     if not spec_ids:
+        print('[FLUX-BATCH-SPECS] ❌ spec_ids vazio')
         return jsonify({'error': 'spec_ids é obrigatório.'}), 400
 
     if len(spec_ids) > MAX_BATCH_SIZE:
@@ -400,9 +414,11 @@ def send_batch_specs():
     success_count = 0
     error_count = 0
 
-    for spec_id in spec_ids:
+    for i, spec_id in enumerate(spec_ids):
+        print(f'\n[FLUX-BATCH-SPECS] ── Spec {i+1}/{len(spec_ids)} (id={spec_id}) ──')
         spec = Specification.query.get(spec_id)
         if not spec:
+            print(f'[FLUX-BATCH-SPECS]   ❌ Spec {spec_id} não encontrada no DB')
             results.append({
                 'spec_id': spec_id,
                 'ok': False,
@@ -493,7 +509,11 @@ def send_batch_specs():
         # Remove empty values
         payload = {k: v for k, v in payload.items() if v}
 
+        print(f'[FLUX-BATCH-SPECS]   Payload keys: {list(payload.keys())}')
+        print(f'[FLUX-BATCH-SPECS]   referencia={payload.get("referencia","")} | colecao={payload.get("colecao","")} | ws_id={payload.get("ws_id","")}')
+
         if not payload.get('referencia'):
+            print(f'[FLUX-BATCH-SPECS]   ❌ Sem referência (ref_souq)')
             results.append({
                 'spec_id': spec_id,
                 'ok': False,
@@ -522,14 +542,21 @@ def send_batch_specs():
             payload['sistema_criar_modelo'] = 1
             payload['subetapa'] = effective_subetapa
 
+        print(f'[FLUX-BATCH-SPECS]   Enviando... (dry_run={dry_run})')
         try:
             result = send_payload(payload, dry_run=dry_run)
             is_ok = result.get('status') in ('success', 'dry_run')
 
             if is_ok:
                 success_count += 1
+                print(f'[FLUX-BATCH-SPECS]   ✅ {result.get("status")} | HTTP {result.get("http_status", "—")}')
             else:
                 error_count += 1
+                print(f'[FLUX-BATCH-SPECS]   ❌ ERRO: {result.get("error", "?")} | HTTP {result.get("http_status", "?")}')
+                # Log response body for debugging
+                resp_body = result.get('response', '')
+                if resp_body:
+                    print(f'[FLUX-BATCH-SPECS]   Response body: {str(resp_body)[:500]}')
 
             results.append({
                 'spec_id': spec_id,
@@ -539,11 +566,18 @@ def send_batch_specs():
             })
         except Exception as exc:
             error_count += 1
+            print(f'[FLUX-BATCH-SPECS]   💥 EXCEPTION: {type(exc).__name__}: {exc}')
+            import traceback
+            traceback.print_exc()
             results.append({
                 'spec_id': spec_id,
                 'ok': False,
                 'message': f'Erro inesperado: {exc}',
             })
+
+    print(f'\n[FLUX-BATCH-SPECS] ══ RESUMO ══')
+    print(f'[FLUX-BATCH-SPECS] Total: {len(spec_ids)} | ✅ Sucesso: {success_count} | ❌ Erro: {error_count} | Dry-run: {dry_run}')
+    print('='*60 + '\n')
 
     return jsonify({
         'total': len(spec_ids),
