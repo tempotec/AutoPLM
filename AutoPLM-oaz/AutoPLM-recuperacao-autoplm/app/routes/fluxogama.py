@@ -115,7 +115,7 @@ def send_to_fluxogama(ficha_id, item_id):
     if allow_create:
         subetapa = request.args.get(
             'subetapa',
-            os.environ.get('FLUXOGAMA_SUBETAPA_WSID', ''),
+            os.environ.get('FLUXOGAMA_SUBETAPA_WSID') or os.environ.get('OAZ_DEFAULT_COLECAO', ''),
         )
         if not subetapa:
             return jsonify({
@@ -221,7 +221,7 @@ def send_batch():
     if allow_create:
         subetapa = request.args.get(
             'subetapa',
-            os.environ.get('FLUXOGAMA_SUBETAPA_WSID', ''),
+            os.environ.get('FLUXOGAMA_SUBETAPA_WSID') or os.environ.get('OAZ_DEFAULT_COLECAO', ''),
         )
         if not subetapa:
             return jsonify({
@@ -393,7 +393,7 @@ def send_batch_specs():
     if allow_create:
         subetapa = request.args.get(
             'subetapa',
-            os.environ.get('FLUXOGAMA_SUBETAPA_WSID', ''),
+            os.environ.get('FLUXOGAMA_SUBETAPA_WSID') or os.environ.get('OAZ_DEFAULT_COLECAO', ''),
         )
 
     results = []

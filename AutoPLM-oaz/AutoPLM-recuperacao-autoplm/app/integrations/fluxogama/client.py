@@ -18,10 +18,12 @@ logger = logging.getLogger('fluxogama.client')
 
 
 def _get_config():
-    """Read Fluxogama config from environment variables."""
-    base_url = os.environ.get('FLUXOGAMA_BASE_URL', '').rstrip('/')
-    chave = os.environ.get('FLUXOGAMA_CHAVE', '')
-    endpoint = os.environ.get('FLUXOGAMA_ENDPOINT_ENVIO', '/rest/api/v1/remessa/envio')
+    """Read Fluxogama config from environment variables.
+    Supports both OAZ_* (current .env) and FLUXOGAMA_* (legacy) prefixes.
+    """
+    base_url = (os.environ.get('OAZ_BASE_URL') or os.environ.get('FLUXOGAMA_BASE_URL', '')).rstrip('/')
+    chave = os.environ.get('OAZ_CHAVE') or os.environ.get('FLUXOGAMA_CHAVE', '')
+    endpoint = os.environ.get('OAZ_MODELO_PUSH_PATH') or os.environ.get('FLUXOGAMA_ENDPOINT_ENVIO', '/remessa/envio')
     return base_url, chave, endpoint
 
 

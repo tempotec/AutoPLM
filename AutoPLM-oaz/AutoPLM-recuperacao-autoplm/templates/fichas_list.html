@@ -96,6 +96,11 @@
         transform: translateY(-2px);
     }
 
+    .ficha-card.selected {
+        border-color: #7c3aed;
+        box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.3), var(--shadow-md);
+    }
+
     /* Thumbnail */
     .ficha-thumb {
         width: 100%;
@@ -118,6 +123,18 @@
         font-size: 38px;
         color: var(--brand-primary);
         opacity: 0.4;
+    }
+
+    /* Checkbox overlay on card */
+    .ficha-checkbox {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        width: 22px;
+        height: 22px;
+        cursor: pointer;
+        accent-color: #7c3aed;
     }
 
     /* Body */
@@ -268,6 +285,212 @@
             transform: rotate(360deg);
         }
     }
+
+    /* ─── Floating Action Bar ─── */
+    .flux-action-bar {
+        position: fixed;
+        bottom: -80px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 14px 28px;
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        transition: bottom 0.3s ease;
+    }
+
+    .flux-action-bar.visible {
+        bottom: 32px;
+    }
+
+    .flux-action-bar .counter {
+        font-size: 14px;
+        font-weight: 600;
+        color: #a78bfa;
+        white-space: nowrap;
+    }
+
+    .flux-action-bar .btn-flux-send {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 24px;
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: #fff;
+        border: none;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .flux-action-bar .btn-flux-send:hover {
+        background: linear-gradient(135deg, #6d28d9, #5b21b6);
+        transform: translateY(-1px);
+    }
+
+    .flux-action-bar .btn-deselect {
+        background: none;
+        border: 1px solid #475569;
+        color: #94a3b8;
+        padding: 8px 14px;
+        border-radius: 8px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .flux-action-bar .btn-deselect:hover {
+        background: #334155;
+        color: #e2e8f0;
+    }
+
+    /* ─── Flux Modal ─── */
+    .flux-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .flux-modal-overlay.active {
+        display: flex;
+    }
+
+    .flux-modal {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 28px;
+        width: 520px;
+        max-width: 90vw;
+        max-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .flux-modal h2 {
+        font-size: 18px;
+        font-weight: 700;
+        color: #fff;
+        margin: 0 0 20px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .flux-modal h2 i {
+        color: #a78bfa;
+        font-size: 22px;
+    }
+
+    .flux-modal-body {
+        flex: 1;
+        overflow-y: auto;
+        margin-bottom: 20px;
+    }
+
+    .flux-item-list {
+        list-style: none;
+        padding: 0;
+        margin: 12px 0 0;
+        max-height: 200px;
+        overflow-y: auto;
+        background: #0f172a;
+        border-radius: 8px;
+        border: 1px solid #1f2937;
+    }
+
+    .flux-item-list li {
+        padding: 8px 12px;
+        font-size: 12px;
+        color: #94a3b8;
+        border-bottom: 1px solid #1f2937;
+        display: flex;
+        gap: 8px;
+    }
+
+    .flux-item-list li:last-child {
+        border-bottom: none;
+    }
+
+    .flux-item-list .item-ref {
+        color: #e2e8f0;
+        font-weight: 600;
+        min-width: 110px;
+    }
+
+    .flux-footer {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .flux-footer .btn-cancel {
+        padding: 10px 18px;
+        background: #1f2937;
+        border: 1px solid #334155;
+        color: #e5e7eb;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .flux-footer .btn-confirm {
+        padding: 10px 22px;
+        background: linear-gradient(135deg, #7c3aed, #6d28d9);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .flux-footer .btn-confirm:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    .flux-result-ok {
+        color: #34d399;
+    }
+
+    .flux-result-fail {
+        color: #f87171;
+    }
+
+    .flux-spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #334155;
+        border-top-color: #a78bfa;
+        border-radius: 50%;
+        animation: fluxSpin 0.6s linear infinite;
+        display: inline-block;
+    }
+
+    @keyframes fluxSpin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
 </style>
 {% endblock %}
 
@@ -315,9 +538,13 @@
 <!-- Cards Grid -->
 <div class="fichas-grid" id="fichasGrid">
     {% for spec in specifications %}
-    <a href="{{ url_for('specifications.view', id=spec.id) }}" class="ficha-card"
-        data-name="{{ (spec.description or '') | lower }}" data-ref="{{ (spec.ref_souq or '') | lower }}"
-        data-status="{{ spec.processing_status or '' }}" data-colecao="{{ spec.collection_id or '' }}">
+    <div class="ficha-card" data-spec-id="{{ spec.id }}" data-name="{{ (spec.description or '') | lower }}"
+        data-ref="{{ (spec.ref_souq or '') | lower }}" data-status="{{ spec.processing_status or '' }}"
+        data-colecao="{{ spec.collection_id or '' }}">
+
+        <!-- Selection checkbox -->
+        <input type="checkbox" class="ficha-checkbox" data-id="{{ spec.id }}"
+            title="Selecionar para enviar ao Fluxogama">
 
         <!-- Status badge -->
         {% if spec.processing_status == 'completed' %}
@@ -330,17 +557,17 @@
         <span class="status-badge pending">Pendente</span>
         {% endif %}
 
-        <!-- Thumbnail -->
-        <div class="ficha-thumb">
+        <!-- Thumbnail (clickable to view) -->
+        <a href="{{ url_for('specifications.view', id=spec.id) }}" class="ficha-thumb">
             {% if spec.pdf_thumbnail %}
             <img src="{{ spec.pdf_thumbnail }}" alt="Thumbnail">
             {% else %}
             <i class="fas fa-file-alt no-thumb"></i>
             {% endif %}
-        </div>
+        </a>
 
-        <!-- Body -->
-        <div class="ficha-body">
+        <!-- Body (clickable to view) -->
+        <a href="{{ url_for('specifications.view', id=spec.id) }}" class="ficha-body" style="text-decoration:none;">
             {% if spec.ref_souq %}
             <div class="ficha-ref">REF {{ spec.ref_souq }}</div>
             {% endif %}
@@ -358,8 +585,8 @@
                 <span><i class="fas fa-calendar"></i> {{ spec.created_at.strftime('%d/%m/%y') }}</span>
                 {% endif %}
             </div>
-        </div>
-    </a>
+        </a>
+    </div>
     {% else %}
     <div class="empty-state">
         <i class="fas fa-file-alt"></i>
@@ -371,16 +598,94 @@
     </div>
     {% endfor %}
 </div>
+
+<!-- Floating Action Bar (appears when items are selected) -->
+<div class="flux-action-bar" id="fluxActionBar">
+    <span class="counter" id="fluxCounter">0 selecionadas</span>
+    <button class="btn-deselect" id="btnDeselectAll">
+        <i class="fas fa-times"></i> Limpar
+    </button>
+    <button class="btn-flux-send" id="btnFluxSend">
+        <i class="fas fa-paper-plane"></i> Enviar para o Fluxogama
+    </button>
+</div>
+{% endblock %}
+
+{% block modals %}
+<!-- Fluxogama Batch Send Modal -->
+<div class="flux-modal-overlay" id="fluxModal">
+    <div class="flux-modal">
+        <h2><i class="fas fa-paper-plane"></i> Enviar ao Fluxogama</h2>
+        <div class="flux-modal-body" id="fluxModalBody">
+            <!-- Populated by JS -->
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:12px;color:#94a3b8;margin-bottom:6px;">Subetapa</label>
+            <select id="fluxSubetapa"
+                style="width:100%;padding:10px 12px;background:#0f172a;border:1px solid #334155;border-radius:8px;color:#e5e7eb;font-size:13px;">
+                <option value="">-- Selecione a subetapa --</option>
+            </select>
+        </div>
+        <div style="display:flex;gap:16px;margin-bottom:20px;">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
+                <input type="checkbox" id="fluxDryRun"> Dry-run (teste)
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94a3b8;cursor:pointer;">
+                <input type="checkbox" id="fluxForce"> Force (reenviar)
+            </label>
+        </div>
+        <div class="flux-footer">
+            <button class="btn-cancel" id="btnFluxCancel">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button class="btn-confirm" id="btnFluxConfirm" disabled>
+                <i class="fas fa-check"></i> Confirmar envio
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
+    // ─── Subetapa Options ───
+    const SUBETAPA_OPTIONS = [
+        { label: 'Ficha do desenvolvimento', wsid: '14' },
+        { label: 'Entrada do mix Souq', wsid: '54' },
+        { label: 'Tabela de Medidas', wsid: '70' },
+        { label: 'Fluxogama', wsid: '11' },
+    ];
+
+    // ─── DOM refs ───
     const searchInput = document.getElementById('fichasSearch');
     const statusFilter = document.getElementById('statusFilter');
     const colecaoFilter = document.getElementById('colecaoFilter');
     const grid = document.getElementById('fichasGrid');
     const resultsLine = document.getElementById('resultsLine');
+    const actionBar = document.getElementById('fluxActionBar');
+    const fluxCounter = document.getElementById('fluxCounter');
+    const btnDeselectAll = document.getElementById('btnDeselectAll');
+    const btnFluxSend = document.getElementById('btnFluxSend');
+    const fluxModal = document.getElementById('fluxModal');
+    const fluxModalBody = document.getElementById('fluxModalBody');
+    const fluxSubetapa = document.getElementById('fluxSubetapa');
+    const fluxDryRun = document.getElementById('fluxDryRun');
+    const fluxForce = document.getElementById('fluxForce');
+    const btnFluxCancel = document.getElementById('btnFluxCancel');
+    const btnFluxConfirm = document.getElementById('btnFluxConfirm');
 
+    // ─── Selection state ───
+    const selectedSpecIds = new Set();
+
+    // Populate subetapa dropdown
+    SUBETAPA_OPTIONS.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt.wsid;
+        o.textContent = `${opt.label} (wsid: ${opt.wsid})`;
+        fluxSubetapa.appendChild(o);
+    });
+
+    // ─── Filters ───
     function applyFilters() {
         const q = searchInput ? searchInput.value.toLowerCase().trim() : '';
         const status = statusFilter ? statusFilter.value : '';
@@ -408,5 +713,176 @@
     if (searchInput) searchInput.addEventListener('input', applyFilters);
     if (statusFilter) statusFilter.addEventListener('change', applyFilters);
     if (colecaoFilter) colecaoFilter.addEventListener('change', applyFilters);
+
+    // ─── Selection logic ───
+    function updateActionBar() {
+        const count = selectedSpecIds.size;
+        if (count > 0) {
+            actionBar.classList.add('visible');
+            fluxCounter.textContent = count === 1 ? '1 ficha selecionada' : `${count} fichas selecionadas`;
+        } else {
+            actionBar.classList.remove('visible');
+        }
+    }
+
+    // Checkbox click (stop propagation so it doesn't navigate)
+    grid.addEventListener('change', (e) => {
+        if (!e.target.classList.contains('ficha-checkbox')) return;
+        const specId = parseInt(e.target.dataset.id, 10);
+        const card = e.target.closest('.ficha-card');
+        if (e.target.checked) {
+            selectedSpecIds.add(specId);
+            card.classList.add('selected');
+        } else {
+            selectedSpecIds.delete(specId);
+            card.classList.remove('selected');
+        }
+        updateActionBar();
+    });
+
+    // Prevent checkbox clicks from triggering card navigation
+    grid.querySelectorAll('.ficha-checkbox').forEach(cb => {
+        cb.addEventListener('click', (e) => e.stopPropagation());
+    });
+
+    // Deselect all
+    btnDeselectAll.addEventListener('click', () => {
+        selectedSpecIds.clear();
+        grid.querySelectorAll('.ficha-checkbox').forEach(cb => {
+            cb.checked = false;
+            cb.closest('.ficha-card').classList.remove('selected');
+        });
+        updateActionBar();
+    });
+
+    // ─── Flux Send Modal ───
+    btnFluxSend.addEventListener('click', () => {
+        if (!selectedSpecIds.size) return;
+
+        const count = selectedSpecIds.size;
+        // Build list preview from cards
+        const items = [];
+        grid.querySelectorAll('.ficha-card').forEach(card => {
+            const id = parseInt(card.dataset.specId, 10);
+            if (selectedSpecIds.has(id)) {
+                const ref = card.querySelector('.ficha-ref')?.textContent?.trim() || '';
+                const name = card.querySelector('.ficha-name')?.textContent?.trim() || `#${id}`;
+                items.push({ ref, name });
+            }
+        });
+
+        let listHtml = '<ul class="flux-item-list">';
+        items.slice(0, 30).forEach(it => {
+            listHtml += `<li><span class="item-ref">${it.ref}</span><span>${it.name}</span></li>`;
+        });
+        if (items.length > 30) {
+            listHtml += `<li style="color:#64748b;">…e mais ${items.length - 30} fichas</li>`;
+        }
+        listHtml += '</ul>';
+
+        fluxModalBody.innerHTML = `
+            <p style="font-size:14px;color:#cbd5e1;margin-bottom:12px;">
+                Você está prestes a enviar <strong style="color:#a78bfa;">${count}</strong>
+                ${count === 1 ? 'ficha' : 'fichas'} para o Fluxogama.
+            </p>
+            ${listHtml}
+        `;
+
+        // Reset modal state
+        btnFluxConfirm.disabled = !fluxSubetapa.value;
+        btnFluxConfirm.style.opacity = fluxSubetapa.value ? '1' : '0.5';
+        btnFluxConfirm.innerHTML = '<i class="fas fa-check"></i> Confirmar envio';
+        btnFluxConfirm.style.display = '';
+        btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Cancelar';
+
+        fluxModal.classList.add('active');
+    });
+
+    // Enable/disable confirm based on subetapa
+    fluxSubetapa.addEventListener('change', () => {
+        const hasVal = fluxSubetapa.value !== '';
+        btnFluxConfirm.disabled = !hasVal;
+        btnFluxConfirm.style.opacity = hasVal ? '1' : '0.5';
+    });
+
+    // Close modal
+    btnFluxCancel.addEventListener('click', () => fluxModal.classList.remove('active'));
+    fluxModal.addEventListener('click', (e) => {
+        if (e.target === fluxModal) fluxModal.classList.remove('active');
+    });
+
+    // ─── Confirm Send ───
+    btnFluxConfirm.addEventListener('click', async () => {
+        if (!selectedSpecIds.size || !fluxSubetapa.value) return;
+
+        btnFluxConfirm.disabled = true;
+        btnFluxConfirm.innerHTML = '<span class="flux-spinner"></span> Enviando…';
+        btnFluxCancel.style.display = 'none';
+
+        try {
+            const params = new URLSearchParams({
+                allow_create: '1',
+                subetapa: fluxSubetapa.value,
+            });
+            if (fluxDryRun.checked) params.set('dry_run', '1');
+            if (fluxForce.checked) params.set('force', '1');
+
+            const resp = await fetch(`/api/fluxogama/send-batch-specs?${params.toString()}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ spec_ids: Array.from(selectedSpecIds) }),
+                credentials: 'same-origin',
+            });
+
+            const data = await resp.json();
+
+            if (!resp.ok && !data.results) {
+                showFluxResult(null, data.error || 'Erro ao enviar.');
+                return;
+            }
+
+            showFluxResult(data, null);
+        } catch (err) {
+            showFluxResult(null, `Erro de conexão: ${err.message}`);
+        }
+    });
+
+    function showFluxResult(data, errorMsg) {
+        let html = '';
+        if (errorMsg) {
+            html = `<p class="flux-result-fail"><i class="fas fa-exclamation-triangle"></i> ${errorMsg}</p>`;
+        } else if (data) {
+            const { success_count, error_count, results, dry_run } = data;
+            const parts = [];
+            if (success_count > 0) {
+                const verb = dry_run ? 'validadas' : 'enviadas';
+                parts.push(`<p class="flux-result-ok" style="margin-bottom:8px;"><i class="fas fa-check-circle"></i> ${success_count} ${verb} com sucesso.</p>`);
+            }
+            if (error_count > 0) {
+                parts.push(`<p class="flux-result-fail" style="margin-bottom:12px;"><i class="fas fa-exclamation-triangle"></i> ${error_count} com erro.</p>`);
+            }
+            if (parts.length === 0 && dry_run) {
+                parts.push(`<p class="flux-result-ok"><i class="fas fa-vial"></i> Dry-run concluído.</p>`);
+            }
+            html = parts.join('');
+
+            // Per-spec details
+            if (results && results.length > 0) {
+                html += '<ul class="flux-item-list" style="margin-top:12px;">';
+                results.forEach(r => {
+                    const icon = r.ok
+                        ? '<i class="fas fa-check" style="color:#34d399"></i>'
+                        : '<i class="fas fa-times" style="color:#f87171"></i>';
+                    html += `<li>${icon} <span class="item-ref">Spec #${r.spec_id}</span><span>${r.message}</span></li>`;
+                });
+                html += '</ul>';
+            }
+        }
+
+        fluxModalBody.innerHTML = html;
+        btnFluxConfirm.style.display = 'none';
+        btnFluxCancel.style.display = '';
+        btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
+    }
 </script>
 {% endblock %}
