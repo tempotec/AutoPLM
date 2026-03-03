@@ -5,7 +5,7 @@ import json
 from datetime import datetime
 from flask import Blueprint, render_template, redirect, url_for, flash, session, request, jsonify, send_file, current_app
 from werkzeug.utils import secure_filename
-from app.extensions import db, get_openai_client
+from app.extensions import db, csrf, get_openai_client
 from app.models import User, Specification, Collection, Supplier
 from app.forms import UploadPDFForm, SpecificationForm
 from app.utils.auth import login_required
@@ -583,17 +583,23 @@ def edit(id):
 
 
 @specifications_bp.route('/specification/<int:id>/delete', methods=['POST'])
+@csrf.exempt
 @login_required
 def delete(id):
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in (request.headers.get('Accept') or '')
     try:
         spec = Specification.query.get_or_404(id)
         user = User.query.get(session['user_id'])
         if not user:
             session.clear()
+            if is_ajax:
+                return jsonify({'ok': False, 'error': 'Sessão inválida'}), 401
             flash('Sessão inválida. Por favor, faça login novamente.')
             return redirect(url_for('auth.login'))
 
         if not user.is_admin and spec.user_id != user.id:
+            if is_ajax:
+                return jsonify({'ok': False, 'error': 'Acesso negado'}), 403
             flash('Acesso negado.')
             return redirect(url_for('dashboard.index'))
 
@@ -606,6 +612,9 @@ def delete(id):
         db.session.commit()
         log_activity('DELETE_SPECIFICATION', 'specification', id, target_name=spec_name)
         rpa_info(f"DELETE_SPEC: Especificação '{spec_name}' (ID: {id}) excluída")
+
+        if is_ajax:
+            return jsonify({'ok': True, 'message': 'Excluída com sucesso'})
         flash('Especificação excluída com sucesso!')
     except Exception as e:
         db.session.rollback()
@@ -613,6 +622,8 @@ def delete(id):
         print(f"Erro ao excluir especificação {id}: {e}")
         traceback.print_exc()
         rpa_error(f"DELETE_SPEC_ERRO: Erro ao excluir especificação ID {id}", exc=e, regiao="delete_spec")
+        if is_ajax:
+            return jsonify({'ok': False, 'error': str(e)}), 500
         flash('Erro ao excluir especificação. Tente novamente.')
 
     return redirect(url_for('dashboard.index'))

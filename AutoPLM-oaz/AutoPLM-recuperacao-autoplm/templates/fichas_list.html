@@ -491,6 +491,146 @@
             transform: rotate(360deg);
         }
     }
+
+    /* ─── Card Delete Button ─── */
+    .ficha-delete-btn {
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        opacity: 0;
+        transition: all 0.2s;
+        z-index: 5;
+    }
+
+    .ficha-card:hover .ficha-delete-btn {
+        opacity: 1;
+    }
+
+    .ficha-delete-btn:hover {
+        background: #ef4444;
+        color: #fff;
+        border-color: #ef4444;
+        transform: scale(1.1);
+    }
+
+    .ficha-card {
+        position: relative;
+    }
+
+    .flux-action-bar .btn-batch-delete {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        color: #f87171;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .flux-action-bar .btn-batch-delete:hover {
+        background: #ef4444;
+        color: #fff;
+        border-color: #ef4444;
+    }
+
+    /* ─── Delete Confirmation Modal ─── */
+    .delete-modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .delete-modal-overlay.active {
+        display: flex;
+    }
+
+    .delete-modal {
+        background: #1e293b;
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 28px;
+        width: 440px;
+        max-width: 90vw;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+        text-align: center;
+    }
+
+    .delete-modal .delete-icon {
+        font-size: 42px;
+        color: #ef4444;
+        margin-bottom: 16px;
+    }
+
+    .delete-modal h3 {
+        color: #fff;
+        font-size: 18px;
+        margin: 0 0 8px;
+    }
+
+    .delete-modal p {
+        color: #94a3b8;
+        font-size: 14px;
+        margin: 0 0 24px;
+        line-height: 1.5;
+    }
+
+    .delete-modal .delete-actions {
+        display: flex;
+        gap: 12px;
+        justify-content: center;
+    }
+
+    .delete-modal .btn-cancel-del {
+        padding: 10px 24px;
+        background: #1f2937;
+        border: 1px solid #334155;
+        color: #e5e7eb;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .delete-modal .btn-confirm-del {
+        padding: 10px 24px;
+        background: #ef4444;
+        border: none;
+        color: #fff;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background 0.2s;
+    }
+
+    .delete-modal .btn-confirm-del:hover {
+        background: #dc2626;
+    }
 </style>
 {% endblock %}
 
@@ -586,6 +726,12 @@
                 {% endif %}
             </div>
         </a>
+
+        <!-- Delete button -->
+        <button class="ficha-delete-btn" data-id="{{ spec.id }}"
+            data-name="{{ spec.description or spec.ref_souq or spec.pdf_filename or '' }}" title="Excluir ficha">
+            <i class="fas fa-trash-alt"></i>
+        </button>
     </div>
     {% else %}
     <div class="empty-state">
@@ -604,6 +750,9 @@
     <span class="counter" id="fluxCounter">0 selecionadas</span>
     <button class="btn-deselect" id="btnDeselectAll">
         <i class="fas fa-times"></i> Limpar
+    </button>
+    <button class="btn-batch-delete" id="btnBatchDelete">
+        <i class="fas fa-trash-alt"></i> Excluir selecionadas
     </button>
     <button class="btn-flux-send" id="btnFluxSend">
         <i class="fas fa-paper-plane"></i> Enviar para o Fluxogama
@@ -644,16 +793,42 @@
         </div>
     </div>
 </div>
+
+<!-- Delete Confirmation Modal -->
+<div class="delete-modal-overlay" id="deleteModal">
+    <div class="delete-modal">
+        <div class="delete-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 id="deleteTitle">Excluir ficha?</h3>
+        <p id="deleteMsg">Essa ação não pode ser desfeita.</p>
+        <div class="delete-actions">
+            <button class="btn-cancel-del" id="btnCancelDel">Cancelar</button>
+            <button class="btn-confirm-del" id="btnConfirmDel">
+                <i class="fas fa-trash-alt"></i> Excluir
+            </button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-    // ─── Subetapa Options ───
+    // ─── Subetapa Options (coleção 61 — VERÃO 26/27) ───
     const SUBETAPA_OPTIONS = [
-        { label: 'Ficha do desenvolvimento', wsid: '14' },
+        { label: 'Ficha do desenvolvimento', wsid: '31' },
+        { label: 'Cotação/Escolha c/ Fornecedor', wsid: '32' },
+        { label: 'Montagem da Coleção', wsid: '33' },
+        { label: 'Ajuste Croqui', wsid: '34' },
+        { label: 'Estilo Nacional', wsid: '5' },
+        { label: 'Aprovação das Amostras Imp', wsid: '6' },
+        { label: 'Compras Tecido Imp/Nacional', wsid: '9' },
+        { label: 'Entrada do mix IDA', wsid: '10' },
+        { label: 'Compras Nacional/Importado', wsid: '17' },
+        { label: 'Criar PI', wsid: '20' },
         { label: 'Entrada do mix Souq', wsid: '54' },
-        { label: 'Tabela de Medidas', wsid: '70' },
-        { label: 'Fluxogama', wsid: '11' },
+        { label: 'Entrada do mix TSM', wsid: '55' },
+        { label: 'Envio de Artworks, Tags Etc', wsid: '89' },
+        { label: 'Envio de artworks - aprovado', wsid: '93' },
+        { label: 'Envio de artworks - reprovado', wsid: '94' },
     ];
 
     // ─── DOM refs ───
@@ -884,5 +1059,112 @@
         btnFluxCancel.style.display = '';
         btnFluxCancel.innerHTML = '<i class="fas fa-times"></i> Fechar';
     }
+
+    // ─── Delete Logic ───
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteTitle = document.getElementById('deleteTitle');
+    const deleteMsg = document.getElementById('deleteMsg');
+    const btnCancelDel = document.getElementById('btnCancelDel');
+    const btnConfirmDel = document.getElementById('btnConfirmDel');
+    const btnBatchDelete = document.getElementById('btnBatchDelete');
+    let pendingDeleteIds = [];
+
+    function openDeleteModal(ids, nameOrCount) {
+        pendingDeleteIds = ids;
+        if (ids.length === 1) {
+            deleteTitle.textContent = 'Excluir ficha?';
+            deleteMsg.innerHTML = `Tem certeza que deseja excluir <strong>${nameOrCount}</strong>?<br>Essa ação não pode ser desfeita.`;
+        } else {
+            deleteTitle.textContent = `Excluir ${ids.length} fichas?`;
+            deleteMsg.innerHTML = `Tem certeza que deseja excluir <strong>${ids.length} fichas</strong> selecionadas?<br>Essa ação não pode ser desfeita.`;
+        }
+        btnConfirmDel.innerHTML = '<i class="fas fa-trash-alt"></i> Excluir';
+        btnConfirmDel.disabled = false;
+        btnConfirmDel.style.display = '';
+        btnCancelDel.textContent = 'Cancelar';
+        deleteModal.classList.add('active');
+    }
+
+    btnCancelDel.addEventListener('click', () => {
+        deleteModal.classList.remove('active');
+        pendingDeleteIds = [];
+    });
+
+    deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+            deleteModal.classList.remove('active');
+            pendingDeleteIds = [];
+        }
+    });
+
+    // Individual delete buttons
+    document.querySelectorAll('.ficha-delete-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            const id = parseInt(btn.dataset.id);
+            const name = btn.dataset.name || `Spec #${id}`;
+            openDeleteModal([id], name);
+        });
+    });
+
+    // Batch delete button
+    if (btnBatchDelete) {
+        btnBatchDelete.addEventListener('click', () => {
+            if (selectedSpecIds.size === 0) return;
+            openDeleteModal(Array.from(selectedSpecIds), selectedSpecIds.size);
+        });
+    }
+
+    // Confirm delete
+    btnConfirmDel.addEventListener('click', async () => {
+        if (pendingDeleteIds.length === 0) return;
+        btnConfirmDel.disabled = true;
+        btnConfirmDel.innerHTML = '<span class="flux-spinner"></span> Excluindo…';
+
+        let deleted = 0;
+        let errors = 0;
+
+        for (const id of pendingDeleteIds) {
+            try {
+                const resp = await fetch(`/specification/${id}/delete`, {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                    credentials: 'same-origin',
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (data.ok) {
+                    const card = document.querySelector(`.ficha-card[data-spec-id="${id}"]`);
+                    if (card) {
+                        card.style.transition = 'opacity 0.3s, transform 0.3s';
+                        card.style.opacity = '0';
+                        card.style.transform = 'scale(0.9)';
+                        setTimeout(() => card.remove(), 300);
+                    }
+                    selectedSpecIds.delete(id);
+                    deleted++;
+                } else {
+                    errors++;
+                }
+            } catch (err) {
+                errors++;
+            }
+        }
+
+        updateActionBar();
+        setTimeout(() => {
+            const remaining = grid.querySelectorAll('.ficha-card').length;
+            resultsLine.textContent = `${remaining} ficha(s) encontrada(s)`;
+        }, 400);
+
+        let msg = '';
+        if (deleted > 0) msg += `<span style="color:#34d399"><i class="fas fa-check-circle"></i> ${deleted} ficha(s) excluída(s)</span>`;
+        if (errors > 0) msg += `<br><span style="color:#f87171"><i class="fas fa-times-circle"></i> ${errors} erro(s)</span>`;
+        deleteMsg.innerHTML = msg;
+        deleteTitle.textContent = 'Concluído';
+        btnConfirmDel.style.display = 'none';
+        btnCancelDel.textContent = 'Fechar';
+        pendingDeleteIds = [];
+    });
 </script>
 {% endblock %}
