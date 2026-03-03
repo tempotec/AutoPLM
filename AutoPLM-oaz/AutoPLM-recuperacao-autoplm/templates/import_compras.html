@@ -1,0 +1,629 @@
+{%- extends "layout.html" -%}
+
+{% block title %}Importar Compras - OAZ AutoPLM{% endblock %}
+
+{% block styles %}
+<style>
+    .import-container {
+        max-width: 960px;
+        margin: 0 auto;
+    }
+
+    /* Upload zone */
+    .upload-zone {
+        border: 2px dashed var(--border-default);
+        border-radius: var(--radius-lg);
+        padding: 48px 32px;
+        text-align: center;
+        background: var(--bg-card);
+        transition: all var(--transition-fast);
+        cursor: pointer;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.dragover {
+        border-color: var(--brand-primary);
+        background: var(--bg-hover);
+    }
+
+    .upload-zone i {
+        font-size: 48px;
+        color: var(--brand-primary);
+        margin-bottom: 16px;
+    }
+
+    .upload-zone h3 {
+        font-family: var(--font-heading);
+        font-size: 18px;
+        color: var(--text-primary);
+        margin: 0 0 8px;
+    }
+
+    .upload-zone p {
+        font-size: 14px;
+        color: var(--text-muted);
+        margin: 0;
+    }
+
+    .upload-zone input[type="file"] {
+        display: none;
+    }
+
+    /* Sheet selector */
+    .sheet-selector {
+        display: none;
+        margin-top: 16px;
+        padding: 16px;
+        background: var(--bg-card);
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+    }
+
+    .sheet-selector.visible {
+        display: block;
+    }
+
+    .sheet-selector label {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        display: block;
+        margin-bottom: 8px;
+    }
+
+    .sheet-selector select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        background: var(--bg-card);
+        color: var(--text-primary);
+        font-size: 14px;
+        font-family: var(--font-body);
+    }
+
+    /* Preview table */
+    .preview-section {
+        display: none;
+        margin-top: 24px;
+    }
+
+    .preview-section.visible {
+        display: block;
+    }
+
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+    }
+
+    .preview-header h3 {
+        font-family: var(--font-heading);
+        font-size: 18px;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .preview-stats {
+        display: flex;
+        gap: 16px;
+    }
+
+    .preview-stat {
+        font-size: 13px;
+        padding: 6px 12px;
+        border-radius: var(--radius-md);
+        background: var(--bg-hover);
+        color: var(--text-secondary);
+    }
+
+    .preview-stat strong {
+        color: var(--text-gold-dark);
+    }
+
+    .preview-table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border-default);
+        border-radius: var(--radius-md);
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .preview-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+    }
+
+    .preview-table th {
+        position: sticky;
+        top: 0;
+        background: var(--bg-card-alt);
+        padding: 10px 12px;
+        text-align: left;
+        font-weight: 600;
+        color: var(--text-secondary);
+        border-bottom: 2px solid var(--border-default);
+        white-space: nowrap;
+    }
+
+    .preview-table td {
+        padding: 8px 12px;
+        border-bottom: 1px solid var(--border-default);
+        color: var(--text-primary);
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .preview-table tr:hover {
+        background: var(--bg-hover);
+    }
+
+    /* Action bar */
+    .import-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 24px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border-default);
+    }
+
+    /* Progress / loading */
+    .import-progress {
+        display: none;
+        text-align: center;
+        padding: 32px;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        margin-top: 24px;
+    }
+
+    .import-progress.visible {
+        display: block;
+    }
+
+    .import-progress .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--border-default);
+        border-top-color: var(--brand-primary);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+        margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    .import-progress p {
+        font-size: 15px;
+        color: var(--text-secondary);
+    }
+
+    /* Result */
+    .import-result {
+        display: none;
+        padding: 24px;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-default);
+        margin-top: 24px;
+        text-align: center;
+    }
+
+    .import-result.visible {
+        display: block;
+    }
+
+    .import-result.success {
+        border-color: var(--color-success);
+    }
+
+    .import-result.error {
+        border-color: var(--color-error);
+    }
+
+    .import-result i {
+        font-size: 40px;
+        margin-bottom: 12px;
+    }
+
+    .import-result.success i {
+        color: var(--color-success);
+    }
+
+    .import-result.error i {
+        color: var(--color-error);
+    }
+
+    .import-result h3 {
+        font-family: var(--font-heading);
+        font-size: 18px;
+        color: var(--text-primary);
+        margin: 0 0 8px;
+    }
+
+    .import-result p {
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .selected-file {
+        display: none;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        background: var(--bg-hover);
+        border-radius: var(--radius-md);
+        margin-top: 16px;
+    }
+
+    .selected-file.visible {
+        display: flex;
+    }
+
+    .selected-file i {
+        color: var(--brand-primary);
+        font-size: 20px;
+    }
+
+    .selected-file .file-name {
+        flex: 1;
+        font-size: 14px;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+
+    .selected-file .btn-remove {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        font-size: 16px;
+    }
+
+    .selected-file .btn-remove:hover {
+        color: var(--color-error);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="header-top">
+        <h1 class="page-title">Importar Compras</h1>
+        <a href="{{ url_for('specifications.index') }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar às Fichas
+        </a>
+    </div>
+    <p class="page-subtitle">Importe produtos comprados de planilhas Excel para criar fichas automaticamente</p>
+</div>
+
+<div class="import-container">
+    <!-- Step 1: Upload -->
+    <div class="upload-zone" id="uploadZone">
+        <i class="fas fa-file-excel"></i>
+        <h3>Arraste o arquivo Excel aqui</h3>
+        <p>ou clique para selecionar um arquivo .xlsx</p>
+        <input type="file" id="fileInput" accept=".xlsx,.xls">
+    </div>
+
+    <div class="selected-file" id="selectedFile">
+        <i class="fas fa-file-excel"></i>
+        <span class="file-name" id="fileName"></span>
+        <button class="btn-remove" id="btnRemoveFile" title="Remover arquivo">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <!-- Sheet selector (shown after upload) -->
+    <div class="sheet-selector" id="sheetSelector">
+        <label for="sheetSelect">Selecione a aba do Excel:</label>
+        <select id="sheetSelect"></select>
+        <div style="margin-top:12px; text-align:right;">
+            <button class="btn btn-primary" id="btnPreview">
+                <i class="fas fa-search"></i> Visualizar
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 2: Preview -->
+    <div class="preview-section" id="previewSection">
+        <div class="preview-header">
+            <h3>Preview dos Produtos</h3>
+            <div class="preview-stats">
+                <span class="preview-stat"><strong id="totalRows">0</strong> produtos</span>
+                <span class="preview-stat"><strong id="skippedRows">0</strong> ignorados</span>
+                <span class="preview-stat">Aba: <strong id="selectedSheet">—</strong></span>
+            </div>
+        </div>
+
+        <div class="preview-table-wrap">
+            <table class="preview-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Subgrupo</th>
+                        <th>Referência</th>
+                        <th>Cor</th>
+                        <th>Fornecedor</th>
+                        <th>Grupo</th>
+                        <th>Linha</th>
+                        <th>Corner</th>
+                        <th>Composição</th>
+                        <th>Preço</th>
+                        <th>Tamanhos</th>
+                        <th>Entrega</th>
+                    </tr>
+                </thead>
+                <tbody id="previewBody"></tbody>
+            </table>
+        </div>
+
+        <div class="import-actions">
+            <button class="btn btn-secondary" id="btnCancel">
+                <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button class="btn btn-primary" id="btnConfirm">
+                <i class="fas fa-check"></i> Confirmar Importação
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="import-progress" id="importProgress">
+        <div class="spinner"></div>
+        <p id="progressText">Importando produtos...</p>
+    </div>
+
+    <!-- Result -->
+    <div class="import-result" id="importResult">
+        <i class="fas fa-check-circle"></i>
+        <h3 id="resultTitle">Importação concluída!</h3>
+        <p id="resultMessage"></p>
+        <div style="margin-top: 20px;">
+            <a href="{{ url_for('specifications.index') }}" class="btn btn-primary">
+                <i class="fas fa-list"></i> Ver Fichas
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        // DOM refs
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const selectedFile = document.getElementById('selectedFile');
+        const fileName = document.getElementById('fileName');
+        const btnRemoveFile = document.getElementById('btnRemoveFile');
+        const sheetSelector = document.getElementById('sheetSelector');
+        const sheetSelect = document.getElementById('sheetSelect');
+        const btnPreview = document.getElementById('btnPreview');
+        const previewSection = document.getElementById('previewSection');
+        const previewBody = document.getElementById('previewBody');
+        const totalRows = document.getElementById('totalRows');
+        const skippedRows = document.getElementById('skippedRows');
+        const selectedSheet = document.getElementById('selectedSheet');
+        const btnCancel = document.getElementById('btnCancel');
+        const btnConfirm = document.getElementById('btnConfirm');
+        const importProgress = document.getElementById('importProgress');
+        const progressText = document.getElementById('progressText');
+        const importResult = document.getElementById('importResult');
+        const resultTitle = document.getElementById('resultTitle');
+        const resultMessage = document.getElementById('resultMessage');
+
+        let currentFile = null;
+        let currentToken = null;
+
+        // ── Upload zone handlers ──
+        uploadZone.addEventListener('click', () => fileInput.click());
+
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length) {
+                handleFile(fileInput.files[0]);
+            }
+        });
+
+        btnRemoveFile.addEventListener('click', () => {
+            resetAll();
+        });
+
+        function handleFile(file) {
+            if (!file.name.toLowerCase().endsWith('.xlsx') && !file.name.toLowerCase().endsWith('.xls')) {
+                alert('Por favor, selecione um arquivo Excel (.xlsx)');
+                return;
+            }
+            currentFile = file;
+            fileName.textContent = file.name;
+            selectedFile.classList.add('visible');
+            uploadZone.style.display = 'none';
+
+            // Do a quick preview to get sheet names
+            doPreview();
+        }
+
+        // ── Preview ──
+        function doPreview(specificSheet) {
+            const formData = new FormData();
+            formData.append('file', currentFile);
+            if (specificSheet) {
+                formData.append('sheet_name', specificSheet);
+            }
+
+            previewSection.classList.remove('visible');
+            importProgress.classList.add('visible');
+            progressText.textContent = 'Analisando planilha...';
+
+            fetch('/api/compras/import/preview', {
+                method: 'POST',
+                body: formData,
+            })
+                .then(r => r.json())
+                .then(data => {
+                    importProgress.classList.remove('visible');
+
+                    if (!data.success) {
+                        alert('Erro: ' + (data.error || 'Falha ao processar'));
+                        // Still show sheet selector if available
+                        if (data.sheet_names && data.sheet_names.length) {
+                            populateSheetSelector(data.sheet_names, '');
+                        }
+                        return;
+                    }
+
+                    currentToken = data.token;
+
+                    // Show sheet selector
+                    if (data.sheet_names && data.sheet_names.length > 1) {
+                        populateSheetSelector(data.sheet_names, data.selected_sheet);
+                    }
+
+                    // Show preview
+                    totalRows.textContent = data.total_rows;
+                    skippedRows.textContent = data.skipped_rows || 0;
+                    selectedSheet.textContent = data.selected_sheet;
+
+                    previewBody.innerHTML = '';
+                    data.preview_items.forEach((item, idx) => {
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                    <td>${idx + 1}</td>
+                    <td>${esc(item.sub_group || '-')}</td>
+                    <td>${esc(item.referencia || '-')}</td>
+                    <td>${esc(item.colors || '-')}</td>
+                    <td>${esc(item.supplier || '-')}</td>
+                    <td>${esc(item.main_group || '-')}</td>
+                    <td>${esc(item.linha || '-')}</td>
+                    <td>${esc(item.corner || '-')}</td>
+                    <td title="${esc(item.composition || '')}">${esc((item.composition || '-').substring(0, 40))}</td>
+                    <td>${esc(item.target_price || '-')}</td>
+                    <td>${esc(item.pilot_size || '-')}</td>
+                    <td>${esc(item.delivery_date || '-')}</td>
+                `;
+                        previewBody.appendChild(tr);
+                    });
+
+                    previewSection.classList.add('visible');
+                })
+                .catch(err => {
+                    importProgress.classList.remove('visible');
+                    alert('Erro de conexão: ' + err.message);
+                });
+        }
+
+        function populateSheetSelector(sheets, selected) {
+            sheetSelect.innerHTML = '';
+            sheets.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                if (s === selected) opt.selected = true;
+                sheetSelect.appendChild(opt);
+            });
+            sheetSelector.classList.add('visible');
+        }
+
+        btnPreview.addEventListener('click', () => {
+            if (!currentFile) return;
+            doPreview(sheetSelect.value);
+        });
+
+        // ── Confirm import ──
+        btnConfirm.addEventListener('click', () => {
+            if (!currentToken) return;
+
+            const count = parseInt(totalRows.textContent);
+            if (!confirm(`Confirma a importação de ${count} produto(s) como fichas?`)) return;
+
+            previewSection.classList.remove('visible');
+            importProgress.classList.add('visible');
+            progressText.textContent = `Criando ${count} fichas...`;
+
+            fetch('/api/compras/import/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token: currentToken }),
+            })
+                .then(r => r.json())
+                .then(data => {
+                    importProgress.classList.remove('visible');
+
+                    if (data.success) {
+                        importResult.classList.add('visible', 'success');
+                        importResult.querySelector('i').className = 'fas fa-check-circle';
+                        resultTitle.textContent = 'Importação concluída!';
+                        resultMessage.textContent = `${data.created} ficha(s) criada(s) com sucesso.`;
+                        if (data.errors && data.errors.length) {
+                            resultMessage.textContent += ` ${data.errors.length} erro(s).`;
+                        }
+                    } else {
+                        importResult.classList.add('visible', 'error');
+                        importResult.querySelector('i').className = 'fas fa-exclamation-circle';
+                        resultTitle.textContent = 'Erro na importação';
+                        resultMessage.textContent = data.error || 'Erro desconhecido';
+                    }
+                })
+                .catch(err => {
+                    importProgress.classList.remove('visible');
+                    importResult.classList.add('visible', 'error');
+                    importResult.querySelector('i').className = 'fas fa-exclamation-circle';
+                    resultTitle.textContent = 'Erro de conexão';
+                    resultMessage.textContent = err.message;
+                });
+        });
+
+        // ── Cancel ──
+        btnCancel.addEventListener('click', () => {
+            resetAll();
+        });
+
+        function resetAll() {
+            currentFile = null;
+            currentToken = null;
+            fileInput.value = '';
+            uploadZone.style.display = '';
+            selectedFile.classList.remove('visible');
+            sheetSelector.classList.remove('visible');
+            previewSection.classList.remove('visible');
+            importProgress.classList.remove('visible');
+            importResult.classList.remove('visible', 'success', 'error');
+            previewBody.innerHTML = '';
+        }
+
+        function esc(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+    })();
+</script>
+{% endblock %}

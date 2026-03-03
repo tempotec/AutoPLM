@@ -360,6 +360,22 @@
         </div>
         <i class="fas fa-arrow-right panel-arrow"></i>
     </a>
+
+    <!-- Importar Compras -->
+    <a href="{{ url_for('specifications.import_compras') }}" class="panel-card">
+        <div class="panel-icon">
+            <i class="fas fa-file-excel"></i>
+        </div>
+        <div class="panel-body">
+            <div class="panel-title">Importar Compras</div>
+            <div class="panel-desc">Importe produtos comprados via Excel</div>
+            <span class="panel-count">
+                <i class="fas fa-upload"></i>
+                Importar Excel
+            </span>
+        </div>
+        <i class="fas fa-arrow-right panel-arrow"></i>
+    </a>
 </div>
 
 {% endblock %}

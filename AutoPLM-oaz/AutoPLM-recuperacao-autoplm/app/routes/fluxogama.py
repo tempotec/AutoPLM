@@ -381,7 +381,7 @@ def send_batch_specs():
     data = request.get_json(silent=True) or {}
     spec_ids = data.get('spec_ids', [])
     print(f'[FLUX-BATCH-SPECS] User: {user.username} | spec_ids: {spec_ids}')
-    print(f'[FLUX-BATCH-SPECS] Params: dry_run={request.args.get("dry_run","0")} force={request.args.get("force","0")} allow_create={request.args.get("allow_create","1")} subetapa={request.args.get("subetapa","")}')
+    print(f'[FLUX-BATCH-SPECS] Params: dry_run={request.args.get("dry_run","0")} force={request.args.get("force","0")} allow_create={request.args.get("allow_create","1")} subetapa={request.args.get("subetapa","")} colecao={request.args.get("colecao","")}')
 
     # Log config
     base_url = os.environ.get('OAZ_BASE_URL') or os.environ.get('FLUXOGAMA_BASE_URL', '')
@@ -401,6 +401,9 @@ def send_batch_specs():
     dry_run = request.args.get('dry_run', '0') in ('1', 'true', 'yes')
     force = request.args.get('force', '0') in ('1', 'true', 'yes')
     allow_create = request.args.get('allow_create', '1') in ('1', 'true', 'yes')
+
+    # User-provided coleção WSID (overrides COLLECTION_MAP)
+    user_colecao = (request.args.get('colecao') or '').strip()
 
     # Resolve subetapa once for the whole batch (optional for specs)
     subetapa = ''
@@ -440,26 +443,31 @@ def send_batch_specs():
         # Maps Specification model fields → Fluxogama uno.X keys
         # aligned with field_map.json and the OAZ /remessa/modelo schema
 
-        # Mapeamento de coleções PDF → WSID numérico do Fluxogama
-        COLLECTION_MAP = {
-            'VERÃO 26/27': '61',
-            'VERAO 26/27': '61',
-            'VERÃO 2026/2027': '61',
-            'VERÃO 2027': '61',
-            'VERAO 2027': '61',
-            'VERÃO 2027 TSM | SOUQ': '61',
-            'VERAO 2027 TSM | SOUQ': '61',
-            'INVERNO 27': '62',
-            'INVERNO 2027': '62',
-            'INVERNO 27 - TSM | SOUQ': '62',
-        }
-        raw_collection = (spec.collection or '').strip()
-        mapped_collection = COLLECTION_MAP.get(raw_collection.upper(), raw_collection)
-        print(f"  [FLUX] Coleção: '{raw_collection}' → '{mapped_collection}'")
+        # Resolve coleção: user-provided > COLLECTION_MAP fallback
+        if user_colecao:
+            resolved_collection = user_colecao
+            print(f"  [FLUX] Coleção: user_provided='{user_colecao}'")
+        else:
+            # Fallback: mapeamento de coleções PDF → WSID numérico
+            COLLECTION_MAP = {
+                'VERÃO 26/27': '61',
+                'VERAO 26/27': '61',
+                'VERÃO 2026/2027': '61',
+                'VERÃO 2027': '61',
+                'VERAO 2027': '61',
+                'VERÃO 2027 TSM | SOUQ': '61',
+                'VERAO 2027 TSM | SOUQ': '61',
+                'INVERNO 27': '62',
+                'INVERNO 2027': '62',
+                'INVERNO 27 - TSM | SOUQ': '62',
+            }
+            raw_collection = (spec.collection or '').strip()
+            resolved_collection = COLLECTION_MAP.get(raw_collection.upper(), raw_collection)
+            print(f"  [FLUX] Coleção: '{raw_collection}' → '{resolved_collection}' (via COLLECTION_MAP)")
 
         payload = {
             'referencia': spec.ref_souq or '',
-            'colecao': mapped_collection,
+            'colecao': resolved_collection,
             'ws_id': f'spec_{spec.id}',
             'codigo': f'spec_{spec.id}',
 

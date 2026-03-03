@@ -961,3 +961,14 @@ def retry_spec(spec_id):
         'message': 'Reprocessamento iniciado',
         'spec_id': spec_id
     })
+
+
+@specifications_bp.route('/import-compras')
+@login_required
+def import_compras():
+    """Page for importing purchased products from Excel."""
+    user = User.query.get(session.get('user_id'))
+    if not user:
+        flash('Sessão inválida.', 'warning')
+        return redirect(url_for('auth.login'))
+    return render_template('import_compras.html', current_user=user)

@@ -9,6 +9,7 @@ from app.extensions import csrf, db
 from app.models import User, Specification, FichaTecnica, FichaTecnicaItem, OazValueMap
 from app.utils.auth import login_required
 from app.utils.excel_parser import parse_excel, HEADER_FIELD_MAP
+from app.utils.compras_parser import parse_compras_xlsx
 from app.integrations.oaz.client import OazClient, OazConfigError, compute_payload_hash
 from app.integrations.oaz.mapper import (
     build_oaz_payload, get_oaz_map_lookup, normalize_text, FIELD_MAP, DB_FIELDS,
@@ -176,6 +177,179 @@ def import_confirm():
         'ficha_id': ficha.id,
         'created_items': created,
         'skipped_items': len(payload.get('invalid_rows', [])),
+    })
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Compras (Purchased Products) Import → Specifications
+# ═══════════════════════════════════════════════════════════════════════
+
+@api_bp.route('/compras/import/preview', methods=['POST'])
+@login_required
+@csrf.exempt
+def compras_import_preview():
+    """Upload a Compras XLSX, parse it, return preview of items."""
+    _prune_import_cache()
+
+    user = User.query.get(session.get('user_id'))
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessao invalida'}), 401
+
+    file = request.files.get('file')
+    if not file or not file.filename:
+        return jsonify({'success': False, 'error': 'Arquivo XLSX nao encontrado'}), 400
+
+    sheet_name = request.form.get('sheet_name', '').strip() or None
+
+    try:
+        file_bytes = file.read()
+        result = parse_compras_xlsx(file_bytes, sheet_name=sheet_name)
+    except Exception as exc:
+        logger.error('Erro ao ler XLSX compras: %s', exc, exc_info=True)
+        return jsonify({'success': False, 'error': f'Falha ao ler o XLSX: {exc}'}), 400
+
+    if result.get('errors'):
+        return jsonify({
+            'success': False,
+            'error': '; '.join(result['errors']),
+            'sheet_names': result.get('sheet_names', []),
+        }), 400
+
+    # Cache for confirm step
+    result['source_filename'] = file.filename
+    token = _cache_import_payload(result)
+
+    return jsonify({
+        'success': True,
+        'token': token,
+        'sheet_names': result.get('sheet_names', []),
+        'selected_sheet': result.get('selected_sheet', ''),
+        'total_rows': result.get('total_rows', 0),
+        'skipped_rows': result.get('skipped_rows', 0),
+        'mapped_columns': result.get('mapped_columns', []),
+        'preview_items': result['items'][:50],
+    })
+
+
+@api_bp.route('/compras/import/confirm', methods=['POST'])
+@login_required
+@csrf.exempt
+def compras_import_confirm():
+    """Confirm compras import — creates one Specification per row."""
+    _prune_import_cache()
+
+    user = User.query.get(session.get('user_id'))
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessao invalida'}), 401
+
+    data = request.get_json(silent=True) or {}
+    token = data.get('token')
+    if not token:
+        return jsonify({'success': False, 'error': 'Token de importacao ausente'}), 400
+
+    payload = _pop_import_payload(token)
+    if not payload:
+        return jsonify({'success': False, 'error': 'Token expirado ou invalido'}), 400
+
+    items = payload.get('items', [])
+    source_filename = payload.get('source_filename', 'compras_import.xlsx')
+    batch_id = str(uuid.uuid4())[:8]
+
+    # Map of compras parser fields → Specification model fields
+    # Mirrors exactly the XLSX columns:
+    #   A  COLEÇÃO         → collection
+    #   D  REFERÊNCIA      → description (material name)
+    #   E  COMPOSIÇÃO      → composition
+    #   F  CORNER          → corner
+    #   G  LINHA           → main_fabric (product line)
+    #   H  GRUPO           → main_group
+    #   I  SUBGRUPO        → sub_group
+    #   J  PREÇO DE VENDA  → target_price
+    #   K  FX DE PREÇO     → price_range
+    #   M  FORNECEDOR      → supplier
+    #   O  COR             → colors
+    #   P-U Sizes           → pilot_size (built by parser)
+    #   AB DATA DE ENTREGA → delivery_cd_month
+    FIELD_MAPPING = {
+        'referencia':       'description',
+        'composition':      'composition',
+        'corner':           'corner',
+        'linha':            'main_fabric',
+        'main_group':       'main_group',
+        'sub_group':        'sub_group',
+        'supplier':         'supplier',
+        'colors':           'colors',
+        'target_price':     'target_price',
+        'price_range':      'price_range',
+        'pilot_size':       'pilot_size',
+        'delivery_date':    'delivery_cd_month',
+        'collection':       'collection',
+        'cor_etiqueta':     'tags_kit',
+        'origem':           'specific_details',
+    }
+
+    # Extra fields stored as JSON in spec.extra_fields
+    EXTRA_KEYS = (
+        'grade', 'total_pcs', 'packs', 'total_souq',
+        'custo_real', 'custo_negociado', 'compra_total', 'aprovado',
+    )
+
+    created = 0
+    errors_list = []
+
+    for i, item in enumerate(items):
+        try:
+            spec = Specification()
+            spec.user_id = user.id
+            spec.pdf_filename = f'compras_import_{batch_id}_{i+1}.xlsx'
+            spec.batch_id = batch_id
+            spec.processing_status = 'completed'
+            spec.processing_stage = 6
+            spec.created_at = datetime.utcnow()
+            spec.set_status('in_development')
+            spec.is_imported = True
+            spec.import_category = 'compras'
+
+            # Set mapped fields
+            for src_field, spec_field in FIELD_MAPPING.items():
+                value = item.get(src_field)
+                if value:
+                    setattr(spec, spec_field, str(value))
+
+            # Build ref_souq from sub_group + color + supplier
+            ref_parts = []
+            if item.get('sub_group'):
+                ref_parts.append(item['sub_group'])
+            if item.get('colors'):
+                ref_parts.append(item['colors'])
+            spec.ref_souq = ' - '.join(ref_parts) if ref_parts else f'COMPRA-{batch_id}-{i+1}'
+
+            # Store extra fields as JSON
+            extra = {}
+            for key in EXTRA_KEYS:
+                if item.get(key):
+                    extra[key] = item[key]
+            if extra:
+                spec.extra_fields = json.dumps(extra, ensure_ascii=False)
+
+            db.session.add(spec)
+            created += 1
+        except Exception as e:
+            errors_list.append(f'Linha {i+1}: {str(e)}')
+            continue
+
+    db.session.commit()
+
+    logger.info(
+        'compras_import_confirm: user=%s batch=%s created=%d errors=%d',
+        user.username, batch_id, created, len(errors_list)
+    )
+
+    return jsonify({
+        'success': True,
+        'created': created,
+        'errors': errors_list,
+        'batch_id': batch_id,
     })
 
 
