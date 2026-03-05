@@ -28,7 +28,8 @@ STAGE_MAP = {
     3: 'extract_text',
     4: 'openai_parse',
     5: 'supplier_link',
-    6: 'completed'
+    6: 'fluxogama_link',
+    7: 'completed'
 }
 
 _IMPORT_CACHE = {}
@@ -304,7 +305,7 @@ def compras_import_confirm():
             spec.pdf_filename = f'compras_import_{batch_id}_{i+1}.xlsx'
             spec.batch_id = batch_id
             spec.processing_status = 'completed'
-            spec.processing_stage = 6
+            spec.processing_stage = 7  # STAGE_COMPLETED
             spec.created_at = datetime.utcnow()
             spec.set_status('in_development')
             spec.is_imported = True

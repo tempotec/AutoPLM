@@ -530,15 +530,25 @@ def send_batch_specs():
             error_count += 1
             continue
 
-        # Model creation support: inject sistema_criar_modelo + subetapa
-        # Per-spec subetapa takes priority over global modal param
-        # IMPORTANT: use (x or '') pattern to avoid str(None) → "None"
-        global_sub = (subetapa or '').strip()
-        spec_sub = (getattr(spec, 'fluxogama_subetapa', None) or '').strip()
-        effective_subetapa = spec_sub or global_sub
-        print(f"  [FLUX] Subetapa: spec={spec_sub!r} | global={global_sub!r} | effective={effective_subetapa!r}")
+        # Update vs Create logic
+        # If spec has fluxogama_model_id → update existing model (just send id + fields)
+        # If not → create new model (sistema_criar_modelo + subetapa required)
+        fluxogama_id = getattr(spec, 'fluxogama_model_id', None)
 
-        if allow_create:
+        if fluxogama_id:
+            # UPDATE MODE: just send the Fluxogama model ID + fields
+            payload['id'] = fluxogama_id
+            # Remove creation-only fields
+            payload.pop('sistema_criar_modelo', None)
+            payload.pop('subetapa', None)
+            print(f"  [FLUX] UPDATE mode: fluxogama_model_id={fluxogama_id}")
+        elif allow_create:
+            # CREATE MODE: needs subetapa
+            global_sub = (subetapa or '').strip()
+            spec_sub = (getattr(spec, 'fluxogama_subetapa', None) or '').strip()
+            effective_subetapa = spec_sub or global_sub
+            print(f"  [FLUX] CREATE mode: subetapa spec={spec_sub!r} | global={global_sub!r} | effective={effective_subetapa!r}")
+
             if not effective_subetapa:
                 results.append({
                     'spec_id': spec_id,
@@ -549,6 +559,15 @@ def send_batch_specs():
                 continue
             payload['sistema_criar_modelo'] = 1
             payload['subetapa'] = effective_subetapa
+        else:
+            # No fluxogama_model_id and allow_create=0 → can't send
+            results.append({
+                'spec_id': spec_id,
+                'ok': False,
+                'message': 'Sem fluxogama_model_id e allow_create desabilitado. Vincule o ID do Fluxogama ou habilite allow_create.',
+            })
+            error_count += 1
+            continue
 
         print(f'[FLUX-BATCH-SPECS]   Enviando... (dry_run={dry_run})')
         try:

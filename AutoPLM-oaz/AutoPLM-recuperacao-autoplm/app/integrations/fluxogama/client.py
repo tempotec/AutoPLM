@@ -20,9 +20,21 @@ logger = logging.getLogger('fluxogama.client')
 def _get_config():
     """Read Fluxogama config from environment variables.
     Supports both OAZ_* (current .env) and FLUXOGAMA_* (legacy) prefixes.
+    Uses token_manager.get_token() to ensure auto-renewal of expired tokens.
     """
     base_url = (os.environ.get('OAZ_BASE_URL') or os.environ.get('FLUXOGAMA_BASE_URL', '')).rstrip('/')
-    chave = os.environ.get('OAZ_CHAVE') or os.environ.get('FLUXOGAMA_CHAVE', '')
+    
+    # Try to get a fresh token via token_manager (auto-renews if expired)
+    chave = None
+    try:
+        from app.integrations.fluxogama.token_manager import get_token
+        chave = get_token()
+    except Exception:
+        pass
+    # Fallback to env var if token_manager not available
+    if not chave:
+        chave = os.environ.get('OAZ_CHAVE') or os.environ.get('FLUXOGAMA_CHAVE', '')
+    
     endpoint = os.environ.get('OAZ_MODELO_PUSH_PATH') or os.environ.get('FLUXOGAMA_ENDPOINT_ENVIO', '/remessa/envio')
     return base_url, chave, endpoint
 

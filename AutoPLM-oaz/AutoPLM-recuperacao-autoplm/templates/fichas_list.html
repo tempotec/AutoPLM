@@ -273,6 +273,37 @@
         font-size: 12.5px;
         color: var(--text-dim);
         margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    .select-all-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        cursor: pointer;
+        user-select: none;
+        padding: 4px 12px;
+        border-radius: 6px;
+        border: 1px solid var(--border-default);
+        background: var(--bg-card);
+        transition: all 0.2s;
+        font-size: 12.5px;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+
+    .select-all-wrap:hover {
+        border-color: #7c3aed;
+        color: #7c3aed;
+    }
+
+    .select-all-wrap input {
+        accent-color: #7c3aed;
+        cursor: pointer;
+        width: 16px;
+        height: 16px;
     }
 
     /* loading spinner for processing */
@@ -671,8 +702,12 @@
     {% endif %}
 </div>
 
-<div class="results-line" id="resultsLine">
-    {{ specifications|length }} ficha(s) encontrada(s)
+<div class="results-line">
+    <span id="resultsLine">{{ specifications|length }} ficha(s) encontrada(s)</span>
+    <label class="select-all-wrap">
+        <input type="checkbox" id="selectAllCheckbox">
+        Selecionar todas
+    </label>
 </div>
 
 <!-- Cards Grid -->
@@ -929,6 +964,26 @@
         cb.addEventListener('click', (e) => e.stopPropagation());
     });
 
+    // ─── Select All ───
+    const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+    selectAllCheckbox.addEventListener('change', () => {
+        const checked = selectAllCheckbox.checked;
+        grid.querySelectorAll('.ficha-card').forEach(card => {
+            if (card.style.display === 'none') return; // skip hidden/filtered
+            const cb = card.querySelector('.ficha-checkbox');
+            const id = parseInt(cb.dataset.id, 10);
+            cb.checked = checked;
+            if (checked) {
+                selectedSpecIds.add(id);
+                card.classList.add('selected');
+            } else {
+                selectedSpecIds.delete(id);
+                card.classList.remove('selected');
+            }
+        });
+        updateActionBar();
+    });
+
     // Deselect all
     btnDeselectAll.addEventListener('click', () => {
         selectedSpecIds.clear();
@@ -936,6 +991,7 @@
             cb.checked = false;
             cb.closest('.ficha-card').classList.remove('selected');
         });
+        selectAllCheckbox.checked = false;
         updateActionBar();
     });
 

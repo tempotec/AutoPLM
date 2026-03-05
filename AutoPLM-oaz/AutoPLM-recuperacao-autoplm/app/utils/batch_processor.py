@@ -8,7 +8,8 @@ Etapas de processamento:
 3 = extract_text (extrair texto do PDF)
 4 = openai_parse (processar com OpenAI)
 5 = supplier_link (vincular fornecedor)
-6 = completed (finalizado)
+6 = fluxogama_link (buscar ID no Fluxogama)
+7 = completed (finalizado)
 """
 
 import os
@@ -24,7 +25,8 @@ STAGE_EXTRACT_IMAGE = 2
 STAGE_EXTRACT_TEXT = 3
 STAGE_OPENAI_PARSE = 4
 STAGE_SUPPLIER_LINK = 5
-STAGE_COMPLETED = 6
+STAGE_FLUXOGAMA_LINK = 6
+STAGE_COMPLETED = 7
 
 STAGE_NAMES = {
     0: 'pending',
@@ -33,7 +35,8 @@ STAGE_NAMES = {
     3: 'extract_text',
     4: 'openai_parse',
     5: 'supplier_link',
-    6: 'completed'
+    6: 'fluxogama_link',
+    7: 'completed'
 }
 
 
@@ -179,8 +182,42 @@ def process_stage_supplier_link(spec, file_path, thread_session):
     return True
 
 
+def process_stage_fluxogama_link(spec, file_path, thread_session):
+    """Stage 6: Buscar ID do modelo no Fluxogama pela referência.
+    
+    Se encontrar → salva fluxogama_model_id (para UPDATE futuro)
+    Se não encontrar → continua sem erro (modelo será criado no envio, se permitido)
+    Se API falhar → continua sem erro (não bloqueia processamento)
+    """
+    ref = getattr(spec, 'ref_souq', None)
+    print(f"[ETAPA 6] Buscando ID no Fluxogama: {spec.pdf_filename} (ref={ref})")
+    
+    if not ref or not ref.strip():
+        print(f"  [RETORNO] Sem ref_souq — pulando busca no Fluxogama")
+        spec.processing_stage = STAGE_FLUXOGAMA_LINK
+        thread_session.commit()
+        return True
+    
+    try:
+        from app.integrations.fluxogama.retorno import buscar_modelo_por_referencia
+        modelo_id = buscar_modelo_por_referencia(ref.strip())
+        
+        if modelo_id:
+            spec.fluxogama_model_id = modelo_id
+            print(f"  [OK] Fluxogama ID vinculado: {modelo_id}")
+        else:
+            print(f"  [INFO] Modelo não encontrado no Fluxogama para ref '{ref}'")
+    except Exception as e:
+        # Não bloqueia o processamento
+        print(f"  [WARN] Erro ao buscar no Fluxogama (não bloqueante): {e}")
+    
+    spec.processing_stage = STAGE_FLUXOGAMA_LINK
+    thread_session.commit()
+    return True
+
+
 def process_stage_complete(spec, thread_session):
-    print(f"[ETAPA 6] Finalizando processamento: {spec.pdf_filename}")
+    print(f"[ETAPA 7] Finalizando processamento: {spec.pdf_filename}")
     spec.processing_stage = STAGE_COMPLETED
     spec.processing_status = 'completed'
     spec.last_error = None
@@ -276,7 +313,8 @@ def advance_spec_processing(spec_id, upload_folder, app):
             (STAGE_EXTRACT_IMAGE, STAGE_EXTRACT_TEXT, process_stage_extract_text),
             (STAGE_EXTRACT_TEXT, STAGE_OPENAI_PARSE, process_stage_openai_parse),
             (STAGE_OPENAI_PARSE, STAGE_SUPPLIER_LINK, process_stage_supplier_link),
-            (STAGE_SUPPLIER_LINK, STAGE_COMPLETED, lambda s, f, t: process_stage_complete(s, t)),
+            (STAGE_SUPPLIER_LINK, STAGE_FLUXOGAMA_LINK, process_stage_fluxogama_link),
+            (STAGE_FLUXOGAMA_LINK, STAGE_COMPLETED, lambda s, f, t: process_stage_complete(s, t)),
         ]
         
         for from_stage, to_stage, stage_func in stages:
