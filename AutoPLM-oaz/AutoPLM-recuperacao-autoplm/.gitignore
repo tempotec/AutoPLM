@@ -10,6 +10,8 @@ venv/
 
 # Ambiente
 .env
+.env.local
+.env.prod
 
 # Arquivos de teste
 test_*.json
