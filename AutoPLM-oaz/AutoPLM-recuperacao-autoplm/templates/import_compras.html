@@ -486,8 +486,16 @@
             fetch('/api/compras/import/preview', {
                 method: 'POST',
                 body: formData,
+                credentials: 'same-origin',
             })
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok && r.status === 413) {
+                        throw new Error('Arquivo muito grande. Tamanho máximo: 50MB.');
+                    }
+                    return r.json().catch(() => {
+                        throw new Error(`Erro do servidor (HTTP ${r.status}). Verifique os logs.`);
+                    });
+                })
                 .then(data => {
                     importProgress.classList.remove('visible');
 
@@ -536,7 +544,7 @@
                 })
                 .catch(err => {
                     importProgress.classList.remove('visible');
-                    alert('Erro de conexão: ' + err.message);
+                    alert('Erro: ' + err.message);
                 });
         }
 
@@ -572,8 +580,13 @@
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ token: currentToken }),
+                credentials: 'same-origin',
             })
-                .then(r => r.json())
+                .then(r => {
+                    return r.json().catch(() => {
+                        throw new Error(`Erro do servidor (HTTP ${r.status}). Verifique os logs.`);
+                    });
+                })
                 .then(data => {
                     importProgress.classList.remove('visible');
 
