@@ -531,9 +531,27 @@ def send_batch_specs():
             continue
 
         # Update vs Create logic
-        # If spec has fluxogama_model_id → update existing model (just send id + fields)
-        # If not → create new model (sistema_criar_modelo + subetapa required)
+        # 1. Check saved fluxogama_model_id
+        # 2. If not saved, do a LIVE lookup via /retorno/modelo
+        # 3. If found → UPDATE mode (no subetapa needed)
+        # 4. If not found → CREATE mode (with subetapa if available)
         fluxogama_id = getattr(spec, 'fluxogama_model_id', None)
+
+        # Live lookup: buscar modelo no Fluxogama pela referência + coleção
+        if not fluxogama_id and payload.get('referencia'):
+            try:
+                from app.integrations.fluxogama.retorno import buscar_modelo_por_referencia
+                ref_to_search = payload['referencia']
+                colecao_to_search = payload.get('colecao', '')
+                print(f"  [FLUX] Buscando modelo no Fluxogama por ref='{ref_to_search}' (coleção={colecao_to_search})...")
+                fluxogama_id = buscar_modelo_por_referencia(ref_to_search, colecao=colecao_to_search)
+                if fluxogama_id:
+                    # Salvar para próximas vezes
+                    spec.fluxogama_model_id = fluxogama_id
+                    db.session.commit()
+                    print(f"  [FLUX] ✅ Modelo encontrado via /retorno/modelo: id={fluxogama_id}")
+            except Exception as retorno_err:
+                print(f"  [FLUX] ⚠️ Erro no lookup retorno (não bloqueante): {retorno_err}")
 
         if fluxogama_id:
             # UPDATE MODE: just send the Fluxogama model ID + fields
@@ -542,29 +560,15 @@ def send_batch_specs():
             payload.pop('sistema_criar_modelo', None)
             payload.pop('subetapa', None)
             print(f"  [FLUX] UPDATE mode: fluxogama_model_id={fluxogama_id}")
-        elif allow_create:
-            # CREATE MODE: needs subetapa
-            global_sub = (subetapa or '').strip()
-            spec_sub = (getattr(spec, 'fluxogama_subetapa', None) or '').strip()
-            effective_subetapa = spec_sub or global_sub
-            print(f"  [FLUX] CREATE mode: subetapa spec={spec_sub!r} | global={global_sub!r} | effective={effective_subetapa!r}")
-
-            if not effective_subetapa:
-                results.append({
-                    'spec_id': spec_id,
-                    'ok': False,
-                    'message': 'Subetapa não definida. Edite a ficha e selecione uma subetapa antes de enviar com allow_create=1.',
-                })
-                error_count += 1
-                continue
-            payload['sistema_criar_modelo'] = 1
-            payload['subetapa'] = effective_subetapa
         else:
-            # No fluxogama_model_id and allow_create=0 → can't send
+            # Model NOT found in Fluxogama → skip (only update, never create)
+            ref_name = payload.get('referencia', 'N/A')
+            msg = f'Modelo "{ref_name}" não encontrado no Fluxogama. Apenas modelos existentes podem ser atualizados.'
+            print(f"  [FLUX] ⚠️ SKIP: {msg}")
             results.append({
                 'spec_id': spec_id,
                 'ok': False,
-                'message': 'Sem fluxogama_model_id e allow_create desabilitado. Vincule o ID do Fluxogama ou habilite allow_create.',
+                'message': msg,
             })
             error_count += 1
             continue

@@ -185,6 +185,30 @@ def import_confirm():
 # Compras (Purchased Products) Import → Specifications
 # ═══════════════════════════════════════════════════════════════════════
 
+@api_bp.route('/compras/import/sheets', methods=['POST'])
+@login_required
+@csrf.exempt
+def compras_import_sheets():
+    """Upload a Compras XLSX and return only sheet names (lightweight, no parsing)."""
+    user = User.query.get(session.get('user_id'))
+    if not user:
+        return jsonify({'success': False, 'error': 'Sessao invalida'}), 401
+
+    file = request.files.get('file')
+    if not file or not file.filename:
+        return jsonify({'success': False, 'error': 'Arquivo XLSX nao encontrado'}), 400
+
+    try:
+        import pandas as pd
+        xl = pd.ExcelFile(io.BytesIO(file.read()), engine='openpyxl')
+        return jsonify({
+            'success': True,
+            'sheet_names': xl.sheet_names,
+        })
+    except Exception as exc:
+        logger.error('Erro ao ler sheet names: %s', exc, exc_info=True)
+        return jsonify({'success': False, 'error': f'Falha ao ler o XLSX: {exc}'}), 400
+
 @api_bp.route('/compras/import/preview', methods=['POST'])
 @login_required
 @csrf.exempt
