@@ -629,6 +629,67 @@ def delete(id):
     return redirect(url_for('dashboard.index'))
 
 
+@specifications_bp.route('/specifications/delete-all', methods=['POST'])
+@csrf.exempt
+@login_required
+def delete_all():
+    """Delete ALL specifications. Admin only."""
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest' or 'application/json' in (request.headers.get('Accept') or '')
+    try:
+        user = User.query.get(session['user_id'])
+        if not user:
+            session.clear()
+            if is_ajax:
+                return jsonify({'ok': False, 'error': 'Sessão inválida'}), 401
+            return redirect(url_for('auth.login'))
+
+        if not user.is_admin:
+            if is_ajax:
+                return jsonify({'ok': False, 'error': 'Apenas administradores podem excluir todas as fichas'}), 403
+            flash('Acesso negado.')
+            return redirect(url_for('specifications.index'))
+
+        # Get all specs
+        if user.is_admin:
+            specs = Specification.query.all()
+        else:
+            specs = Specification.query.filter_by(user_id=user.id).all()
+
+        total = len(specs)
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+
+        # Delete files and specs
+        for spec in specs:
+            try:
+                file_path = os.path.join(upload_folder, spec.pdf_filename)
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+            except Exception:
+                pass  # Don't block on file deletion errors
+            db.session.delete(spec)
+
+        db.session.commit()
+        log_activity('DELETE_ALL_SPECIFICATIONS', 'specification', None,
+                    target_name=f'{total} fichas excluídas',
+                    metadata={'total': total, 'user': user.username})
+        rpa_info(f"DELETE_ALL: {total} fichas excluídas pelo usuário '{user.username}'")
+
+        if is_ajax:
+            return jsonify({'ok': True, 'message': f'{total} ficha(s) excluída(s) com sucesso', 'deleted': total})
+        flash(f'{total} ficha(s) excluída(s) com sucesso!')
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        print(f"Erro ao excluir todas as fichas: {e}")
+        traceback.print_exc()
+        rpa_error(f"DELETE_ALL_ERRO: Erro ao excluir todas as fichas", exc=e, regiao="delete_all")
+        if is_ajax:
+            return jsonify({'ok': False, 'error': str(e)}), 500
+        flash('Erro ao excluir fichas.')
+
+    return redirect(url_for('specifications.index'))
+
+
 @specifications_bp.route('/download_pdf/<int:id>')
 @login_required
 def download_pdf(id):

@@ -662,6 +662,44 @@
     .delete-modal .btn-confirm-del:hover {
         background: #dc2626;
     }
+
+    /* ─── Delete All Button ─── */
+    .btn-delete-all {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: transparent;
+        border: 1.5px solid rgba(239, 68, 68, 0.4);
+        color: #f87171;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        white-space: nowrap;
+    }
+
+    .btn-delete-all:hover {
+        background: #ef4444;
+        color: #fff;
+        border-color: #ef4444;
+    }
+
+    .delete-all-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(4px);
+        z-index: 10001;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .delete-all-overlay.active {
+        display: flex;
+    }
 </style>
 {% endblock %}
 
@@ -672,9 +710,35 @@
         <h1 class="page-title">Fichas Técnicas</h1>
         <p class="page-subtitle">Visualize e gerencie todas as suas fichas de produto</p>
     </div>
-    <a href="{{ url_for('specifications.upload') }}" class="btn-nova">
-        <i class="fas fa-plus"></i> Nova Ficha
-    </a>
+    <div style="display:flex;gap:10px;align-items:center;">
+        {% if current_user.is_admin %}
+        <button class="btn-delete-all" id="btnDeleteAll" title="Excluir todas as fichas">
+            <i class="fas fa-trash-alt"></i> Excluir Todas
+        </button>
+        {% endif %}
+        <a href="{{ url_for('specifications.upload') }}" class="btn-nova">
+            <i class="fas fa-plus"></i> Nova Ficha
+        </a>
+    </div>
+</div>
+
+<!-- Delete All Confirmation Modal -->
+<div class="delete-all-overlay" id="deleteAllOverlay">
+    <div class="delete-modal">
+        <div class="delete-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <h3 id="deleteAllTitle">Excluir TODAS as Fichas?</h3>
+        <p id="deleteAllMsg" style="color:#94a3b8;font-size:14px;margin:12px 0;">Esta ação é <strong style="color:#f87171;">irreversível</strong>. Todas as fichas e seus arquivos serão excluídos permanentemente.</p>
+        <div style="margin:16px 0;">
+            <label style="color:#94a3b8;font-size:12px;display:block;margin-bottom:6px;">Digite <strong style="color:#f87171;">EXCLUIR</strong> para confirmar:</label>
+            <input type="text" id="deleteAllConfirmInput" autocomplete="off" style="width:100%;padding:10px 14px;background:#0f172a;border:1.5px solid #334155;border-radius:8px;color:#fff;font-size:14px;text-align:center;letter-spacing:2px;" placeholder="EXCLUIR">
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;margin-top:20px;">
+            <button class="btn-cancel-del" id="btnCancelDeleteAll" style="padding:10px 22px;background:transparent;border:1px solid #475569;color:#94a3b8;border-radius:8px;font-size:13px;cursor:pointer;">Cancelar</button>
+            <button class="btn-confirm-del" id="btnConfirmDeleteAll" disabled style="padding:10px 22px;background:#ef4444;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;opacity:0.5;">
+                <i class="fas fa-trash-alt"></i> Excluir Tudo
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Filter bar -->
@@ -1233,5 +1297,76 @@
         btnCancelDel.textContent = 'Fechar';
         pendingDeleteIds = [];
     });
+
+    // ── Delete All ──
+    const btnDeleteAll = document.getElementById('btnDeleteAll');
+    const deleteAllOverlay = document.getElementById('deleteAllOverlay');
+    const deleteAllConfirmInput = document.getElementById('deleteAllConfirmInput');
+    const btnConfirmDeleteAll = document.getElementById('btnConfirmDeleteAll');
+    const btnCancelDeleteAll = document.getElementById('btnCancelDeleteAll');
+    const deleteAllTitle = document.getElementById('deleteAllTitle');
+    const deleteAllMsg = document.getElementById('deleteAllMsg');
+
+    if (btnDeleteAll) {
+        btnDeleteAll.addEventListener('click', () => {
+            deleteAllOverlay.classList.add('active');
+            deleteAllConfirmInput.value = '';
+            btnConfirmDeleteAll.disabled = true;
+            btnConfirmDeleteAll.style.opacity = '0.5';
+            deleteAllTitle.textContent = 'Excluir TODAS as Fichas?';
+            deleteAllMsg.innerHTML = 'Esta ação é <strong style="color:#f87171;">irreversível</strong>. Todas as fichas e seus arquivos serão excluídos permanentemente.';
+            btnConfirmDeleteAll.style.display = '';
+            btnCancelDeleteAll.textContent = 'Cancelar';
+            deleteAllConfirmInput.focus();
+        });
+    }
+
+    if (deleteAllConfirmInput) {
+        deleteAllConfirmInput.addEventListener('input', () => {
+            const match = deleteAllConfirmInput.value.trim().toUpperCase() === 'EXCLUIR';
+            btnConfirmDeleteAll.disabled = !match;
+            btnConfirmDeleteAll.style.opacity = match ? '1' : '0.5';
+        });
+    }
+
+    if (btnCancelDeleteAll) {
+        btnCancelDeleteAll.addEventListener('click', () => {
+            deleteAllOverlay.classList.remove('active');
+        });
+    }
+
+    if (btnConfirmDeleteAll) {
+        btnConfirmDeleteAll.addEventListener('click', async () => {
+            if (deleteAllConfirmInput.value.trim().toUpperCase() !== 'EXCLUIR') return;
+            deleteAllTitle.textContent = 'Excluindo...';
+            deleteAllMsg.innerHTML = '<div class="flux-spinner"></div> Aguarde, excluindo todas as fichas...';
+            btnConfirmDeleteAll.disabled = true;
+            btnCancelDeleteAll.style.display = 'none';
+
+            try {
+                const resp = await fetch('{{ url_for("specifications.delete_all") }}', {
+                    method: 'POST',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                    credentials: 'same-origin',
+                });
+                const data = await resp.json().catch(() => ({}));
+                if (data.ok) {
+                    deleteAllTitle.textContent = 'Concluído!';
+                    deleteAllMsg.innerHTML = `<span style="color:#34d399"><i class="fas fa-check-circle"></i> ${data.deleted || 0} ficha(s) excluída(s) com sucesso</span>`;
+                    setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    deleteAllTitle.textContent = 'Erro';
+                    deleteAllMsg.innerHTML = `<span style="color:#f87171"><i class="fas fa-times-circle"></i> ${data.error || 'Erro desconhecido'}</span>`;
+                    btnCancelDeleteAll.style.display = '';
+                    btnCancelDeleteAll.textContent = 'Fechar';
+                }
+            } catch (err) {
+                deleteAllTitle.textContent = 'Erro';
+                deleteAllMsg.innerHTML = `<span style="color:#f87171"><i class="fas fa-times-circle"></i> ${err.message}</span>`;
+                btnCancelDeleteAll.style.display = '';
+                btnCancelDeleteAll.textContent = 'Fechar';
+            }
+        });
+    }
 </script>
 {% endblock %}
