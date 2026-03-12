@@ -20,8 +20,14 @@ import threading
 # Import OpenAI functionality
 from openai import OpenAI
 
-# Import Replit Object Storage
-from replit.object_storage import Client
+# Import Replit Object Storage (optional - only available in Replit environment)
+try:
+    from replit.object_storage import Client
+    REPLIT_STORAGE_AVAILABLE = True
+except ImportError:
+    Client = None
+    REPLIT_STORAGE_AVAILABLE = False
+    print("WARNING: replit.object_storage not available, storage features disabled")
 
 # Import RPA Monitor Client for system monitoring
 try:
