@@ -580,7 +580,10 @@ def send_batch_specs():
 
             if is_ok:
                 success_count += 1
+                resp_body = result.get('response', '')
                 print(f'[FLUX-BATCH-SPECS]   ✅ {result.get("status")} | HTTP {result.get("http_status", "—")}')
+                if resp_body:
+                    print(f'[FLUX-BATCH-SPECS]   Response: {str(resp_body)[:500]}')
             else:
                 error_count += 1
                 print(f'[FLUX-BATCH-SPECS]   ❌ ERRO: {result.get("error", "?")} | HTTP {result.get("http_status", "?")}')

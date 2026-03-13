@@ -457,7 +457,8 @@
                         <tr>
                             <th>#</th>
                             <th>Subgrupo</th>
-                            <th>Referência</th>
+                            <th>Nome</th>
+                            <th>Código Ref.</th>
                             <th>Cor</th>
                             <th>Fornecedor</th>
                             <th>Grupo</th>
@@ -655,7 +656,8 @@
                         tr.innerHTML = `
                             <td>${idx + 1}</td>
                             <td>${esc(item.sub_group || '-')}</td>
-                            <td>${esc(item.referencia || '-')}</td>
+                            <td>${esc(item.ref_name || '-')}</td>
+                            <td><strong>${esc(item.ref_code || item.referencia || '-')}</strong></td>
                             <td>${esc(item.colors || '-')}</td>
                             <td>${esc(item.supplier || '-')}</td>
                             <td>${esc(item.main_group || '-')}</td>

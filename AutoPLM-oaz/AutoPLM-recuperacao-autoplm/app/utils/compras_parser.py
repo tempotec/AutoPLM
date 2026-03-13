@@ -16,7 +16,8 @@ logger = logging.getLogger('compras_parser')
 #   A  COLEÇÃO         → collection
 #   B  FOTO            → (skip, formula)
 #   C  ORIGEM          → origem (extra)
-#   D  REFERÊNCIA      → referencia (material name e.g. "Poliéster")
+#   D  REFERÊNCIA      → referencia (name + code e.g. "CONJUNTO TRICOT - W26TH113A")
+#                        Split into: ref_name="CONJUNTO TRICOT" + ref_code="W26TH113A"
 #   E  COMPOSIÇÃO      → composition
 #   F  CORNER          → corner
 #   G  LINHA           → linha (product line e.g. "ALFAIATARIA")
@@ -235,6 +236,22 @@ def parse_compras_xlsx(file_bytes, sheet_name=None):
             skipped += 1
             continue
 
+        # ── Split REFERÊNCIA into ref_name + ref_code ──
+        # Excel has: "CONJUNTO TRICOT BLUSA E SAIA - W26TH113A"
+        # We split: ref_name = "CONJUNTO TRICOT BLUSA E SAIA"
+        #           ref_code = "W26TH113A" (actual product code)
+        raw_ref = item.get('referencia', '')
+        if ' - ' in raw_ref:
+            parts = raw_ref.rsplit(' - ', 1)
+            item['ref_name'] = parts[0].strip()   # Product name
+            item['ref_code'] = parts[1].strip()   # Reference code
+            item['referencia'] = item['ref_code']  # Use code as the main reference
+        else:
+            # No code separator — keep as-is (might be just a material name)
+            item['ref_name'] = raw_ref
+            item['ref_code'] = ''
+            # referencia stays as the raw value
+
         # Build pilot_size from size columns
         sizes = []
         for size_field, size_label in _SIZE_COLS:
@@ -251,16 +268,16 @@ def parse_compras_xlsx(file_bytes, sheet_name=None):
                 item['delivery_date'] = dd.replace(' 00:00:00', '')
 
         # Build a display reference for preview table
-        parts = []
+        display_parts = []
         if item.get('sub_group'):
-            parts.append(item['sub_group'])
-        if item.get('referencia'):
-            parts.append(item['referencia'])
+            display_parts.append(item['sub_group'])
+        if item.get('ref_name'):
+            display_parts.append(item['ref_name'])
         if item.get('colors'):
-            parts.append(item['colors'])
+            display_parts.append(item['colors'])
         if item.get('supplier'):
-            parts.append(f"({item['supplier']})")
-        item['_display_ref'] = ' - '.join(parts) if parts else f'Linha {row_idx + 1}'
+            display_parts.append(f"({item['supplier']})")
+        item['_display_ref'] = ' - '.join(display_parts) if display_parts else f'Linha {row_idx + 1}'
         item['_row_number'] = row_idx + header_row + 2  # 1-based Excel row
 
         items.append(item)

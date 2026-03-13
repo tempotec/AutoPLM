@@ -341,13 +341,22 @@ def compras_import_confirm():
                 if value:
                     setattr(spec, spec_field, str(value))
 
-            # Build ref_souq from sub_group + color + supplier
-            ref_parts = []
-            if item.get('sub_group'):
-                ref_parts.append(item['sub_group'])
-            if item.get('colors'):
-                ref_parts.append(item['colors'])
-            spec.ref_souq = ' - '.join(ref_parts) if ref_parts else f'COMPRA-{batch_id}-{i+1}'
+            # Build ref_souq: prioritize ref_code from Excel (e.g., W26TH120C)
+            # If no code, fall back to sub_group + color
+            if item.get('ref_code'):
+                # Reference code from Excel (split from "BLUSA TRICOT - W26TH120C")
+                spec.ref_souq = item['ref_code']
+            else:
+                ref_parts = []
+                if item.get('sub_group'):
+                    ref_parts.append(item['sub_group'])
+                if item.get('colors'):
+                    ref_parts.append(item['colors'])
+                spec.ref_souq = ' - '.join(ref_parts) if ref_parts else f'COMPRA-{batch_id}-{i+1}'
+
+            # Also store ref_name (product name from reference column)
+            if item.get('ref_name') and not spec.description:
+                spec.description = item['ref_name']
 
             # Store extra fields as JSON
             extra = {}
